@@ -3,76 +3,80 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#28a9e8" />
-  <title>줄넘기 어드벤처: 한 칸 전진 말판</title>
+  <meta name="theme-color" content="#0b91d3" />
+  <title>줄넘기 어드벤처: 몬스터 제압 말판</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="app">
-    <section class="hero-card">
-      <div class="rope-kids" aria-hidden="true">
-        <span class="rope-kid left">🧒</span>
-        <span class="rope"></span>
-        <span class="rope-kid right">👧</span>
+  <main class="poster-shell">
+    <section class="poster-hero">
+      <div class="sky-stars" aria-hidden="true">✦ ✧ ✦</div>
+      <div class="jump-kid kid-left" aria-hidden="true">
+        <span class="jump-rope"></span><b>🧒🏻</b>
+        <em>우리 힘을<br/>모아보자!</em>
       </div>
-      <p class="eyebrow">한 타임에 친구들이 함께 하는</p>
-      <h1>줄넘기 말판 어드벤처</h1>
-      <p class="subtitle">잘한 일이 있으면 말을 <b>한 칸 전진!</b> 끝까지 도착하면 귀여운 몬스터를 제압하고 친구가 돼요.</p>
+      <div class="jump-kid kid-right" aria-hidden="true">
+        <span class="jump-rope"></span><b>👧🏻</b>
+        <em>끝까지 가면<br/>최고의 용사!</em>
+      </div>
 
-      <div class="stats-panel">
+      <div class="title-ribbon">★ 줄넘기 어드벤처 ★</div>
+      <h1>몬스터 제압 말판</h1>
+      <div class="sub-ribbon">잘한 일이 생길 때마다 한 칸 UP! 모두 함께 힘을 모아 끝까지 도착하자!</div>
+
+      <div class="score-strip">
         <div><span>현재 목표</span><strong id="stageName">개구리 친구</strong></div>
         <div><span>말 위치</span><strong><span id="positionText">0</span> / <span id="goalText">20</span></strong></div>
         <div><span>응원 코인</span><strong id="coins">0</strong></div>
       </div>
     </section>
 
-    <section class="game-layout">
-      <article class="board-card">
-        <div class="board-header">
+    <section class="poster-grid">
+      <article class="adventure-board panel-frame">
+        <header class="board-title-row">
           <div>
             <span class="week-badge" id="weekBadge">1주차</span>
             <h2 id="monsterName">개구리 친구</h2>
           </div>
-          <div class="monster cute" id="monsterEmoji">🐸</div>
-        </div>
-
-        <div class="progress-copy" id="progressCopy">출발! 친구들이 줄넘기를 잡고 기다리고 있어요.</div>
+          <div class="friendly-monster" id="monsterEmoji">🐸</div>
+        </header>
+        <p class="progress-copy" id="progressCopy">출발! 친구들이 줄넘기를 잡고 기다리고 있어요.</p>
+        <div class="stage-line" id="stageLine"></div>
         <div class="board-wrap">
-          <div class="rope-side left-rope"><span>🧒</span><i></i></div>
+          <div class="rope-holder left-holder"><span>🧒</span><i></i></div>
           <div class="board" id="board" aria-label="줄넘기 말판"></div>
-          <div class="rope-side right-rope"><i></i><span>👧</span></div>
+          <div class="rope-holder right-holder"><i></i><span>👧</span></div>
         </div>
       </article>
 
-      <article class="action-card">
-        <h3>한 칸 전진 조건</h3>
-        <p class="small">한 타임 동안 잘한 일이 생기면 아래 버튼을 눌러 말이 한 칸씩 앞으로 가요.</p>
+      <aside class="control-panel panel-frame">
+        <h3>공격 방법 대신<br/><b>한 칸 전진!</b></h3>
+        <p class="small">한 타임 동안 아이들이 잘한 일이 있으면 해당 버튼을 눌러 주세요.</p>
         <div class="action-grid">
-          <button data-move="1" class="action green"><span>✅</span><b>줄넘기 성공</b><em>한 칸 전진</em></button>
-          <button data-move="1" class="action blue"><span>👏</span><b>친구 응원하기</b><em>한 칸 전진</em></button>
-          <button data-move="1" class="action purple"><span>🤝</span><b>규칙 잘 지키기</b><em>한 칸 전진</em></button>
-          <button data-move="1" class="action pink"><span>🌟</span><b>도전 포기하지 않기</b><em>한 칸 전진</em></button>
+          <button data-move="1" class="action green"><span>🟢</span><b>줄넘기 성공</b><em>+1칸</em></button>
+          <button data-move="1" class="action blue"><span>🔵</span><b>기술 성공</b><em>+1칸</em></button>
+          <button data-move="1" class="action red"><span>🔴</span><b>이중뛰기 도전</b><em>+1칸</em></button>
+          <button data-move="1" class="action pink"><span>💗</span><b>친구 도와주기</b><em>+1칸</em></button>
         </div>
         <button id="undoBtn" class="sub-button">↩️ 방금 전진 취소</button>
         <p class="hint" id="hint">잘한 일을 누르면 말이 한 칸 앞으로 이동해요.</p>
-      </article>
+      </aside>
     </section>
 
-    <section class="rules-rewards">
-      <article>
-        <h3>놀이 규칙</h3>
+    <section class="info-scrolls">
+      <article class="scroll-card method">
+        <h3>놀이 방법</h3>
         <ul>
-          <li>한 타임에 친구들이 함께 말판을 채워요.</li>
-          <li>잘한 일이 있으면 한 칸 전진해요.</li>
+          <li><b>줄넘기 성공</b> 또는 멋진 행동이 나오면 한 칸 전진!</li>
+          <li>한 타임 친구들이 함께 하나의 말판을 채워요.</li>
           <li>끝 칸에 도착하면 몬스터를 무섭지 않게 제압해요.</li>
-          <li>제압한 몬스터는 우리 편 친구가 돼요.</li>
         </ul>
       </article>
-      <article>
-        <h3>이번 모험 친구들</h3>
+      <article class="scroll-card reward">
+        <h3>보상 안내</h3>
         <ul id="rewardList"></ul>
       </article>
-      <article>
+      <article class="scroll-card promise">
         <h3>용사들의 약속</h3>
         <ul>
           <li>포기하지 않아요!</li>
@@ -83,7 +87,7 @@
       </article>
     </section>
 
-    <section class="boss" id="winPanel" hidden>
+    <section class="boss panel-frame" id="winPanel" hidden>
       <h2>🎉 오늘의 모험 성공!</h2>
       <p>끝까지 도착해서 몬스터 친구들과 모두 사이좋게 됐어요. WE CAN DO IT!</p>
       <button id="restartBtn">처음부터 다시 하기</button>
