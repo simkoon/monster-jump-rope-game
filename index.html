@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0b78d0" />
+  <title>줄넘기 어드벤처: 몬스터 사냥</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero-card">
+      <div class="hero-top">
+        <div class="kid bounce">🏃‍♂️</div>
+        <div class="title-wrap">
+          <p class="eyebrow">줄넘기 어드벤처</p>
+          <h1>몬스터 사냥 게임</h1>
+          <p class="subtitle">줄넘기 성공으로 공격력을 모아 몬스터를 물리쳐요!</p>
+        </div>
+        <div class="kid bounce delay">🏃‍♀️</div>
+      </div>
+
+      <div class="stats-panel">
+        <div><span>현재 스테이지</span><strong id="stageName">개구리 몬스터</strong></div>
+        <div><span>공격력</span><strong id="attackPower">0</strong></div>
+        <div><span>코인</span><strong id="coins">0</strong></div>
+      </div>
+    </section>
+
+    <section class="game-board">
+      <article class="monster-card" id="monsterCard">
+        <div class="week-badge" id="weekBadge">1주차</div>
+        <h2 id="monsterName">개구리 몬스터</h2>
+        <div class="monster" id="monsterEmoji">🐸</div>
+        <div class="hp-row"><span>HP</span><strong id="hpText">300 / 300</strong></div>
+        <div class="hpbar"><div id="hpFill"></div></div>
+        <div class="tick-row" id="tickRow"></div>
+      </article>
+
+      <article class="action-card">
+        <h3>공격 방법</h3>
+        <div class="action-grid">
+          <button data-power="10" class="action green"><span>🟢</span><b>줄넘기 10개 성공</b><em>공격력 10</em></button>
+          <button data-power="20" class="action blue"><span>🔵</span><b>기술 성공</b><em>공격력 20</em></button>
+          <button data-power="30" class="action red"><span>🔴</span><b>이중뛰기 성공</b><em>공격력 30</em></button>
+          <button data-heal="20" class="action pink"><span>💗</span><b>친구 도와주기</b><em>회복 20 HP</em></button>
+        </div>
+        <button id="attackBtn" class="big-attack" disabled>⚔️ 공격하기</button>
+        <p class="hint" id="hint">먼저 줄넘기 버튼으로 공격력을 모아주세요.</p>
+      </article>
+    </section>
+
+    <section class="rules-rewards">
+      <article>
+        <h3>사냥 규칙</h3>
+        <ul>
+          <li>친구들이 함께 힘을 모아 몬스터를 공격해요.</li>
+          <li>공격력만큼 HP가 줄어들어요.</li>
+          <li>몬스터를 물리치면 코인을 획득해요.</li>
+          <li>더 강한 몬스터가 나타나니 계속 도전해요!</li>
+        </ul>
+      </article>
+      <article>
+        <h3>보상 안내</h3>
+        <ul id="rewardList"></ul>
+      </article>
+      <article>
+        <h3>용사들의 약속</h3>
+        <ul>
+          <li>포기하지 않아요!</li>
+          <li>친구를 응원해요!</li>
+          <li>규칙을 지켜요!</li>
+          <li>즐겁게 참여해요!</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="boss" id="winPanel" hidden>
+      <h2>🎉 최종 보스 클리어!</h2>
+      <p>모두 함께 끝까지 포기하지 않고 승리했어요. WE CAN DO IT!</p>
+      <button id="restartBtn">처음부터 다시 하기</button>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="./script.js"></script>
+</body>
+</html>
