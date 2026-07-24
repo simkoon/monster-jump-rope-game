@@ -2,99 +2,118 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#0b91d3" />
-  <title>줄넘기 어드벤처: 몬스터 제압 말판</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1d4ed8" />
+  <title>점프 아일랜드: 황금줄을 찾아라!</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="poster-shell">
-    <section class="poster-hero">
-      <div class="sky-stars" aria-hidden="true">✦ ✧ ✦</div>
-      <div class="jump-kid kid-left" aria-hidden="true">
-        <span class="jump-rope"></span><b>🧒🏻</b>
-        <em>우리 힘을<br/>모아보자!</em>
+<div class="app">
+
+  <!-- ================= 설정 화면 ================= -->
+  <section id="setup" class="setup">
+    <header class="setup-hero">
+      <div class="setup-badges">
+        <span>🏝 이동형 보드게임</span>
+        <span>🪢 줄넘기 미션</span>
+        <span>🤝 협동 + 반전</span>
       </div>
-      <div class="jump-kid kid-right" aria-hidden="true">
-        <span class="jump-rope"></span><b>👧🏻</b>
-        <em>끝까지 가면<br/>최고의 용사!</em>
+      <h1>점프 아일랜드<br/><b>황금줄을 찾아라!</b></h1>
+      <p class="setup-sub">출발섬에서 황금줄 신전까지! 주사위를 굴리고 줄넘기 미션을 성공해 전진하세요.</p>
+    </header>
+
+    <div class="setup-card">
+      <h2>1. 방식 선택</h2>
+      <div class="chooser" id="modeChooser">
+        <button class="choice active" data-mode="solo"><b>개인전</b><em>각자 말 1개 · 2~6명</em></button>
+        <button class="choice" data-mode="team"><b>팀전</b><em>팀 말 1개 · 2~4팀</em></button>
       </div>
 
-      <div class="title-ribbon">★ 줄넘기 어드벤처 ★</div>
-      <h1>몬스터 제압 말판</h1>
-      <div class="sub-ribbon">잘한 일이 생길 때마다 한 칸 UP! 모두 함께 힘을 모아 끝까지 도착하자!</div>
-
-      <div class="score-strip">
-        <div><span>현재 목표</span><strong id="stageName">개구리 친구</strong></div>
-        <div><span>말 위치</span><strong><span id="positionText">0</span> / <span id="goalText">20</span></strong></div>
-        <div><span>응원 코인</span><strong id="coins">0</strong></div>
+      <h2>2. <span id="countLabel">참가자</span> 수</h2>
+      <div class="counter">
+        <button id="countMinus" class="round-btn">−</button>
+        <strong id="countValue">3</strong>
+        <button id="countPlus" class="round-btn">+</button>
       </div>
-    </section>
 
-    <section class="poster-grid">
-      <article class="adventure-board panel-frame">
-        <header class="board-title-row">
-          <div>
-            <span class="week-badge" id="weekBadge">1주차</span>
-            <h2 id="monsterName">개구리 친구</h2>
+      <h2>3. 연령대 (난이도)</h2>
+      <div class="chooser" id="ageChooser">
+        <button class="choice" data-age="8"><b>8~10세</b><em>기본 위주</em></button>
+        <button class="choice active" data-age="11"><b>11~12세</b><em>표준</em></button>
+        <button class="choice" data-age="13"><b>13~14세</b><em>도전 강화</em></button>
+      </div>
+
+      <h2>4. <span id="nameLabel">참가자</span> 이름</h2>
+      <div id="nameInputs" class="name-inputs"></div>
+
+      <button id="startBtn" class="start-btn">🚀 모험 시작!</button>
+      <p class="setup-foot">기존 <a href="./monster.html">몬스터 제압 말판</a> · <a href="./design-plan.html" target="_blank" rel="noopener">기획안 원본 보기</a></p>
+    </div>
+  </section>
+
+  <!-- ================= 게임 화면 ================= -->
+  <section id="game" class="game" hidden>
+    <header class="game-hero">
+      <div class="hero-left">
+        <span class="hero-badge">점프 아일랜드</span>
+        <h1>황금줄을 찾아라!</h1>
+      </div>
+      <div class="hero-right">
+        <div class="wave-flag" id="waveFlag" hidden>🌊 마지막 파도! 성공 보상 +1</div>
+        <button id="rulesBtn" class="ghost-btn">📖 규칙</button>
+        <button id="restartBtn" class="ghost-btn">↺ 새 게임</button>
+      </div>
+    </header>
+
+    <div class="game-body">
+      <!-- 말판 -->
+      <div class="board-col">
+        <div class="turn-banner">
+          <span class="turn-label">지금 차례</span>
+          <strong id="turnName">—</strong>
+          <span class="turn-avatar" id="turnAvatar">🐰</span>
+        </div>
+
+        <div class="board" id="board" aria-label="점프 아일랜드 말판"></div>
+
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <!-- 조작 패널 -->
+      <aside class="side-col">
+        <div class="dice-panel">
+          <div class="dice" id="dice">🎲</div>
+          <button id="rollBtn" class="roll-btn">주사위 굴리기</button>
+          <button id="reversalBtn" class="reversal-btn" hidden>🔁 역전 토큰 사용 (두 번 굴려 선택)</button>
+          <p class="dice-hint" id="diceHint">주사위를 굴려 이동하세요. (5·6은 최대 4칸)</p>
+        </div>
+
+        <div class="players" id="players"></div>
+
+        <details class="referee">
+          <summary>🛠 진행자 도구</summary>
+          <div class="ref-body" id="refBody"></div>
+          <div class="ref-actions">
+            <button id="waveBtn" class="ref-btn">🌊 마지막 파도 발동</button>
+            <button id="finishBtn" class="ref-btn">🏁 지금 순위로 종료</button>
           </div>
-          <div class="friendly-monster" id="monsterEmoji">🐸</div>
-        </header>
-        <p class="progress-copy" id="progressCopy">출발! 친구들이 줄넘기를 잡고 기다리고 있어요.</p>
-        <div class="stage-line" id="stageLine"></div>
-        <div class="board-wrap">
-          <div class="rope-holder left-holder"><span>🧒</span><i></i></div>
-          <div class="board" id="board" aria-label="줄넘기 말판"></div>
-          <div class="rope-holder right-holder"><i></i><span>👧</span></div>
-        </div>
-      </article>
+        </details>
 
-      <aside class="control-panel panel-frame">
-        <h3>공격 방법 대신<br/><b>한 칸 전진!</b></h3>
-        <p class="small">한 타임 동안 아이들이 잘한 일이 있으면 해당 버튼을 눌러 주세요.</p>
-        <div class="action-grid">
-          <button data-move="1" class="action green"><span>🟢</span><b>줄넘기 성공</b><em>+1칸</em></button>
-          <button data-move="1" class="action blue"><span>🔵</span><b>기술 성공</b><em>+1칸</em></button>
-          <button data-move="1" class="action red"><span>🔴</span><b>이중뛰기 도전</b><em>+1칸</em></button>
-          <button data-move="1" class="action pink"><span>💗</span><b>친구 도와주기</b><em>+1칸</em></button>
+        <div class="log-wrap">
+          <h3>진행 기록</h3>
+          <ul id="log" class="log"></ul>
         </div>
-        <button id="undoBtn" class="sub-button">↩️ 방금 전진 취소</button>
-        <p class="hint" id="hint">잘한 일을 누르면 말이 한 칸 앞으로 이동해요.</p>
       </aside>
-    </section>
+    </div>
+  </section>
 
-    <section class="info-scrolls">
-      <article class="scroll-card method">
-        <h3>놀이 방법</h3>
-        <ul>
-          <li><b>줄넘기 성공</b> 또는 멋진 행동이 나오면 한 칸 전진!</li>
-          <li>한 타임 친구들이 함께 하나의 말판을 채워요.</li>
-          <li>끝 칸에 도착하면 몬스터를 무섭지 않게 제압해요.</li>
-        </ul>
-      </article>
-      <article class="scroll-card reward">
-        <h3>보상 안내</h3>
-        <ul id="rewardList"></ul>
-      </article>
-      <article class="scroll-card promise">
-        <h3>용사들의 약속</h3>
-        <ul>
-          <li>포기하지 않아요!</li>
-          <li>친구를 응원해요!</li>
-          <li>규칙을 지켜요!</li>
-          <li>즐겁게 참여해요!</li>
-        </ul>
-      </article>
-    </section>
-
-    <section class="boss panel-frame" id="winPanel" hidden>
-      <h2>🎉 오늘의 모험 성공!</h2>
-      <p>끝까지 도착해서 몬스터 친구들과 모두 사이좋게 됐어요. WE CAN DO IT!</p>
-      <button id="restartBtn">처음부터 다시 하기</button>
-    </section>
-  </main>
-
+  <!-- ================= 모달 / 토스트 ================= -->
+  <div class="modal-back" id="modalBack" hidden>
+    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+  </div>
   <div class="toast" id="toast"></div>
-  <script src="./script.js"></script>
+</div>
+
+<script src="./script.js"></script>
 </body>
 </html>

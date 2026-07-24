@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>점프 아일랜드: 황금줄을 찾아라!</title>
+<style>
+  :root{
+    --navy:#16213e;
+    --blue:#2f80ed;
+    --sky:#dff3ff;
+    --mint:#dff7eb;
+    --green:#27ae60;
+    --yellow:#ffd166;
+    --orange:#f2994a;
+    --red:#eb5757;
+    --purple:#9b51e0;
+    --pink:#ff8fab;
+    --paper:#fffdf7;
+    --ink:#263238;
+    --line:#bcc7d1;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:#e9eef4;
+    color:var(--ink);
+    font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+    line-height:1.55;
+  }
+  .page{
+    width:min(1120px, calc(100% - 24px));
+    margin:20px auto;
+    background:var(--paper);
+    border-radius:24px;
+    box-shadow:0 18px 50px rgba(22,33,62,.12);
+    overflow:hidden;
+  }
+  header{
+    padding:48px 44px 40px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,.22), transparent 20%),
+      radial-gradient(circle at 80% 30%, rgba(255,255,255,.18), transparent 18%),
+      linear-gradient(135deg,#1d4ed8,#00a8cc 60%,#22c55e);
+    position:relative;
+  }
+  header:after{
+    content:"";
+    position:absolute;
+    inset:auto 0 0;
+    height:24px;
+    background:linear-gradient(135deg,transparent 10px,var(--paper) 0) 0 0/20px 20px repeat-x;
+  }
+  h1{font-size:clamp(34px,6vw,68px);line-height:1.05;margin:0 0 12px;letter-spacing:-2px}
+  .subtitle{font-size:20px;font-weight:700;opacity:.96}
+  .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .badge{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.18);font-weight:700;font-size:14px}
+  main{padding:34px 38px 50px}
+  section{margin:0 0 42px}
+  h2{
+    font-size:28px;
+    margin:0 0 16px;
+    color:var(--navy);
+    border-left:8px solid var(--blue);
+    padding-left:12px;
+    letter-spacing:-.5px;
+  }
+  h3{font-size:20px;margin:22px 0 10px;color:#174a75}
+  p{margin:8px 0}
+  .lead{
+    font-size:18px;
+    background:linear-gradient(90deg,#eef7ff,#f6fff9);
+    border:1px solid #cfe6f7;
+    border-radius:18px;
+    padding:18px 20px;
+  }
+  .grid{display:grid;gap:16px}
+  .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .card{
+    border:1px solid #d9e2ea;
+    border-radius:18px;
+    background:#fff;
+    padding:18px;
+    box-shadow:0 7px 18px rgba(31,50,71,.05);
+  }
+  .card h3{margin-top:0}
+  .name-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .name-item{padding:12px 14px;background:#f7fafc;border:1px solid #dce5ec;border-radius:12px;font-weight:700}
+  .winner{background:#fff6cf;border:2px solid var(--yellow)}
+  .winner strong{color:#b36b00}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+  th,td{border:1px solid #d8e0e8;padding:11px 10px;vertical-align:top;text-align:left}
+  th{background:#edf5fb;color:#173c5c}
+  ul,ol{padding-left:22px}
+  li{margin:5px 0}
+  .board-wrap{
+    overflow:auto;
+    border:2px dashed #aab8c4;
+    border-radius:18px;
+    background:#f7fbff;
+    padding:14px;
+  }
+  .board{
+    min-width:980px;
+    aspect-ratio:1.414/1;
+    background:
+      radial-gradient(circle at 50% 50%,rgba(255,255,255,.95),rgba(235,247,255,.9)),
+      linear-gradient(45deg,#dff3ff,#efffec);
+    border:10px solid #1f4f78;
+    border-radius:32px;
+    padding:22px;
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(5,1fr);
+    gap:10px;
+    position:relative;
+  }
+  .tile{
+    border-radius:16px;
+    border:3px solid rgba(22,33,62,.18);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight:800;
+    padding:6px;
+    min-height:100px;
+    box-shadow:inset 0 -5px rgba(0,0,0,.07);
+  }
+  .tile small{font-size:11px;opacity:.8;display:block}
+  .normal{background:#fff}
+  .luck{background:#ffe8a3}
+  .trap{background:#ffd5d5}
+  .bonus{background:#d8f7dd}
+  .challenge{background:#eadcff}
+  .coop{background:#d7f1ff}
+  .start{background:#c4f5d2}
+  .finish{background:#fff0a8}
+  .center-island{
+    grid-column:3/7;
+    grid-row:2/5;
+    border-radius:40% 60% 55% 45%;
+    background:linear-gradient(135deg,#6fd08c,#2db36a);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:35px;
+    border:8px solid rgba(255,255,255,.7);
+    box-shadow:0 12px 25px rgba(20,100,70,.22);
+  }
+  .center-island strong{font-size:30px;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .legend span{border-radius:999px;padding:7px 11px;font-weight:700;font-size:13px;border:1px solid rgba(0,0,0,.08)}
+  .steps{counter-reset:step}
+  .step{
+    position:relative;
+    padding:16px 16px 16px 64px;
+    border:1px solid #dbe5ed;
+    border-radius:14px;
+    margin:10px 0;
+    background:#fff;
+  }
+  .step:before{
+    counter-increment:step;
+    content:counter(step);
+    position:absolute;left:16px;top:14px;
+    width:34px;height:34px;border-radius:50%;
+    background:var(--blue);color:#fff;
+    display:grid;place-items:center;font-weight:900;
+  }
+  .script{background:#14213d;color:#f6f9ff;border-radius:16px;padding:18px 20px}
+  .script b{color:#ffd166}
+  .difficulty{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:800}
+  .d1{background:#dff7eb;color:#13753b}
+  .d2{background:#fff1c9;color:#9a6500}
+  .d3{background:#f8d9e1;color:#9b2946}
+  .cards-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .mission-card,.event-card{
+    background:#fff;
+    border-radius:14px;
+    border:2px solid #d9e2ea;
+    padding:14px;
+    min-height:150px;
+    break-inside:avoid;
+  }
+  .mission-card h4,.event-card h4{margin:0 0 8px;font-size:17px}
+  .mission-card{border-top:8px solid var(--blue)}
+  .event-card{border-top:8px solid var(--purple)}
+  .meta{font-size:12px;color:#64748b;margin-top:8px}
+  .move{font-weight:900;color:#b42318}
+  .print-note{padding:14px 16px;background:#fff3cd;border:1px solid #efd27a;border-radius:12px}
+  .character{
+    display:flex;gap:14px;align-items:flex-start;
+  }
+  .avatar{
+    flex:0 0 70px;height:70px;border-radius:50%;
+    display:grid;place-items:center;font-size:38px;
+    background:#eef7ff;border:3px solid #b9dcf5;
+  }
+  footer{padding:28px 38px;background:#152238;color:#dce7f3}
+  .no-break{break-inside:avoid}
+  @media(max-width:800px){
+    main{padding:26px 18px 40px}
+    header{padding:36px 22px}
+    .grid.two,.grid.three,.cards-grid,.name-list{grid-template-columns:1fr}
+  }
+  @media print{
+    @page{size:A3 landscape;margin:10mm}
+    body{background:#fff}
+    .page{width:100%;margin:0;box-shadow:none;border-radius:0}
+    header{break-after:page}
+    section{break-inside:auto}
+    .board-wrap{border:0;padding:0;overflow:visible;break-before:page;break-after:page}
+    .board{min-width:0;width:100%;height:calc(100vh - 20mm)}
+    .cards-grid{grid-template-columns:repeat(3,1fr)}
+    .mission-card,.event-card{min-height:135px}
+    h2{break-after:avoid}
+    .print-hide{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>점프 아일랜드<br>황금줄을 찾아라!</h1>
+  <div class="subtitle">줄넘기 미션형 보드 레이스 · 8~14세 · 20~30분 · 개인전/팀전</div>
+  <div class="badge-row">
+    <span class="badge">🏝 이동형 보드게임</span>
+    <span class="badge">🪢 단계별 줄넘기 미션</span>
+    <span class="badge">🤝 협동 + 반전</span>
+    <span class="badge">🖨 A3/A2 인쇄 대응</span>
+  </div>
+</header>
+<main>
+<section>
+  <h2>1. 프로그램 핵심 콘셉트</h2>
+  <div class="lead">
+    아이들은 탐험대가 되어 출발섬에서 황금줄 신전까지 이동한다. 매 차례 주사위를 굴린 뒤 도착한 칸의 미션을 수행하며, 성공하면 전진하고 실패하면 제자리 또는 후퇴한다. 후반부에는 협동 열쇠와 역전 카드가 등장해 실력 차이가 있어도 끝까지 승부가 유지된다.
+  </div>
+  <div class="grid three">
+    <div class="card"><h3>몰입 구조</h3><p>짧은 차례, 즉시 보상, 캐릭터 역할, 눈에 보이는 이동으로 집중을 유지한다.</p></div>
+    <div class="card"><h3>성장 구조</h3><p>초급·중급·고급 카드를 혼합하고, 성공 스티커와 열쇠 토큰으로 성취감을 강화한다.</p></div>
+    <div class="card"><h3>안전 구조</h3><p>동시 점프 인원을 제한하고, 대기자는 응원·판정·카드 담당 역할을 맡는다.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>2. 프로그램 이름 10개</h2>
+  <div class="name-list">
+    <div class="name-item">1. 점프 아일랜드: 황금줄을 찾아라!</div>
+    <div class="name-item">2. 줄넘기 어드벤처 킹덤</div>
+    <div class="name-item">3. 점프 브릿지 대탐험</div>
+    <div class="name-item">4. 로프 히어로 레이스</div>
+    <div class="name-item">5. 점프 몬스터 원정대</div>
+    <div class="name-item">6. 황금줄 보물섬</div>
+    <div class="name-item">7. 점프업! 미션 로드</div>
+    <div class="name-item">8. 줄넘기 챔피언 서바이벌</div>
+    <div class="name-item">9. 로프 퀘스트 30</div>
+    <div class="name-item">10. 점프 크루 대모험</div>
+  </div>
+  <div class="card winner">
+    <strong>최종 선정: 「점프 아일랜드: 황금줄을 찾아라!」</strong>
+    <p>8~14세 모두 이해하기 쉽고, 보드게임·탐험·줄넘기라는 핵심 요소가 한 번에 전달된다. 캐릭터와 확장팩 제작에도 유리하다.</p>
+  </div>
+</section>
+
+<section>
+  <h2>3. 준비물</h2>
+  <div class="grid two">
+    <div class="card">
+      <h3>기본 구성품</h3>
+      <ul>
+        <li>A3 또는 A2 게임판 1장</li>
+        <li>팀/개인 말 2~6개</li>
+        <li>주사위 1개</li>
+        <li>미션 카드 36장</li>
+        <li>이벤트 카드 36장</li>
+        <li>황금 열쇠 토큰 6개</li>
+        <li>보호막 토큰 6개</li>
+        <li>역전 토큰 3개</li>
+        <li>난이도 표시 클립 또는 색 스티커</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>수업 준비물</h3>
+      <ul>
+        <li>개인 줄넘기 1인 1개</li>
+        <li>긴 줄 1~2개</li>
+        <li>바닥 표시 콘 4~8개</li>
+        <li>30초 타이머 또는 휴대폰</li>
+        <li>화이트보드와 점수펜</li>
+        <li>안전 간격 확보용 라인 테이프</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. 게임판 설계</h2>
+  <div class="print-note print-hide"><b>인쇄 팁:</b> 브라우저 인쇄에서 용지를 A3 가로로 선택하고 배율 100%로 출력한다. A2 출력은 PDF로 저장 후 141% 확대 인쇄하면 된다.</div>
+  <div class="board-wrap">
+    <div class="board">
+      <div class="tile start">1<br>출발섬<small>모두 힘차게 시작!</small></div>
+      <div class="tile normal">2<br>초급 미션</div>
+      <div class="tile luck">3<br>행운칸</div>
+      <div class="tile normal">4<br>초급 미션</div>
+      <div class="tile bonus">5<br>보너스칸</div>
+      <div class="tile normal">6<br>중급 미션</div>
+      <div class="tile trap">7<br>함정칸</div>
+      <div class="tile coop">8<br>협동미션</div>
+
+      <div class="tile normal" style="grid-column:8;grid-row:2">9<br>초급 미션</div>
+      <div class="tile challenge" style="grid-column:8;grid-row:3">10<br>챌린지</div>
+      <div class="tile luck" style="grid-column:8;grid-row:4">11<br>행운칸</div>
+      <div class="tile normal" style="grid-column:8;grid-row:5">12<br>중급 미션</div>
+
+      <div class="tile trap" style="grid-column:7;grid-row:5">13<br>함정칸</div>
+      <div class="tile bonus" style="grid-column:6;grid-row:5">14<br>보너스칸</div>
+      <div class="tile coop" style="grid-column:5;grid-row:5">15<br>협동미션</div>
+      <div class="tile normal" style="grid-column:4;grid-row:5">16<br>고급 미션</div>
+      <div class="tile luck" style="grid-column:3;grid-row:5">17<br>행운칸</div>
+      <div class="tile challenge" style="grid-column:2;grid-row:5">18<br>챌린지</div>
+      <div class="tile normal" style="grid-column:1;grid-row:5">19<br>중급 미션</div>
+
+      <div class="tile trap" style="grid-column:1;grid-row:4">20<br>함정칸</div>
+      <div class="tile coop" style="grid-column:1;grid-row:3">21<br>협동미션</div>
+      <div class="tile bonus" style="grid-column:1;grid-row:2">22<br>보너스칸</div>
+
+      <div class="tile normal" style="grid-column:2;grid-row:2">23<br>고급 미션</div>
+      <div class="tile luck" style="grid-column:2;grid-row:3">24<br>행운칸</div>
+      <div class="tile challenge" style="grid-column:2;grid-row:4">25<br>최종 챌린지</div>
+
+      <div class="tile finish" style="grid-column:7;grid-row:2/5">26<br>황금줄 신전<small>열쇠 2개가 필요!</small></div>
+
+      <div class="center-island">
+        <div><strong>🏝 점프 아일랜드</strong>성공하면 전진!<br>협동하면 열쇠 획득!<br>마지막까지 역전 가능!</div>
+      </div>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="normal">⬜ 일반 미션</span><span class="luck">🍀 행운칸</span><span class="trap">🕳 함정칸</span>
+    <span class="bonus">⭐ 보너스칸</span><span class="challenge">🔥 챌린지칸</span><span class="coop">🤝 협동미션칸</span>
+  </div>
+</section>
+
+<section>
+  <h2>5. 기본 규칙</h2>
+  <div class="steps">
+    <div class="step"><b>차례 정하기</b><br>개인전은 가위바위보, 팀전은 팀 대표가 주사위를 굴려 높은 팀부터 시작한다.</div>
+    <div class="step"><b>주사위 이동</b><br>주사위를 굴려 나온 수만큼 이동한다. 단, 5~6이 나오면 최대 4칸까지만 이동해 게임 속도를 안정시킨다.</div>
+    <div class="step"><b>칸 해결</b><br>도착한 칸에 맞는 카드 또는 미션을 수행한다. 일반 미션은 현재 연령과 수준에 맞는 난이도로 지도자가 선택한다.</div>
+    <div class="step"><b>성공·실패 이동</b><br>성공 시 카드에 적힌 만큼 추가 전진한다. 실패 시 기본적으로 제자리, 챌린지 실패 시 1칸 후퇴한다.</div>
+    <div class="step"><b>황금 열쇠</b><br>협동미션 성공 또는 특정 이벤트로 열쇠를 얻는다. 황금줄 신전에 들어가려면 열쇠 2개가 필요하다.</div>
+    <div class="step"><b>종료</b><br>20~25분이 지나면 마지막 한 바퀴를 선언한다. 신전에 가장 먼저 도착하거나, 시간 종료 시 신전에 가장 가까운 개인/팀이 승리한다.</div>
+  </div>
+</section>
+
+<section>
+  <h2>6. 개인전·팀전 운영</h2>
+  <div class="grid two">
+    <div class="card">
+      <h3>개인전 3~8명</h3>
+      <ul>
+        <li>각자 말 1개를 사용한다.</li>
+        <li>미션은 본인이 수행한다.</li>
+        <li>협동미션에서는 가장 뒤에 있는 참가자와 2인 1조가 된다.</li>
+        <li>도움을 준 참가자도 열쇠 조각 1개를 받는다.</li>
+        <li>열쇠 조각 2개는 황금 열쇠 1개로 교환한다.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>팀전 2~4팀</h3>
+      <ul>
+        <li>팀당 2~5명, 팀 말 1개를 사용한다.</li>
+        <li>매 차례 수행자를 교대한다.</li>
+        <li>같은 학생이 연속 수행할 수 없다.</li>
+        <li>협동미션은 전원 또는 2인 이상이 함께 수행한다.</li>
+        <li>모든 팀원이 최소 1회 성공해야 신전 입장이 가능하다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>7. 연령·수준별 난이도 조절</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>구분</th><th>8~10세</th><th>11~12세</th><th>13~14세</th></tr></thead>
+      <tbody>
+        <tr><td><span class="difficulty d1">초급</span></td><td>기본 뛰기 10~20회, 제한시간 20초</td><td>기본 뛰기 20~30회, 제한시간 20초</td><td>기본 뛰기 30~40회, 제한시간 15초</td></tr>
+        <tr><td><span class="difficulty d2">중급</span></td><td>번갈아 뛰기·좌우 이동 10~15회</td><td>번갈아 뛰기·스키·복서 20회</td><td>크로스·이중뛰기 입문·조합 20~30회</td></tr>
+        <tr><td><span class="difficulty d3">고급</span></td><td>초급 동작 2종 연결</td><td>크로스 5회, 이중뛰기 1~3회</td><td>이중뛰기 5~15회, 3동작 콤보</td></tr>
+        <tr><td>실패 보정</td><td>재도전 1회 허용</td><td>팀 응원 토큰 사용 시 재도전</td><td>재도전 없음, 대신 성공 보상 증가</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>8. 반전과 협동 시스템</h2>
+  <div class="grid three">
+    <div class="card">
+      <h3>⚡ 마지막 파도</h3>
+      <p>누군가 20번 칸을 통과하면 발동한다. 이후 모든 성공 보상은 +1칸이 된다.</p>
+    </div>
+    <div class="card">
+      <h3>🛡 보호막</h3>
+      <p>함정 또는 실패 후퇴를 1회 막는다. 보너스칸이나 이벤트 카드로 획득한다.</p>
+    </div>
+    <div class="card">
+      <h3>🔁 역전 토큰</h3>
+      <p>가장 뒤 팀은 게임 중 1회, 주사위를 두 번 굴려 원하는 결과를 선택한다.</p>
+    </div>
+    <div class="card">
+      <h3>🤝 공동 열쇠</h3>
+      <p>협동미션 성공 시 참여자 모두가 열쇠 조각을 얻어 약한 참가자도 중요한 역할을 맡는다.</p>
+    </div>
+    <div class="card">
+      <h3>👑 선두 부담</h3>
+      <p>1등이 챌린지칸에 도착하면 고급 미션을 수행한다. 성공 시 큰 보상, 실패 시 2칸 후퇴.</p>
+    </div>
+    <div class="card">
+      <h3>🌈 구출 점프</h3>
+      <p>마지막 참가자가 미션 성공 시 가장 가까운 참가자와 함께 1칸 전진한다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>9. 실제 수업 진행 순서</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>시간</th><th>단계</th><th>지도 내용</th></tr></thead>
+      <tbody>
+        <tr><td>0~3분</td><td>도입</td><td>세계관 소개, 팀 구성, 안전 간격 확인</td></tr>
+        <tr><td>3~6분</td><td>연습</td><td>초급·중급 동작 각 1개씩 짧게 연습</td></tr>
+        <tr><td>6~22분</td><td>본게임</td><td>주사위 이동, 카드 수행, 토큰 획득</td></tr>
+        <tr><td>22~26분</td><td>마지막 파도</td><td>모든 성공 보상 +1, 역전 기회 제공</td></tr>
+        <tr><td>26~30분</td><td>마무리</td><td>우승 발표, 개인 성장 칭찬, 정리 스트레칭</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>10. 지도자 멘트</h2>
+  <div class="script">
+    <p><b>도입:</b> “여러분은 오늘 점프 아일랜드 탐험대입니다. 황금줄 신전까지 가려면 실력뿐 아니라 용기와 협동이 필요해요!”</p>
+    <p><b>미션 전:</b> “기록보다 중요한 건 정확한 자세와 끝까지 도전하는 태도입니다. 준비, 점프!”</p>
+    <p><b>실패 시:</b> “실패는 멈춤이 아니라 다음 점프를 위한 힌트예요. 어느 부분을 바꾸면 성공할 수 있을까요?”</p>
+    <p><b>협동미션:</b> “이번에는 혼자 잘하는 것보다 서로 맞추는 것이 더 중요합니다. 구호를 정하고 시작하세요!”</p>
+    <p><b>마지막 5분:</b> “점프 아일랜드에 마지막 파도가 몰려옵니다! 지금부터 성공 보상이 1칸 더 커집니다!”</p>
+    <p><b>마무리:</b> “오늘의 진짜 보물은 황금줄이 아니라 끝까지 도전한 여러분의 점프 실력입니다.”</p>
+  </div>
+</section>
+
+<section>
+  <h2>11. 승리 조건과 시상</h2>
+  <ul>
+    <li><b>기본 승리:</b> 황금 열쇠 2개를 보유하고 26번 황금줄 신전에 먼저 도착한 개인/팀.</li>
+    <li><b>시간 종료:</b> 신전에 가장 가까운 순서 → 열쇠 수 → 성공 미션 수로 순위를 정한다.</li>
+    <li><b>공동 우승:</b> 같은 차례에 도착하면 최종 협동미션을 함께 성공해 공동 우승할 수 있다.</li>
+    <li><b>보조 시상:</b> 최고 도전상, 최고의 응원상, 정확한 자세상, 협동왕, 포기하지 않은 점프상.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>12. 캐릭터와 디자인 콘셉트</h2>
+  <div class="grid two">
+    <div class="card character"><div class="avatar">🐰</div><div><h3>점피</h3><p>빠르고 밝은 토끼 탐험가. 초급 미션과 시작 안내를 담당한다.</p></div></div>
+    <div class="card character"><div class="avatar">🦊</div><div><h3>루피</h3><p>전략을 좋아하는 여우. 이벤트 카드와 역전 규칙을 설명한다.</p></div></div>
+    <div class="card character"><div class="avatar">🐻</div><div><h3>파워곰</h3><p>힘과 끈기의 상징. 고급 미션과 챌린지칸의 안내자다.</p></div></div>
+    <div class="card character"><div class="avatar">🦜</div><div><h3>코치링</h3><p>응원과 협동을 이끄는 앵무새. 협동미션과 팀 보너스를 담당한다.</p></div></div>
+  </div>
+  <p><b>그래픽 방향:</b> 밝은 섬 지도, 굵은 테두리, 색상별 칸 구분, 멀리서도 읽히는 큰 아이콘을 사용한다. 카드 뒷면은 미션=파란색, 이벤트=보라색, 협동=하늘색으로 구분한다.</p>
+</section>
+
+<section>
+  <h2>13. 미션 카드 36장</h2>
+  <div class="cards-grid">
+<div class="mission-card"><h4>1. 기본 점프 스타트</h4><span class="difficulty d1">초급</span><p>양발 모아 뛰기 15회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>2. 리듬 지키기</h4><span class="difficulty d1">초급</span><p>같은 속도로 20회 연속 뛰기</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>3. 멈춤 없는 점프</h4><span class="difficulty d1">초급</span><p>줄에 걸리지 않고 25회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>4. 앞뒤 이동</h4><span class="difficulty d1">초급</span><p>앞 2회·뒤 2회를 3세트</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>5. 좌우 섬 건너기</h4><span class="difficulty d1">초급</span><p>좌우 이동 점프 10회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>6. 한 발 맛보기</h4><span class="difficulty d1">초급</span><p>오른발 5회, 왼발 5회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>7. 무소음 점프</h4><span class="difficulty d1">초급</span><p>발소리를 작게 하며 15회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>8. 정확한 손목</h4><span class="difficulty d1">초급</span><p>팔꿈치를 붙이고 20회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>9. 타이머 점프</h4><span class="difficulty d1">초급</span><p>15초 동안 멈추지 않기</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>10. 숫자 맞히기</h4><span class="difficulty d1">초급</span><p>지도자가 정한 숫자만큼 정확히 뛰기</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>11. 번갈아 뛰기</h4><span class="difficulty d1">초급</span><p>발을 번갈아 20회</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>12. 점프 포즈</h4><span class="difficulty d1">초급</span><p>10회 후 지정 포즈로 멈추기</p><p class="move">성공 +1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>13. 스키 점프</h4><span class="difficulty d2">중급</span><p>좌우 스키 점프 20회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>14. 복서 스텝</h4><span class="difficulty d2">중급</span><p>복서 스텝 20회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>15. 앞뒤 콤보</h4><span class="difficulty d2">중급</span><p>앞뒤 점프 4회씩 3세트</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>16. 십자 이동</h4><span class="difficulty d2">중급</span><p>앞·뒤·좌·우 각 3회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>17. 무릎 높이</h4><span class="difficulty d2">중급</span><p>무릎을 평소보다 높게 15회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>18. 속도 업</h4><span class="difficulty d2">중급</span><p>10초 동안 최대 횟수 25회 이상</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>19. 리듬 전환</h4><span class="difficulty d2">중급</span><p>느리게 5회, 빠르게 10회, 느리게 5회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>20. 눈맞춤 점프</h4><span class="difficulty d2">중급</span><p>정면을 보며 20회 연속</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>21. 파트너 싱크</h4><span class="difficulty d2">중급</span><p>2명이 같은 리듬으로 15회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>22. 박수 점프</h4><span class="difficulty d2">중급</span><p>5회마다 박수, 총 20회</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>23. 교차 준비</h4><span class="difficulty d2">중급</span><p>팔 교차 동작만 10회 연습 후 5회 성공</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>24. 턴 점프</h4><span class="difficulty d2">중급</span><p>4회마다 90도 회전, 한 바퀴</p><p class="move">성공 +2칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>25. 크로스 점프</h4><span class="difficulty d3">고급</span><p>팔 교차 뛰기 5회 성공</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>26. 이중뛰기 입문</h4><span class="difficulty d3">고급</span><p>이중뛰기 1회 성공</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>27. 이중뛰기 연속</h4><span class="difficulty d3">고급</span><p>이중뛰기 5회 연속</p><p class="move">성공 +4칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>28. 트리플 콤보</h4><span class="difficulty d3">고급</span><p>기본 10회+스키 10회+크로스 3회</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>29. 백워드 도전</h4><span class="difficulty d3">고급</span><p>뒤로 줄 돌리기 10회</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>30. 한 발 마스터</h4><span class="difficulty d3">고급</span><p>한 발씩 10회 연속</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>31. 30초 챔피언</h4><span class="difficulty d3">고급</span><p>30초 동안 60회 이상</p><p class="move">성공 +4칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>32. 교차 연속</h4><span class="difficulty d3">고급</span><p>크로스 10회 연속</p><p class="move">성공 +4칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>33. 이중+기본 콤보</h4><span class="difficulty d3">고급</span><p>이중 1회·기본 3회를 3세트</p><p class="move">성공 +4칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>34. 무실수 50</h4><span class="difficulty d3">고급</span><p>기본 뛰기 50회 무실수</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>35. 창작 콤보</h4><span class="difficulty d3">고급</span><p>서로 다른 동작 3개를 연결</p><p class="move">성공 +3칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div><div class="mission-card"><h4>36. 보스 미션</h4><span class="difficulty d3">고급</span><p>지도자가 지정한 3단계 조합 완수</p><p class="move">성공 +5칸 / 실패 -1칸</p><div class="meta">연령에 따라 횟수 ±30% 조정</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>14. 이벤트 카드 36장</h2>
+  <div class="cards-grid">
+<div class="event-card"><h4>1. 순풍이 분다</h4><p>앞으로 2칸 이동</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>2. 황금 깃털</h4><p>보호막 토큰 1개 획득</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>3. 비밀 지름길</h4><p>가장 가까운 보너스칸으로 이동</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>4. 점피의 응원</h4><p>미션 재도전권 1장 획득</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>5. 행운의 숫자</h4><p>주사위를 한 번 더 굴린다</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>6. 보물 상자</h4><p>황금 열쇠 조각 1개 획득</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>7. 팀워크 보너스</h4><p>팀원 전원이 응원 구호를 외치면 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>8. 친구 구출</h4><p>가장 뒤 참가자와 함께 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>9. 집중의 별</h4><p>다음 미션 성공 보상 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>10. 교환 찬스</h4><p>원하는 사람과 자리 교환, 상대 동의 필요</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>11. 무지개 다리</h4><p>함정칸 하나를 건너뛴다</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>12. 코치링의 선물</h4><p>원하는 난이도 미션을 선택</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>13. 폭풍 경보</h4><p>1칸 뒤로 이동</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>14. 끊어진 다리</h4><p>다음 차례 주사위 이동 -1</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>15. 늪지대</h4><p>이번 차례 추가 이동 없음</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>16. 장난꾸러기 원숭이</h4><p>보호막이 없으면 1칸 후퇴</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>17. 안개 섬</h4><p>다음 미션 카드를 보지 않고 선택</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>18. 줄이 꼬였다</h4><p>10초 안에 줄을 정리하지 못하면 -1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>19. 조용한 동굴</h4><p>응원 없이 미션 수행</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>20. 파도에 밀렸다</h4><p>선두라면 -2칸, 그 외 -1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>21. 용기의 시험</h4><p>고급 도전 성공 +3칸, 포기하면 제자리</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>22. 선택의 갈림길</h4><p>초급 성공 +1 또는 중급 성공 +2 선택</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>23. 더블 점프 찬스</h4><p>다음 미션 성공 시 보상 2배</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>24. 역전의 나침반</h4><p>현재 꼴찌라면 +3칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>25. 선두의 무게</h4><p>현재 1등은 중급 이상 미션 수행</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>26. 모두 함께</h4><p>전원이 기본 뛰기 10회 성공하면 모두 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>27. 협동 구조대</h4><p>다른 팀과 함께 협동미션 성공 시 양 팀 +2칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>28. 응원 에너지</h4><p>가장 크게 응원한 팀 보호막 1개</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>29. 시간 정지</h4><p>다른 팀 1곳은 다음 차례 추가 이동 불가</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>30. 바람 방향 변경</h4><p>진행 순서를 반대로 바꾼다</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>31. 황금 열쇠 도둑</h4><p>열쇠가 2개 이상인 팀은 1개를 공동 창고에 반납</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>32. 공동 창고</h4><p>모든 팀이 열쇠 조각 1개씩 획득</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>33. 마지막 파도</h4><p>이후 모든 미션 성공 보상 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>34. 운명의 주사위</h4><p>홀수면 +2칸, 짝수면 -1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>35. 챔피언의 선택</h4><p>다른 참가자에게 미션을 추천하고, 성공하면 둘 다 +1칸</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div><div class="event-card"><h4>36. 황금줄의 축복</h4><p>즉시 열쇠 1개 획득, 단 다음 미션은 중급 이상</p><div class="meta">지도자는 안전과 수준에 따라 효과 조정 가능</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>15. 협동미션 추천 12개</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>미션</th><th>방법</th><th>성공 보상</th></tr></thead>
+      <tbody>
+        <tr><td>동시 점프 20</td><td>2명이 같은 박자로 20회</td><td>열쇠 조각 각 1개</td></tr>
+        <tr><td>팀 합계 100</td><td>팀원이 나누어 총 100회</td><td>팀 +2칸</td></tr>
+        <tr><td>릴레이 4종</td><td>각자 다른 동작 10회씩</td><td>열쇠 1개</td></tr>
+        <tr><td>긴 줄 입장</td><td>2명이 긴 줄에 차례로 들어가 5회</td><td>팀 +3칸</td></tr>
+        <tr><td>박자 맞추기</td><td>구호에 맞춰 전원 10회</td><td>보호막 1개</td></tr>
+        <tr><td>응원 패스</td><td>미션 중 팀원 이름을 한 번씩 부르기</td><td>전원 열쇠 조각 1개</td></tr>
+        <tr><td>약속 점프</td><td>서로 정한 목표 횟수 모두 달성</td><td>팀 +2칸</td></tr>
+        <tr><td>눈빛 신호</td><td>말 없이 시작·정지를 맞추기</td><td>팀 +2칸</td></tr>
+        <tr><td>구출 점프</td><td>가장 뒤 참가자와 함께 15회</td><td>둘 다 +2칸</td></tr>
+        <tr><td>3단 콤보</td><td>팀원 3명이 서로 다른 동작 성공</td><td>열쇠 1개</td></tr>
+        <tr><td>전원 무실수</td><td>팀원 모두 기본 10회 무실수</td><td>팀 +3칸</td></tr>
+        <tr><td>라이벌 연합</td><td>다른 팀과 합계 150회</td><td>양 팀 +2칸</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>16. 운영 밸런스와 안전 규칙</h2>
+  <div class="grid two">
+    <div class="card">
+      <h3>게임 밸런스</h3>
+      <ul>
+        <li>한 차례는 45초 이내로 제한한다.</li>
+        <li>연속 실패자는 다음 카드 난이도를 한 단계 낮춘다.</li>
+        <li>선두와 꼴찌가 8칸 이상 차이 나면 꼴찌에게 역전 토큰을 준다.</li>
+        <li>고급 미션은 전체 카드의 25% 이하로 사용한다.</li>
+        <li>20분 수업은 18번 칸에서 바로 신전으로 연결한다.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>안전 규칙</h3>
+      <ul>
+        <li>참가자 사이 1.5m 이상 간격을 유지한다.</li>
+        <li>줄 길이와 손잡이 상태를 수업 전 점검한다.</li>
+        <li>무릎·발목 통증이 있으면 점프 대신 그림자 동작으로 대체한다.</li>
+        <li>한 번에 점프하는 인원은 공간에 맞게 제한한다.</li>
+        <li>장난으로 줄을 휘두르거나 다른 사람에게 접근하지 않는다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>17. 판매용 구성 제안</h2>
+  <ul>
+    <li><b>기본판:</b> 게임판, 미션 36장, 이벤트 36장, 말 6개, 토큰 24개, 주사위, 지도자 설명서.</li>
+    <li><b>확장팩 1:</b> 이중뛰기 마스터 카드 24장.</li>
+    <li><b>확장팩 2:</b> 긴 줄 협동미션 카드 24장.</li>
+    <li><b>확장팩 3:</b> 유아·초급 전용 그림 카드 30장.</li>
+    <li><b>도장 운영 키트:</b> 출석 스티커, 시즌 랭킹판, 캐릭터 배지, 수료증.</li>
+  </ul>
+  <p>카드는 63×88mm 표준 포커 크기를 권장하며, 모서리는 3mm 이상 둥글게 가공한다. 게임판은 접이식 A2 또는 코팅 A3 규격이 적합하다.</p>
+</section>
+</main>
+<footer>
+  <b>점프 아일랜드: 황금줄을 찾아라!</b><br>
+  줄넘기 도장용 게임형 수업 프로그램 · 인쇄 및 수업 활용용 HTML 기획안
+</footer>
+</div>
+</body>
+</html>
