@@ -1,21 +1,22 @@
-const monsters = [
-  { week:'1주차', name:'개구리 몬스터', emoji:'🐸', hp:300, coin:10, color:'#22b65b' },
-  { week:'2주차', name:'늑대 몬스터', emoji:'🐺', hp:500, coin:15, color:'#2578d4' },
-  { week:'3주차', name:'드래곤 몬스터', emoji:'🐲', hp:800, coin:20, color:'#d74422' },
-  { week:'4주차', name:'마왕 몬스터', emoji:'🧙‍♂️', hp:1500, coin:30, color:'#6e36c9' },
-  { week:'최종 보스전', name:'마왕 헤르칸', emoji:'👹', hp:3000, coin:50, color:'#9b0e0e' },
+const stages = [
+  { week:'1주차', name:'개구리 친구', emoji:'🐸', goal:20, coin:10, color:'#20b156' },
+  { week:'2주차', name:'늑대 친구', emoji:'🐺', goal:22, coin:15, color:'#2578d4' },
+  { week:'3주차', name:'드래곤 친구', emoji:'🐲', goal:24, coin:20, color:'#d74422' },
+  { week:'4주차', name:'마법사 친구', emoji:'🧙‍♂️', goal:26, coin:30, color:'#6e36c9' },
+  { week:'최종 보스전', name:'헤르칸 친구', emoji:'🦁', goal:30, coin:50, color:'#f08a1c' },
 ];
 
 let stage = 0;
-let hp = monsters[0].hp;
-let attack = 0;
+let pos = 0;
 let coins = 0;
+const history = [];
 
 const $ = (id) => document.getElementById(id);
-const stageName = $('stageName'), attackPower = $('attackPower'), coinsEl = $('coins');
+const stageName = $('stageName'), posText = $('positionText'), goalText = $('goalText'), coinsEl = $('coins');
 const weekBadge = $('weekBadge'), monsterName = $('monsterName'), monsterEmoji = $('monsterEmoji');
-const hpText = $('hpText'), hpFill = $('hpFill'), tickRow = $('tickRow'), card = $('monsterCard');
-const attackBtn = $('attackBtn'), hint = $('hint'), toast = $('toast'), winPanel = $('winPanel');
+const board = $('board'), hint = $('hint'), toast = $('toast'), winPanel = $('winPanel'), progressCopy = $('progressCopy');
+
+const labels = ['출발','응원','도전','성공','칭찬','규칙','박수','점프','친절','집중','웃음','협동','용기','친구','약속','멋짐','한번더','최고','거의 다','도착'];
 
 function showToast(message){
   toast.textContent = message;
@@ -25,95 +26,112 @@ function showToast(message){
 }
 
 function renderRewards(){
-  $('rewardList').innerHTML = monsters.map(m => `<li>${m.emoji} ${m.name} — 코인 ${m.coin}개</li>`).join('');
+  $('rewardList').innerHTML = stages.map(s => `<li>${s.emoji} ${s.name} — 응원 코인 ${s.coin}개</li>`).join('');
 }
 
-function renderTicks(maxHp, currentHp){
-  const parts = 5;
-  const filled = Math.ceil((currentHp / maxHp) * parts);
-  tickRow.innerHTML = '';
-  for(let i=0;i<parts;i++){
-    const dot = document.createElement('i');
-    dot.style.opacity = i < filled ? '1' : '.17';
-    tickRow.appendChild(dot);
+function boardLabel(i, goal){
+  if(i === 0) return '출발';
+  if(i === goal) return '도착!';
+  return labels[i % labels.length];
+}
+
+function renderBoard(){
+  const s = stages[stage];
+  board.innerHTML = '';
+  const total = s.goal + 1;
+  for(let i=0; i<total; i++){
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if(i === 0) cell.classList.add('start');
+    if(i === s.goal) cell.classList.add('goal');
+    if(i < pos) cell.classList.add('done');
+    if(i === pos) cell.classList.add('current');
+    cell.innerHTML = `<span class="num">${i}</span><span class="label">${boardLabel(i, s.goal)}</span>`;
+    if(i === pos){
+      const token = document.createElement('span');
+      token.className = 'token';
+      token.textContent = '🏃';
+      cell.appendChild(token);
+    }
+    board.appendChild(cell);
   }
 }
 
 function render(){
-  const m = monsters[stage];
-  stageName.textContent = m.name;
-  attackPower.textContent = attack;
+  const s = stages[stage];
+  stageName.textContent = s.name;
+  posText.textContent = pos;
+  goalText.textContent = s.goal;
   coinsEl.textContent = coins;
-  weekBadge.textContent = m.week;
-  weekBadge.style.background = m.color;
-  monsterName.textContent = m.name;
-  monsterName.style.color = m.color;
-  monsterEmoji.textContent = m.emoji;
-  hpText.textContent = `${Math.max(0, hp)} / ${m.hp}`;
-  hpFill.style.width = `${Math.max(0, hp / m.hp * 100)}%`;
-  renderTicks(m.hp, hp);
-  attackBtn.disabled = attack <= 0;
+  weekBadge.textContent = s.week;
+  weekBadge.style.background = s.color;
+  monsterName.textContent = s.name;
+  monsterName.style.color = s.color;
+  monsterEmoji.textContent = s.emoji;
+  const left = s.goal - pos;
+  progressCopy.textContent = left > 0
+    ? `좋아요! ${left}칸만 더 가면 ${s.name}를 제압하고 친구가 돼요.`
+    : `${s.name}와 친구가 됐어요!`;
+  renderBoard();
 }
 
 function clearStage(){
-  const m = monsters[stage];
-  coins += m.coin;
-  showToast(`${m.name} 처치! 코인 ${m.coin}개 획득!`);
+  const s = stages[stage];
+  coins += s.coin;
+  showToast(`${s.name} 제압 성공! 이제 우리 편 친구예요 🥳`);
   stage += 1;
-  attack = 0;
-  if(stage >= monsters.length){
-    stage = monsters.length - 1;
+  pos = 0;
+  history.length = 0;
+  if(stage >= stages.length){
+    stage = stages.length - 1;
     winPanel.hidden = false;
-    document.querySelector('.game-board').style.display = 'none';
+    document.querySelector('.game-layout').style.display = 'none';
     document.querySelector('.rules-rewards').style.display = 'none';
-    stageName.textContent = '클리어!';
-    attackPower.textContent = 'MAX';
+    stageName.textContent = '오늘의 모험 성공!';
+    posText.textContent = stages[stage].goal;
+    goalText.textContent = stages[stage].goal;
     coinsEl.textContent = coins;
     window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
     return;
   }
-  hp = monsters[stage].hp;
   render();
 }
 
-document.querySelectorAll('.action').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const power = Number(btn.dataset.power || 0);
-    const heal = Number(btn.dataset.heal || 0);
-    if(power){
-      attack += power;
-      hint.textContent = `공격력 ${power} 획득! 이제 공격하기 버튼을 눌러요.`;
-      showToast(`공격력 +${power}`);
-    }
-    if(heal){
-      hp = Math.min(monsters[stage].hp, hp + heal);
-      hint.textContent = `친구 도움으로 몬스터 HP가 ${heal} 회복됐어요. 실제 포스터 규칙을 게임에 반영했어요!`;
-      showToast(`몬스터 HP +${heal}`);
-    }
+function moveForward(reason){
+  const s = stages[stage];
+  if(pos >= s.goal) return;
+  history.push(pos);
+  pos += 1;
+  hint.textContent = `${reason}! 말이 한 칸 전진했어요.`;
+  if(pos >= s.goal){
     render();
-  });
-});
-
-attackBtn.addEventListener('click', () => {
-  if(attack <= 0) return;
-  hp -= attack;
-  card.classList.remove('hit'); void card.offsetWidth; card.classList.add('hit');
-  showToast(`⚔️ ${attack} 데미지!`);
-  attack = 0;
-  hint.textContent = '좋아요! 다시 줄넘기로 공격력을 모아주세요.';
-  if(hp <= 0){
-    setTimeout(clearStage, 360);
+    setTimeout(clearStage, 500);
   } else {
+    showToast('한 칸 전진!');
     render();
   }
+}
+
+document.querySelectorAll('.action').forEach(btn => {
+  btn.addEventListener('click', () => moveForward(btn.querySelector('b').textContent));
+});
+
+$('undoBtn').addEventListener('click', () => {
+  if(!history.length){
+    showToast('취소할 전진이 없어요');
+    return;
+  }
+  pos = history.pop();
+  hint.textContent = '방금 전진을 취소했어요.';
+  render();
 });
 
 $('restartBtn').addEventListener('click', () => {
-  stage = 0; hp = monsters[0].hp; attack = 0; coins = 0;
+  stage = 0; pos = 0; coins = 0; history.length = 0;
   winPanel.hidden = true;
-  document.querySelector('.game-board').style.display = '';
+  document.querySelector('.game-layout').style.display = '';
   document.querySelector('.rules-rewards').style.display = '';
-  hint.textContent = '먼저 줄넘기 버튼으로 공격력을 모아주세요.';
+  hint.textContent = '잘한 일을 누르면 말이 한 칸 앞으로 이동해요.';
   render();
   window.scrollTo({top:0, behavior:'smooth'});
 });
