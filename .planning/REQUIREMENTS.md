@@ -18,16 +18,16 @@
 
 ### 핵심 게임 루프 (LOOP)
 
-- [ ] **LOOP-01**: 현재 차례 플레이어가 턴 시작 버튼을 누르면 카드가 회전하는 연출과 함께 미션 1장이 뽑힌다
-- [ ] **LOOP-02**: 뽑힌 미션(줄넘기 기술)의 이름/설명/난이도가 화면에 크게 표시된다
-- [ ] **LOOP-03**: 사용자(강사)는 미션 수행 결과를 "성공" 또는 "실패" 버튼으로 수동 판정할 수 있다
-- [ ] **LOOP-04**: 실패 시 전진 없이 다음 플레이어에게 차례가 넘어간다
-- [ ] **LOOP-05**: 성공 시 주사위가 등장하고, 굴리면 1~6 중 한 값이 나온다
+- [x] **LOOP-01**: 현재 차례 플레이어가 턴 시작 버튼을 누르면 카드가 회전하는 연출과 함께 미션 1장이 뽑힌다
+- [x] **LOOP-02**: 뽑힌 미션(줄넘기 기술)의 이름/설명/난이도가 화면에 크게 표시된다
+- [x] **LOOP-03**: 사용자(강사)는 미션 수행 결과를 "성공" 또는 "실패" 버튼으로 수동 판정할 수 있다
+- [x] **LOOP-04**: 실패 시 전진 없이 다음 플레이어에게 차례가 넘어간다
+- [x] **LOOP-05**: 성공 시 주사위가 등장하고, 굴리면 1~6 중 한 값이 나온다
 - [ ] **LOOP-06**: 주사위 값만큼 3D 보드판 위에서 현재 플레이어의 말(토큰)이 칸을 이동하는 애니메이션이 재생된다
-- [ ] **LOOP-07**: 말이 멈춘 칸에 이벤트가 있으면 해당 이벤트 효과(보너스/함정/앞으로 N칸/뒤로 N칸/한 번 더 등)가 적용된다
-- [ ] **LOOP-08**: "한 번 더" 효과는 같은 플레이어가 추가 턴을, 그 외에는 다음 플레이어에게 차례가 넘어간다
-- [ ] **LOOP-09**: 어떤 플레이어/팀이 결승 칸에 먼저 도달하면 승리로 판정되고 결과 화면이 표시된다
-- [ ] **LOOP-10**: 사용자는 결과 화면에서 다시 시작하거나 시작 화면으로 돌아갈 수 있다
+- [x] **LOOP-07**: 말이 멈춘 칸에 이벤트가 있으면 해당 이벤트 효과(보너스/함정/앞으로 N칸/뒤로 N칸/한 번 더 등)가 적용된다
+- [x] **LOOP-08**: "한 번 더" 효과는 같은 플레이어가 추가 턴을, 그 외에는 다음 플레이어에게 차례가 넘어간다
+- [x] **LOOP-09**: 어떤 플레이어/팀이 결승 칸에 먼저 도달하면 승리로 판정되고 결과 화면이 표시된다
+- [x] **LOOP-10**: 사용자는 결과 화면에서 다시 시작하거나 시작 화면으로 돌아갈 수 있다
 
 ### 미션 관리 (MISSION)
 
@@ -103,16 +103,16 @@
 | SETUP-04 | Phase 2 | Complete |
 | SETUP-05 | Phase 2 | Complete |
 | SETUP-06 | Phase 2 | Complete |
-| LOOP-01 | Phase 2 | Pending |
-| LOOP-02 | Phase 2 | Pending |
-| LOOP-03 | Phase 2 | Pending |
-| LOOP-04 | Phase 2 | Pending |
-| LOOP-05 | Phase 2 | Pending |
+| LOOP-01 | Phase 2 | Complete |
+| LOOP-02 | Phase 2 | Complete |
+| LOOP-03 | Phase 2 | Complete |
+| LOOP-04 | Phase 2 | Complete |
+| LOOP-05 | Phase 2 | Complete |
 | LOOP-06 | Phase 3 | Pending |
-| LOOP-07 | Phase 2 | Pending |
-| LOOP-08 | Phase 2 | Pending |
-| LOOP-09 | Phase 2 | Pending |
-| LOOP-10 | Phase 2 | Pending |
+| LOOP-07 | Phase 2 | Complete |
+| LOOP-08 | Phase 2 | Complete |
+| LOOP-09 | Phase 2 | Complete |
+| LOOP-10 | Phase 2 | Complete |
 | MISSION-01 | Phase 1 | Complete |
 | MISSION-02 | Phase 1 | Complete |
 | MISSION-03 | Phase 1 | Complete |
