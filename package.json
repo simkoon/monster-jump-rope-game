@@ -10,25 +10,30 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@hookform/resolvers": "5.4.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "zustand": "5.0.14",
-    "zod": "4.4.3",
     "react-hook-form": "7.83.0",
-    "@hookform/resolvers": "5.4.2"
+    "three": "^0.185.1",
+    "zod": "4.4.3",
+    "zustand": "5.0.14"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "vite": "8.1.5",
-    "@vitejs/plugin-react": "6.0.4",
+    "@react-three/test-renderer": "^9.1.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
+    "@types/three": "^0.185.1",
+    "@vitejs/plugin-react": "6.0.4",
+    "jsdom": "27.0.0",
     "tailwindcss": "4.3.3",
-    "@tailwindcss/vite": "4.3.3",
-    "vitest": "3.2.4",
-    "@testing-library/dom": "10.4.1",
-    "@testing-library/react": "16.3.0",
-    "@testing-library/jest-dom": "6.9.1",
-    "jsdom": "27.0.0"
+    "typescript": "5.9.3",
+    "vite": "8.1.5",
+    "vitest": "3.2.4"
   }
 }
