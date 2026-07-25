@@ -513,16 +513,18 @@ Consolidated above (schema.ts, store.ts read-guard, io.ts import/export, normali
 | A5 | Tailwind 4 `@theme` can express the prototype's exact tokens, OR plain CSS is used | Styling | Low — UI-SPEC explicitly permits plain CSS fallback (lift prototype `<style>`). |
 | A6 | Zod v4 `zodResolver` needs no adapter with `@hookform/resolvers` v5 | Editor UX | Low — peer dep `zod ^4.0.0` verified this session; strongly supported. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Tailwind 4 `@theme` vs. lift prototype CSS verbatim**
    - Known: UI-SPEC permits either; prototype CSS is complete and correct.
    - Unclear: team preference for utility classes vs. plain CSS.
    - Recommendation: lift the prototype `<style>` into `src/styles/index.css` as plain CSS custom properties (lowest risk, zero re-authoring). Add Tailwind only if the team wants utilities. Planner decides in 01-01.
+   - RESOLVED: 01-01 Task 1 lifts the prototype token system into `src/styles/index.css` as CSS custom properties while keeping `@import "tailwindcss";` as the first line for utility classes (both, not either/or) — plain custom properties carry the palette; Tailwind provides utilities on top.
 
 2. **Accessible ConfirmDialog vs. reusing the edit Modal shell**
    - Known: UI-SPEC requires focus-trapped, Esc-cancellable, aria-modal dialogs for delete + import overwrite.
    - Recommendation: build one small `Modal`/`ConfirmDialog` shell and reuse it for edit modals, delete confirm, and import confirm. Planner defines in 01-02.
+   - RESOLVED: 01-02 Task 1 builds one reusable accessible `Modal` shell plus a `ConfirmDialog` on top of it, reused for mission/event edit modals, mission/event delete confirms, category cascade-delete confirm (D-02), and import overwrite confirm.
 
 ## Environment Availability
 
