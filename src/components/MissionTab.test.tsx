@@ -87,6 +87,8 @@ describe('MissionTab tab count pill (via App)', () => {
 
   it('keeps the full mission count in the tab pill even when filtered to empty', () => {
     render(<App />);
+    // D-10: the app opens in 게임 mode by default — switch to the 편집기 first.
+    fireEvent.click(within(screen.getByRole('navigation', { name: '화면 전환' })).getByRole('button', { name: '✏️ 편집기' }));
     fireEvent.change(screen.getByLabelText('미션 이름으로 찾기'), { target: { value: 'zzzz' } });
     expect(screen.getByText('조건에 맞는 미션이 없어요')).toBeInTheDocument();
     const missionTab = screen.getByRole('tab', { name: /미션/ });

@@ -11,15 +11,48 @@ function resetToSeed() {
   useStore.setState({ version: s.version, categories: s.categories, missions: s.missions, events: s.events });
 }
 
+// The two top-level mode-switch buttons live in the "화면 전환" nav. Scope queries there so
+// they never collide with 게임/편집기 text elsewhere on the screen (e.g. SetupScreen copy).
+function modeSwitch() {
+  return within(screen.getByRole('navigation', { name: '화면 전환' }));
+}
+
+// D-10: the app now opens in 게임 mode by default, so editor-content tests must first switch
+// to the 편집기 via the mode toggle before asserting Phase-1 mission/event content.
+function enterEditor() {
+  fireEvent.click(modeSwitch().getByRole('button', { name: '✏️ 편집기' }));
+}
+
 function clickEventTab() {
   fireEvent.click(screen.getByRole('tab', { name: /이벤트/ }));
 }
+
+describe('App shell — default 게임 entry (D-10)', () => {
+  beforeEach(resetToSeed);
+
+  it('opens in 게임 mode on first mount (the 🎮 게임 toggle is active, editor content absent)', () => {
+    render(<App />);
+    // The game-mode toggle carries the active state on first mount...
+    expect(modeSwitch().getByRole('button', { name: '🎮 게임' }).className).toContain('active');
+    expect(modeSwitch().getByRole('button', { name: '✏️ 편집기' }).className).not.toContain('active');
+    // ...and no editor MissionTab content (a seed mission name) is rendered.
+    expect(screen.queryByText('양발 모아뛰기')).toBeNull();
+  });
+
+  it('keeps the 편집기 reachable via the mode switch', () => {
+    render(<App />);
+    enterEditor();
+    expect(modeSwitch().getByRole('button', { name: '✏️ 편집기' }).className).toContain('active');
+    expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
+  });
+});
 
 describe('App shell (two-tab read-only viewer)', () => {
   beforeEach(resetToSeed);
 
   it('renders all 6 seed mission names and a count pill of 6', () => {
     render(<App />);
+    enterEditor();
     for (const name of ['양발 모아뛰기', '번갈아뛰기', '엇걸어풀기 (X자)', '뒤로뛰기', '이중뛰기', '십자뛰기']) {
       expect(screen.getByText(name)).toBeInTheDocument();
     }
@@ -29,6 +62,7 @@ describe('App shell (two-tab read-only viewer)', () => {
 
   it('switches to the 이벤트 tab, showing the 4 seed events and a pill of 4', () => {
     render(<App />);
+    enterEditor();
     clickEventTab();
     for (const name of ['슈퍼 점프!', '발이 꼬였어요', '한 번 더 도전!', '한 칸 전진']) {
       expect(screen.getByText(name)).toBeInTheDocument();
@@ -39,6 +73,7 @@ describe('App shell (two-tab read-only viewer)', () => {
 
   it('shows a probability percent and weight on event cards', () => {
     render(<App />);
+    enterEditor();
     clickEventTab();
     expect(screen.getAllByText(/가중치/).length).toBeGreaterThan(0);
     // 발생 확률 label present + at least one % rendered
@@ -62,6 +97,7 @@ describe('XSS safety — user text renders escaped', () => {
 
   it('renders angle-bracket markup as literal text, not injected DOM', () => {
     const { container } = render(<App />);
+    enterEditor();
     // The literal string appears as text content...
     expect(screen.getByText('<img src=x onerror=alert(1)>')).toBeInTheDocument();
     // ...and no real <img> element was injected.

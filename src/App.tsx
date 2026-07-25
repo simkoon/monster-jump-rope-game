@@ -5,13 +5,14 @@ import Tabs, { type TabKey } from './components/Tabs';
 import MissionTab from './components/MissionTab';
 import EventTab from './components/EventTab';
 import Toast from './components/Toast';
-import GameHarness from './harness/GameHarness';
+import GameApp from './game/GameApp';
 
-// Top-level view: the content 편집기 (Phase 1 mission/event tabs) or the 게임 harness.
+// Top-level view: the content 편집기 (Phase 1 mission/event tabs) or the 게임 (3D board).
 type View = 'editor' | 'game';
 
 export default function App() {
-  const [view, setView] = useState<View>('editor');
+  // D-10: the app opens in 게임 mode by default; the 편집기 stays reachable via the switch.
+  const [view, setView] = useState<View>('game');
   const [tab, setTab] = useState<TabKey>('mission');
   const missions = useStore((s) => s.missions);
   const events = useStore((s) => s.events);
@@ -62,7 +63,7 @@ export default function App() {
       ) : (
         <main>
           <section className="panel">
-            <GameHarness />
+            <GameApp />
           </section>
         </main>
       )}
