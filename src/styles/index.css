@@ -127,6 +127,20 @@ main { max-width:1080px; margin:0 auto; }
 .chip.on.cat{ background:var(--sky); }
 .chip:focus-visible, .chip button:focus-visible { outline:3px solid var(--sky); outline-offset:2px; }
 
+/* ---- filter row ---- */
+.filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.flabel { font-size:12px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+
+/* ---- card action mini-buttons ---- */
+.card .acts { position:absolute; top:12px; right:12px; display:flex; gap:4px; }
+.mini { width:30px; height:30px; border-radius:9px; border:1.5px solid var(--line); cursor:pointer; background:var(--panel);
+  font-size:14px; display:grid; place-items:center; color:var(--ink); }
+.mini:hover{ background:var(--sky); color:#fff; border-color:transparent; }
+.mini.del:hover{ background:var(--coral); }
+.mini:focus-visible { outline:3px solid var(--sky); outline-offset:2px; }
+.row2 { display:flex; gap:12px; }
+.row2 .field{ flex:1; }
+
 /* ---- modal ---- */
 .overlay { position:fixed; inset:0; background:rgba(10,25,40,.55); backdrop-filter:blur(3px);
   display:none; align-items:center; justify-content:center; padding:18px; z-index:50; }
