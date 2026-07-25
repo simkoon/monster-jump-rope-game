@@ -6,5 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 // Test config lives in vitest.config.ts (Vitest bundles its own Vite copy,
 // so keeping the plugin-typed app config separate avoids a type clash).
 export default defineConfig({
+  // Project GitHub Pages is served under /<repo>/ — assets must resolve there.
+  base: '/monster-jump-rope-game/',
   plugins: [react(), tailwindcss()],
 });
