@@ -1,7 +1,7 @@
 ---
 phase: 1
 slug: foundation-content-editor
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-25
@@ -80,7 +80,7 @@ source_of_truth: .planning/phases/01-foundation-content-editor/01-PROTOTYPE.html
 
 ## Spacing Scale
 
-Base-4 scale. The prototype uses a few off-grid values (6, 7, 10, 14, 15) for optical fit; **normalize to the nearest token below when implementing** unless a 1px optical nudge is clearly needed.
+Base-4 scale. The prototype uses a few off-grid values (6, 7, 10, 14, 15) for optical fit; **hard-normalize every one to the nearest token below when implementing** — no off-grid spacing values are permitted (radius exceptions below are the only allowed non-4 values, and they are radii, not spacing).
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -105,16 +105,16 @@ Child-friendly, minimal-text, chunky-heavy. **Intentional deviation from the 2-w
 
 **Weights:** `500` (Medium — only for parenthetical/optional micro-text like "(선택)"), `800` (Extrabold — default UI text, labels, tags, chips, secondary buttons, tab labels), `900` (Black — headings, card titles, primary CTAs, effect text). Body/description copy uses `700`→ consolidate to `800` tier for consistency; treat `700` in the prototype as the `800` token.
 
-| Role | Size | Weight | Line Height | Applies to |
-|------|------|--------|-------------|------------|
-| Display | 22px | 900 | 1.1 | App logo title (h1) |
-| Heading | 20px | 900 | 1.2 | Modal titles (h2); empty-state heading uses 18px/900/1.2 |
-| Card Title | 17px | 900 | 1.25 | Mission/event card names |
-| Tab / CTA | 16px | 900 (CTA) / 800 (tab) | 1.2 | Tab labels, primary buttons |
-| Body | 15px | 800 | 1.5 | Search & form inputs, textarea |
-| Body-sm | 13px | 800 | 1.45 | Card description, field labels, tags |
-| Badge / Chip | 12–13.5px | 800 | 1.2 | Difficulty badges, category chips, filter chips |
-| Caption / Hint | 12px | 500–800 | 1.4 | Hints, footer note, filter section labels (uppercase, letter-spacing .06em, `--ink-soft`) |
+**Type scale — exactly 4 sizes** (22 / 18 / 15 / 12, each ≥3px apart — a clear hierarchical scale, no near-duplicates). Every role maps to one of these four tokens; no other font sizes are permitted.
+
+| Token | Size | Weight | Line Height | Applies to |
+|-------|------|--------|-------------|------------|
+| Display | 22px | 900 | 1.1 | App logo title (h1) — the single largest size, reserved for the h1 only |
+| Heading | 18px | 900 | 1.2 (1.25 for card titles) | Modal titles (h2), mission/event card names, empty-state heading |
+| Body | 15px | 900 (primary CTA) / 800 (default) | 1.5 (1.45 for card description) | Primary CTAs (＋ 새 미션/이벤트, 저장), tab labels, search & form inputs, textarea, card description |
+| Caption | 12px | 800 (500 only for "(선택)" micro-text) | 1.4 | Difficulty badges, category/filter chips, field labels, tags, hints, footer note, filter section labels (uppercase, letter-spacing .06em, `--ink-soft`) |
+
+Explicit remaps from the prototype's raw values: Heading 20→**18**; Card Title 17→**18**; Tab/CTA 16→**15**; Body-sm 13→fold into **15** (description) or **12** (tags/labels); Badge range 12–13.5→**12** single value (no ranges — ranges reintroduce off-scale sizes). The 3-weight system (500/800/900) is retained as the documented, prototype-locked deviation justified above; only the size sprawl was consolidated.
 
 **Numeric display:** counts, weights, and probability % use `font-variant-numeric: tabular-nums`.
 **Placeholders:** `--ink-soft`, same size as input. Keep all copy short (child-audience minimal-text rule).

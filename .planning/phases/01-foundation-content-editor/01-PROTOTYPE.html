@@ -1,0 +1,565 @@
+<title>파워점핑 · 콘텐츠 편집기</title>
+<style>
+  :root {
+    --sky:#1E9BFF; --sky-deep:#0F6FD1;
+    --sun:#FFC22E; --coral:#FF5A5A; --grass:#26C97E; --grape:#8B5CF6;
+    --easy:#26C97E; --normal:#FFA92E; --hard:#FF5A5A;
+    /* neutrals biased slightly toward sky */
+    --bg:#EAF3FC; --panel:#FFFFFF; --panel-2:#F4F8FD;
+    --ink:#16324A; --ink-soft:#5B7A93; --line:#D6E4F0;
+    --shadow:0 6px 0 rgba(15,111,209,.12), 0 12px 28px rgba(15,111,209,.14);
+    --shadow-sm:0 3px 0 rgba(15,111,209,.10);
+    --radius:20px; --radius-sm:14px;
+    --font:"Apple SD Gothic Neo","Pretendard","Malgun Gothic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0E1B2A; --panel:#16283C; --panel-2:#1C324A;
+      --ink:#EAF3FC; --ink-soft:#9DB6CC; --line:#284A6B;
+      --shadow:0 6px 0 rgba(0,0,0,.35), 0 14px 30px rgba(0,0,0,.45);
+      --shadow-sm:0 3px 0 rgba(0,0,0,.30);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#EAF3FC; --panel:#FFFFFF; --panel-2:#F4F8FD;
+    --ink:#16324A; --ink-soft:#5B7A93; --line:#D6E4F0;
+    --shadow:0 6px 0 rgba(15,111,209,.12), 0 12px 28px rgba(15,111,209,.14);
+    --shadow-sm:0 3px 0 rgba(15,111,209,.10);
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E1B2A; --panel:#16283C; --panel-2:#1C324A;
+    --ink:#EAF3FC; --ink-soft:#9DB6CC; --line:#284A6B;
+    --shadow:0 6px 0 rgba(0,0,0,.35), 0 14px 30px rgba(0,0,0,.45);
+    --shadow-sm:0 3px 0 rgba(0,0,0,.30);
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; }
+  .app { font-family:var(--font); color:var(--ink); background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(30,155,255,.18), transparent 60%),
+      radial-gradient(900px 400px at -10% 110%, rgba(255,194,46,.18), transparent 60%),
+      var(--bg); min-height:100vh; padding:0 0 64px; }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+  /* ---- header ---- */
+  header.top { max-width:1080px; margin:0 auto; padding:22px 20px 8px;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo .mark { width:46px; height:46px; border-radius:14px; background:linear-gradient(150deg,var(--sun),var(--coral));
+    box-shadow:var(--shadow-sm); display:grid; place-items:center; font-size:26px; transform:rotate(-6deg); }
+  .logo h1 { font-size:22px; margin:0; letter-spacing:-.02em; line-height:1.1; }
+  .logo p { margin:2px 0 0; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  .top .spacer { flex:1; }
+  .iconbtn { border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:14px;
+    background:var(--panel); color:var(--ink); border:2px solid var(--line); border-radius:var(--radius-sm);
+    padding:10px 14px; box-shadow:var(--shadow-sm); transition:transform .08s; display:inline-flex; align-items:center; gap:7px; }
+  .iconbtn:hover { transform:translateY(-1px); }
+  .iconbtn:active { transform:translateY(2px); box-shadow:none; }
+  .iconbtn.ghost { background:transparent; box-shadow:none; }
+
+  /* ---- tabs ---- */
+  .tabs { max-width:1080px; margin:14px auto 0; padding:0 20px; display:flex; gap:10px; }
+  .tab { flex:0 0 auto; cursor:pointer; border:none; font-family:inherit; font-weight:800; font-size:16px;
+    padding:12px 22px; border-radius:16px 16px 0 0; background:transparent; color:var(--ink-soft); position:relative; }
+  .tab .cnt { display:inline-block; min-width:22px; padding:1px 7px; margin-left:8px; border-radius:999px;
+    font-size:12px; background:var(--line); color:var(--ink); font-variant-numeric:tabular-nums; }
+  .tab.active { background:var(--panel); color:var(--ink); box-shadow:0 -4px 14px rgba(15,111,209,.08); }
+  .tab.active .cnt { background:var(--sky); color:#fff; }
+
+  /* ---- panel ---- */
+  main { max-width:1080px; margin:0 auto; }
+  .panel { background:var(--panel); border-radius:0 22px 22px 22px; box-shadow:var(--shadow);
+    padding:20px; margin:0 20px; }
+
+  /* ---- toolbar ---- */
+  .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+  .search { flex:1; min-width:200px; display:flex; align-items:center; gap:8px; background:var(--panel-2);
+    border:2px solid var(--line); border-radius:14px; padding:11px 14px; }
+  .search input { border:none; background:transparent; outline:none; font-family:inherit; font-size:15px;
+    color:var(--ink); width:100%; }
+  .search input::placeholder{ color:var(--ink-soft); }
+  .add { border:none; cursor:pointer; font-family:inherit; font-weight:900; font-size:16px; color:#fff;
+    background:linear-gradient(160deg,var(--sky),var(--sky-deep)); padding:13px 20px; border-radius:16px;
+    box-shadow:var(--shadow-sm); transition:transform .08s; white-space:nowrap; }
+  .add:active { transform:translateY(2px); box-shadow:none; }
+
+  .filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+  .flabel { font-size:12px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+  .chip { cursor:pointer; border:2px solid var(--line); background:var(--panel-2); color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:13.5px; padding:7px 13px; border-radius:999px; transition:transform .06s; }
+  .chip:active{ transform:translateY(1px); }
+  .chip.on { color:#fff; border-color:transparent; }
+  .chip.on.diff-easy{ background:var(--easy);} .chip.on.diff-normal{ background:var(--normal);} .chip.on.diff-hard{ background:var(--hard);}
+  .chip.on.cat{ background:var(--sky); }
+
+  /* ---- cards grid ---- */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
+  .card { background:var(--panel-2); border:2px solid var(--line); border-radius:18px; padding:15px 15px 13px;
+    display:flex; flex-direction:column; gap:10px; position:relative; }
+  .card .title { font-size:17px; font-weight:900; letter-spacing:-.01em; line-height:1.25; padding-right:56px; }
+  .card .desc { font-size:13px; color:var(--ink-soft); line-height:1.45; min-height:18px; }
+  .card .row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .badge { font-size:12px; font-weight:800; padding:4px 10px; border-radius:999px; color:#fff; }
+  .badge.easy{ background:var(--easy);} .badge.normal{ background:var(--normal);} .badge.hard{ background:var(--hard);}
+  .tag { font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; background:var(--panel);
+    border:1.5px solid var(--line); color:var(--ink-soft); }
+  .card .acts { position:absolute; top:12px; right:12px; display:flex; gap:4px; }
+  .mini { width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; background:var(--panel);
+    border:1.5px solid var(--line); font-size:14px; display:grid; place-items:center; color:var(--ink); }
+  .mini:hover{ background:var(--sky); color:#fff; border-color:transparent; }
+  .mini.del:hover{ background:var(--coral); }
+
+  /* event effect visual */
+  .eff { font-size:14px; font-weight:900; display:inline-flex; align-items:center; gap:6px; }
+  .eff.forward{ color:var(--grass);} .eff.backward{ color:var(--coral);} .eff.extra{ color:var(--grape);}
+  .prob { margin-top:2px; }
+  .prob .bar { height:10px; border-radius:999px; background:var(--line); overflow:hidden; }
+  .prob .bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--sun),var(--coral)); border-radius:999px; }
+  .prob .lbl { display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:5px; }
+  .prob .lbl b { color:var(--ink); font-variant-numeric:tabular-nums; }
+
+  .empty { text-align:center; padding:56px 20px; color:var(--ink-soft); }
+  .empty .big { font-size:44px; margin-bottom:10px; }
+  .empty h3 { margin:0 0 6px; color:var(--ink); font-size:18px; }
+
+  /* ---- modal ---- */
+  .overlay { position:fixed; inset:0; background:rgba(10,25,40,.55); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; padding:18px; z-index:50; }
+  .overlay.show{ display:flex; }
+  .modal { background:var(--panel); border-radius:24px; box-shadow:var(--shadow); width:100%; max-width:480px;
+    max-height:92vh; overflow:auto; padding:22px; }
+  .modal h2 { margin:0 0 16px; font-size:20px; letter-spacing:-.01em; }
+  .field { margin-bottom:15px; }
+  .field > label { display:block; font-size:13px; font-weight:800; color:var(--ink-soft); margin-bottom:7px; }
+  .field input[type=text], .field textarea, .field input[type=number] { width:100%; font-family:inherit; font-size:15px;
+    color:var(--ink); background:var(--panel-2); border:2px solid var(--line); border-radius:12px; padding:11px 13px; outline:none; }
+  .field input:focus, .field textarea:focus { border-color:var(--sky); }
+  .field textarea{ resize:vertical; min-height:56px; }
+  .seg { display:flex; gap:8px; flex-wrap:wrap; }
+  .seg button { flex:1; min-width:80px; cursor:pointer; font-family:inherit; font-weight:800; font-size:14px;
+    padding:11px 8px; border-radius:12px; border:2px solid var(--line); background:var(--panel-2); color:var(--ink); }
+  .seg button.sel{ color:#fff; border-color:transparent; }
+  .seg button.sel[data-v=easy]{background:var(--easy);} .seg button.sel[data-v=normal]{background:var(--normal);} .seg button.sel[data-v=hard]{background:var(--hard);}
+  .seg button.sel[data-v=forward]{background:var(--grass);} .seg button.sel[data-v=backward]{background:var(--coral);} .seg button.sel[data-v=extra]{background:var(--grape);}
+  .seg button.sel.plain{ background:var(--sky); }
+  .catpick { display:flex; gap:7px; flex-wrap:wrap; }
+  .catpick .chip.on.cat{ background:var(--sky); }
+  .catadd { display:flex; gap:8px; margin-top:9px; }
+  .catadd input{ flex:1; }
+  .catadd button{ border:none; cursor:pointer; font-family:inherit; font-weight:800; background:var(--sun); color:#5a3a00;
+    border-radius:12px; padding:0 15px; font-size:14px; }
+  .modal .foot { display:flex; gap:10px; margin-top:20px; }
+  .btn-primary { flex:1; border:none; cursor:pointer; font-family:inherit; font-weight:900; font-size:16px; color:#fff;
+    background:linear-gradient(160deg,var(--sky),var(--sky-deep)); padding:14px; border-radius:14px; box-shadow:var(--shadow-sm); }
+  .btn-primary:active{ transform:translateY(2px); box-shadow:none; }
+  .btn-cancel { border:none; cursor:pointer; font-family:inherit; font-weight:800; font-size:15px; color:var(--ink-soft);
+    background:var(--panel-2); border:2px solid var(--line); padding:14px 20px; border-radius:14px; }
+  .hint{ font-size:12px; color:var(--ink-soft); margin-top:6px; line-height:1.4; }
+  .row2 { display:flex; gap:12px; }
+  .row2 .field{ flex:1; }
+
+  /* ---- toast ---- */
+  .toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(30px); opacity:0;
+    background:var(--ink); color:var(--bg); font-weight:800; font-size:14.5px; padding:13px 20px; border-radius:14px;
+    box-shadow:var(--shadow); z-index:80; transition:transform .25s, opacity .25s; max-width:90vw; text-align:center; pointer-events:none; }
+  .toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+  .toast.err{ background:var(--coral); color:#fff; }
+  .toast.ok{ background:var(--grass); color:#06371f; }
+
+  .hidden{ display:none!important; }
+  footer.note{ max-width:1080px; margin:20px auto 0; padding:0 24px; font-size:12.5px; color:var(--ink-soft); line-height:1.6; }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="logo">
+      <div class="mark">🤸</div>
+      <div>
+        <h1>파워점핑 · 콘텐츠 편집기</h1>
+        <p>줄넘기 미션과 이벤트 칸을 자유롭게 만들어요</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="btnExport">⬇️ 내보내기</button>
+    <button class="iconbtn" id="btnImport">⬆️ 가져오기</button>
+    <button class="iconbtn ghost" id="btnTheme" title="테마 전환">🌙</button>
+    <input type="file" id="fileInput" accept="application/json,.json" class="hidden">
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="mission">🎴 미션 <span class="cnt" id="cntM">0</span></button>
+    <button class="tab" data-tab="event">🎲 이벤트 <span class="cnt" id="cntE">0</span></button>
+  </nav>
+
+  <main>
+    <section class="panel">
+      <!-- MISSION VIEW -->
+      <div id="viewMission">
+        <div class="toolbar">
+          <div class="search">🔎 <input id="searchM" placeholder="미션 이름으로 찾기…"></div>
+          <button class="add" id="addM">＋ 새 미션</button>
+        </div>
+        <div class="filters" id="filtersM"></div>
+        <div class="grid" id="gridM"></div>
+      </div>
+
+      <!-- EVENT VIEW -->
+      <div id="viewEvent" class="hidden">
+        <div class="toolbar">
+          <div class="search">🔎 <input id="searchE" placeholder="이벤트 이름으로 찾기…"></div>
+          <button class="add" id="addE">＋ 새 이벤트</button>
+        </div>
+        <p class="hint" style="margin:-4px 2px 14px">💡 발생 확률은 <b>가중치(숫자)</b>로 정해요. 합이 100이 아니어도 괜찮아요 — 아래 %는 자동으로 계산됩니다.</p>
+        <div class="grid" id="gridE"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="note">
+    저장은 이 브라우저에 자동으로 됩니다(새로고침해도 유지). 다른 기기로 옮기거나 백업하려면 <b>내보내기</b>로 파일을 저장하고, <b>가져오기</b>로 불러오세요.
+  </footer>
+</div>
+
+<!-- MISSION MODAL -->
+<div class="overlay" id="mModal">
+  <div class="modal">
+    <h2 id="mTitle">새 미션</h2>
+    <div class="field"><label>미션 이름</label><input type="text" id="mName" placeholder="예: 이중뛰기" maxlength="40"></div>
+    <div class="field"><label>설명 <span style="font-weight:600">(선택)</span></label><textarea id="mDesc" placeholder="예: 한 번 뛸 때 줄을 두 번 돌려요" maxlength="120"></textarea></div>
+    <div class="field">
+      <label>난이도</label>
+      <div class="seg" id="mDiff">
+        <button data-v="easy">🟢 쉬움</button>
+        <button data-v="normal">🟠 보통</button>
+        <button data-v="hard">🔴 어려움</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>카테고리 <span style="font-weight:600">(여러 개 가능)</span></label>
+      <div class="catpick" id="mCats"></div>
+      <div class="catadd">
+        <input type="text" id="mNewCat" placeholder="새 카테고리 추가…" maxlength="16">
+        <button id="mAddCat" type="button">추가</button>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn-cancel" data-close>취소</button>
+      <button class="btn-primary" id="mSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="overlay" id="eModal">
+  <div class="modal">
+    <h2 id="eTitle">새 이벤트</h2>
+    <div class="field"><label>이벤트 이름</label><input type="text" id="eName" placeholder="예: 슈퍼 점프!" maxlength="40"></div>
+    <div class="field">
+      <label>효과</label>
+      <div class="seg" id="eEff">
+        <button data-v="forward">➡️ 앞으로</button>
+        <button data-v="backward">⬅️ 뒤로</button>
+        <button data-v="extra">🔁 한 번 더</button>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field" id="eStepWrap"><label>몇 칸?</label><input type="number" id="eSteps" min="1" max="20" value="1"></div>
+      <div class="field"><label>가중치 (자주 나올수록 크게)</label><input type="number" id="eWeight" min="0" max="999" value="1"></div>
+    </div>
+    <div class="field">
+      <label>표시 이름표 <span style="font-weight:600">(선택)</span></label>
+      <div class="seg" id="eLabel">
+        <button data-v="보너스" class="plain">🎁 보너스</button>
+        <button data-v="함정" class="plain">🕳️ 함정</button>
+        <button data-v="" class="plain">없음</button>
+      </div>
+      <p class="hint">‘보너스·함정’은 게임 규칙이 아니라 아이들에게 보여줄 이름·색상 표시예요.</p>
+    </div>
+    <div class="foot">
+      <button class="btn-cancel" data-close>취소</button>
+      <button class="btn-primary" id="eSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "powerjumping_content_v1";
+  var VERSION = 1;
+  var DIFFS = { easy:{label:"쉬움",cls:"easy"}, normal:{label:"보통",cls:"normal"}, hard:{label:"어려움",cls:"hard"} };
+  var EFFS  = { forward:{label:"앞으로",ico:"➡️",cls:"forward"}, backward:{label:"뒤로",ico:"⬅️",cls:"backward"}, extra:{label:"한 번 더!",ico:"🔁",cls:"extra"} };
+
+  function uid(){ return "id" + Date.now().toString(36) + Math.floor(Math.random()*1e6).toString(36); }
+
+  function seed(){
+    return {
+      version: VERSION,
+      categories: ["기초","응용","고난도"],
+      missions: [
+        { id:uid(), name:"양발 모아뛰기", desc:"두 발을 모아 가볍게 콩콩!", diff:"easy", cats:["기초"] },
+        { id:uid(), name:"번갈아뛰기", desc:"뛰기 발을 좌우로 번갈아요.", diff:"easy", cats:["기초"] },
+        { id:uid(), name:"엇걸어풀기 (X자)", desc:"팔을 X자로 걸었다 풀어요.", diff:"normal", cats:["응용"] },
+        { id:uid(), name:"뒤로뛰기", desc:"줄을 뒤로 돌리며 뛰어요.", diff:"normal", cats:["기초","응용"] },
+        { id:uid(), name:"이중뛰기", desc:"한 번 뛸 때 줄을 두 번!", diff:"hard", cats:["고난도"] },
+        { id:uid(), name:"십자뛰기", desc:"앞뒤좌우 십자로 이동하며 뛰어요.", diff:"hard", cats:["고난도","응용"] }
+      ],
+      events: [
+        { id:uid(), name:"슈퍼 점프!", eff:"forward", steps:3, weight:3, label:"보너스" },
+        { id:uid(), name:"발이 꼬였어요", eff:"backward", steps:2, weight:2, label:"함정" },
+        { id:uid(), name:"한 번 더 도전!", eff:"extra", steps:0, weight:1, label:"보너스" },
+        { id:uid(), name:"한 칸 전진", eff:"forward", steps:1, weight:4, label:"" }
+      ]
+    };
+  }
+
+  var state = load();
+  function load(){
+    try {
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return seed();
+      var d = JSON.parse(raw);
+      if(!d || d.version !== VERSION || !Array.isArray(d.missions)) return seed();
+      d.categories = d.categories || [];
+      d.events = d.events || [];
+      return d;
+    } catch(e){ return seed(); }
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+  // ---------- toast ----------
+  var toastEl = document.getElementById("toast"), toastT;
+  function toast(msg, kind){
+    toastEl.textContent = msg; toastEl.className = "toast show " + (kind||"");
+    clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.className = "toast " + (kind||""); }, 2600);
+  }
+
+  // ---------- tabs ----------
+  var tab = "mission";
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      tab = t.dataset.tab;
+      document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("active", x===t); });
+      document.getElementById("viewMission").classList.toggle("hidden", tab!=="mission");
+      document.getElementById("viewEvent").classList.toggle("hidden", tab!=="event");
+    });
+  });
+
+  // ---------- mission filters + render ----------
+  var searchM = "", activeCats = {}, activeDiff = {};
+  document.getElementById("searchM").addEventListener("input", function(e){ searchM = e.target.value.trim(); renderM(); });
+
+  function renderFilters(){
+    var f = document.getElementById("filtersM"); f.innerHTML = "";
+    var lab1 = document.createElement("span"); lab1.className="flabel"; lab1.textContent="난이도"; f.appendChild(lab1);
+    Object.keys(DIFFS).forEach(function(k){
+      var b=document.createElement("button");
+      b.className="chip diff-"+k+(activeDiff[k]?" on":"");
+      b.textContent=DIFFS[k].label;
+      b.onclick=function(){ activeDiff[k]=!activeDiff[k]; renderFilters(); renderM(); };
+      f.appendChild(b);
+    });
+    if(state.categories.length){
+      var lab2 = document.createElement("span"); lab2.className="flabel"; lab2.style.marginLeft="8px"; lab2.textContent="카테고리"; f.appendChild(lab2);
+      state.categories.forEach(function(c){
+        var b=document.createElement("button");
+        b.className="chip cat"+(activeCats[c]?" on":"");
+        b.textContent=c;
+        b.onclick=function(){ activeCats[c]=!activeCats[c]; renderFilters(); renderM(); };
+        f.appendChild(b);
+      });
+    }
+  }
+
+  function renderM(){
+    document.getElementById("cntM").textContent = state.missions.length;
+    var g = document.getElementById("gridM"); g.innerHTML = "";
+    var diffOn = Object.keys(activeDiff).filter(function(k){return activeDiff[k];});
+    var catOn  = Object.keys(activeCats).filter(function(k){return activeCats[k];});
+    var list = state.missions.filter(function(m){
+      if(searchM && m.name.toLowerCase().indexOf(searchM.toLowerCase())<0) return false;
+      if(diffOn.length && diffOn.indexOf(m.diff)<0) return false;
+      if(catOn.length && !catOn.every(function(c){ return (m.cats||[]).indexOf(c)>=0; })) return false;
+      return true;
+    });
+    if(!list.length){
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="big">🎴</div><h3>'+
+        (state.missions.length? "조건에 맞는 미션이 없어요" : "아직 미션이 없어요")+'</h3><p>'+
+        (state.missions.length? "검색·필터를 바꿔보세요." : "‘＋ 새 미션’으로 첫 미션을 만들어요!")+'</p></div>';
+      return;
+    }
+    list.forEach(function(m){
+      var d = DIFFS[m.diff]||DIFFS.easy;
+      var el = document.createElement("div"); el.className="card";
+      var tags = (m.cats||[]).map(function(c){ return '<span class="tag">'+esc(c)+'</span>'; }).join("");
+      el.innerHTML =
+        '<div class="acts"><button class="mini" title="수정">✏️</button><button class="mini del" title="삭제">🗑️</button></div>'+
+        '<div class="title">'+esc(m.name)+'</div>'+
+        '<div class="desc">'+esc(m.desc||"")+'</div>'+
+        '<div class="row"><span class="badge '+d.cls+'">'+d.label+'</span>'+tags+'</div>';
+      el.querySelector(".mini:not(.del)").onclick=function(){ openMission(m); };
+      el.querySelector(".mini.del").onclick=function(){ if(confirm('“'+m.name+'” 미션을 삭제할까요?')){ state.missions=state.missions.filter(function(x){return x!==m;}); save(); renderFilters(); renderM(); toast("미션을 삭제했어요"); } };
+      g.appendChild(el);
+    });
+  }
+
+  // ---------- event render ----------
+  var searchE = "";
+  document.getElementById("searchE").addEventListener("input", function(e){ searchE = e.target.value.trim(); renderE(); });
+
+  function renderE(){
+    document.getElementById("cntE").textContent = state.events.length;
+    var g = document.getElementById("gridE"); g.innerHTML = "";
+    var total = state.events.reduce(function(s,e){ return s + (Number(e.weight)||0); }, 0);
+    var list = state.events.filter(function(e){ return !searchE || e.name.toLowerCase().indexOf(searchE.toLowerCase())>=0; });
+    if(!list.length){
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="big">🎲</div><h3>'+
+        (state.events.length? "찾는 이벤트가 없어요" : "아직 이벤트가 없어요")+'</h3><p>'+
+        (state.events.length? "" : "‘＋ 새 이벤트’로 첫 이벤트를 만들어요!")+'</p></div>';
+      return;
+    }
+    list.forEach(function(e){
+      var ef = EFFS[e.eff]||EFFS.forward;
+      var pct = total>0 ? Math.round((Number(e.weight)||0)/total*100) : 0;
+      var effText = e.eff==="extra" ? ef.ico+" "+ef.label : ef.ico+" "+ef.label+" "+(e.steps||0)+"칸";
+      var lab = e.label ? '<span class="tag" style="border-color:transparent;color:#fff;background:'+(e.label==="함정"?"var(--coral)":"var(--grape)")+'">'+esc(e.label)+'</span>' : "";
+      var el = document.createElement("div"); el.className="card";
+      el.innerHTML =
+        '<div class="acts"><button class="mini" title="수정">✏️</button><button class="mini del" title="삭제">🗑️</button></div>'+
+        '<div class="title">'+esc(e.name)+'</div>'+
+        '<div class="row"><span class="eff '+ef.cls+'">'+effText+'</span>'+lab+'</div>'+
+        '<div class="prob"><div class="lbl"><span>발생 확률</span><b>'+pct+'% · 가중치 '+(Number(e.weight)||0)+'</b></div>'+
+        '<div class="bar"><i style="width:'+pct+'%"></i></div></div>';
+      el.querySelector(".mini:not(.del)").onclick=function(){ openEvent(e); };
+      el.querySelector(".mini.del").onclick=function(){ if(confirm('“'+e.name+'” 이벤트를 삭제할까요?')){ state.events=state.events.filter(function(x){return x!==e;}); save(); renderE(); toast("이벤트를 삭제했어요"); } };
+      g.appendChild(el);
+    });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  // ---------- mission modal ----------
+  var mModal = document.getElementById("mModal"), mEditing = null, mDiffVal="easy", mCatSel={};
+  function pickSeg(container, val){ container.querySelectorAll("button").forEach(function(b){ b.classList.toggle("sel", b.dataset.v===val); }); }
+  document.getElementById("mDiff").querySelectorAll("button").forEach(function(b){ b.onclick=function(){ mDiffVal=b.dataset.v; pickSeg(document.getElementById("mDiff"), mDiffVal); }; });
+
+  function renderCatPick(){
+    var box = document.getElementById("mCats"); box.innerHTML="";
+    if(!state.categories.length){ box.innerHTML='<span class="hint">아직 카테고리가 없어요. 아래에서 추가하세요.</span>'; return; }
+    state.categories.forEach(function(c){
+      var b=document.createElement("button"); b.type="button"; b.className="chip cat"+(mCatSel[c]?" on":"");
+      b.textContent=c; b.onclick=function(){ mCatSel[c]=!mCatSel[c]; renderCatPick(); };
+      box.appendChild(b);
+    });
+  }
+  document.getElementById("mAddCat").onclick=function(){
+    var inp=document.getElementById("mNewCat"); var v=inp.value.trim(); if(!v) return;
+    if(state.categories.indexOf(v)<0){ state.categories.push(v); save(); }
+    mCatSel[v]=true; inp.value=""; renderCatPick();
+  };
+  document.getElementById("mNewCat").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("mAddCat").click(); }});
+
+  function openMission(m){
+    mEditing = m||null;
+    document.getElementById("mTitle").textContent = m? "미션 수정" : "새 미션";
+    document.getElementById("mName").value = m? m.name : "";
+    document.getElementById("mDesc").value = m? (m.desc||"") : "";
+    mDiffVal = m? m.diff : "easy"; pickSeg(document.getElementById("mDiff"), mDiffVal);
+    mCatSel = {}; if(m){ (m.cats||[]).forEach(function(c){ mCatSel[c]=true; }); }
+    renderCatPick();
+    mModal.classList.add("show");
+    setTimeout(function(){ document.getElementById("mName").focus(); }, 30);
+  }
+  document.getElementById("mSave").onclick=function(){
+    var name=document.getElementById("mName").value.trim();
+    if(!name){ toast("미션 이름을 입력해요","err"); return; }
+    var cats = Object.keys(mCatSel).filter(function(c){return mCatSel[c];});
+    var data = { name:name, desc:document.getElementById("mDesc").value.trim(), diff:mDiffVal, cats:cats };
+    if(mEditing){ Object.assign(mEditing, data); toast("미션을 수정했어요","ok"); }
+    else { data.id=uid(); state.missions.unshift(data); toast("미션을 추가했어요","ok"); }
+    save(); renderFilters(); renderM(); mModal.classList.remove("show");
+  };
+  document.getElementById("addM").onclick=function(){ openMission(null); };
+
+  // ---------- event modal ----------
+  var eModal=document.getElementById("eModal"), eEditing=null, eEffVal="forward", eLabelVal="";
+  function updateStepVis(){ document.getElementById("eStepWrap").style.display = (eEffVal==="extra")? "none":"block"; }
+  document.getElementById("eEff").querySelectorAll("button").forEach(function(b){ b.onclick=function(){ eEffVal=b.dataset.v; pickSeg(document.getElementById("eEff"), eEffVal); updateStepVis(); }; });
+  document.getElementById("eLabel").querySelectorAll("button").forEach(function(b){ b.onclick=function(){ eLabelVal=b.dataset.v; pickSeg(document.getElementById("eLabel"), eLabelVal); }; });
+
+  function openEvent(e){
+    eEditing=e||null;
+    document.getElementById("eTitle").textContent = e? "이벤트 수정":"새 이벤트";
+    document.getElementById("eName").value = e? e.name : "";
+    eEffVal = e? e.eff : "forward"; pickSeg(document.getElementById("eEff"), eEffVal); updateStepVis();
+    document.getElementById("eSteps").value = e? (e.steps||1) : 1;
+    document.getElementById("eWeight").value = e? (e.weight!=null?e.weight:1) : 1;
+    eLabelVal = e? (e.label||"") : ""; pickSeg(document.getElementById("eLabel"), eLabelVal);
+    eModal.classList.add("show");
+    setTimeout(function(){ document.getElementById("eName").focus(); }, 30);
+  }
+  document.getElementById("eSave").onclick=function(){
+    var name=document.getElementById("eName").value.trim();
+    if(!name){ toast("이벤트 이름을 입력해요","err"); return; }
+    var steps = eEffVal==="extra" ? 0 : Math.max(1, Math.min(20, parseInt(document.getElementById("eSteps").value,10)||1));
+    var weight = Math.max(0, Math.min(999, parseInt(document.getElementById("eWeight").value,10)||0));
+    var data = { name:name, eff:eEffVal, steps:steps, weight:weight, label:eLabelVal };
+    if(eEditing){ Object.assign(eEditing, data); toast("이벤트를 수정했어요","ok"); }
+    else { data.id=uid(); state.events.unshift(data); toast("이벤트를 추가했어요","ok"); }
+    save(); renderE(); eModal.classList.remove("show");
+  };
+  document.getElementById("addE").onclick=function(){ openEvent(null); };
+
+  // close modals
+  document.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=function(){ mModal.classList.remove("show"); eModal.classList.remove("show"); }; });
+  [mModal,eModal].forEach(function(o){ o.addEventListener("click", function(e){ if(e.target===o) o.classList.remove("show"); }); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape"){ mModal.classList.remove("show"); eModal.classList.remove("show"); } });
+
+  // ---------- export / import ----------
+  document.getElementById("btnExport").onclick=function(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "파워점핑-콘텐츠.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    toast("파일로 내보냈어요 📁","ok");
+  };
+  document.getElementById("btnImport").onclick=function(){ document.getElementById("fileInput").click(); };
+  document.getElementById("fileInput").addEventListener("change", function(e){
+    var file = e.target.files[0]; if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var d;
+      try { d = JSON.parse(reader.result); }
+      catch(err){ toast("파일을 읽을 수 없어요. 올바른 JSON이 아니에요.","err"); e.target.value=""; return; }
+      // validate — do NOT overwrite on failure
+      if(!d || typeof d!=="object" || d.version!==VERSION || !Array.isArray(d.missions) || !Array.isArray(d.events)){
+        toast("형식/버전이 맞지 않아요. 기존 데이터는 그대로 둘게요.","err"); e.target.value=""; return;
+      }
+      if(!confirm("가져오면 지금 데이터를 이 파일 내용으로 바꿔요. 계속할까요?")){ e.target.value=""; return; }
+      state = { version:VERSION, categories:Array.isArray(d.categories)?d.categories:[], missions:d.missions, events:d.events };
+      save(); activeCats={}; activeDiff={}; searchM=""; searchE="";
+      document.getElementById("searchM").value=""; document.getElementById("searchE").value="";
+      renderFilters(); renderM(); renderE();
+      toast("가져오기 완료! 🎉","ok"); e.target.value="";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- theme ----------
+  document.getElementById("btnTheme").onclick=function(){
+    var root=document.documentElement;
+    var cur = root.getAttribute("data-theme");
+    if(!cur){ cur = matchMedia("(prefers-color-scheme: dark)").matches ? "dark":"light"; }
+    var next = cur==="dark" ? "light":"dark";
+    root.setAttribute("data-theme", next);
+    this.textContent = next==="dark" ? "☀️" : "🌙";
+  };
+
+  // ---------- init ----------
+  renderFilters(); renderM(); renderE();
+})();
+</script>
