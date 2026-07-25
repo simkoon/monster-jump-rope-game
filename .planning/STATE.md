@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: 플레이 가능한 핵심 루프 & 설정
+current_phase: 3
+current_phase_name: 3D 보드 & 실제 게임 UI
 status: executing
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-25T12:28:54.630Z"
+last_updated: "2026-07-25T14:41:06.844Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 2 execution started
+last_activity_desc: Phase 3 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 50
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 2 — 플레이 가능한 핵심 루프 & 설정
+**Current focus:** Phase 3 — 3D 보드 & 실제 게임 UI
 
 ## Current Position
 
-Phase: 2 (플레이 가능한 핵심 루프 & 설정) — EXECUTING
-Plan: 3 of 3
+Phase: 3 (3D 보드 & 실제 게임 UI) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-25 — Phase 2 execution started
+Last activity: 2026-07-25 — Phase 3 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P02 | 6 | 3 tasks | 6 files |
 | Phase 02 P03 | 7 | 2 tasks | 5 files |
 | Phase 02 P03 | 7 | 2 tasks | 5 files |
+| Phase 03 P01 | 32 | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Added @testing-library/dom@10.4.1 explicitly (react peer not auto-installed under legacy-peer-deps)
 - [Phase ?]: 02-02: useGameStore is the single engine-content bridge; reset() returns to setup
 - [Phase ?]: 02-02: App gains an additive 편집기/게임 top-level switch; Phase-1 Tabs untouched
+- [Phase ?]: 03-01: R3F scene gates on a presentation busy flag (usePresentation) with a deadlock-proof watchdog; the pure engine stays unblocked (ANIM_DONE, D-07).
+- [Phase ?]: 03-01: App defaults to 게임 mode routing to GameApp; 편집기 reachable via the mode switch (D-10).
+- [Phase ?]: 03-01: R3F stack exact-pinned (three/@types/three 0.185.1 lockstep, Pitfall 5); no physics engine — tween dice (D-02/D-05).
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T12:28:54.558Z
+Last session: 2026-07-25T14:40:32.867Z
 Stopped at: Phase 1 UI-SPEC approved
 Resume file: .planning/phases/01-foundation-content-editor/01-UI-SPEC.md

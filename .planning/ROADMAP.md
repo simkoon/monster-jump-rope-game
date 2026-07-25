@@ -92,13 +92,13 @@ Plans:
   3. 게임 전체 흐름(시작→플레이→결과)이 크고 단순하며 텍스트가 최소화된 아동용 버튼 UI로 조작된다
   4. 여러 게임을 연속으로 진행해도 3D 리소스 누수 없이(GPU 메모리 안정) 대상 태블릿에서 원활하게 동작한다
 
-**Plans**: 2 plans
+**Plans**: 1/2 plans executed
 **UI hint**: yes
 
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — R3F 스택 설치 + 플레이 가능한 3D 보드 슬라이스: boardLayout/diceRotation 순수 모듈, ANIM_DONE presentation store(busy+watchdog), R3F 씬(보드 타일/토큰/주사위), 토큰 hop 이동(LOOP-06), dpr[1,2]·공유·dispose, PlayView/GameApp로 엔드투엔드 플레이 (LOOP-06)
+- [x] 03-01-PLAN.md — R3F 스택 설치 + 플레이 가능한 3D 보드 슬라이스: boardLayout/diceRotation 순수 모듈, ANIM_DONE presentation store(busy+watchdog), R3F 씬(보드 타일/토큰/주사위), 토큰 hop 이동(LOOP-06), dpr[1,2]·공유·dispose, PlayView/GameApp로 엔드투엔드 플레이 (LOOP-06)
 
 **Wave 2** *(03-01 완료 후 — 3D 슬라이스 위에 실제 UI)*
 
@@ -134,5 +134,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. 기반 & 콘텐츠 편집기 | 3/3 | Complete   | 2026-07-25 |
 | 2. 플레이 가능한 핵심 루프 & 설정 | 3/3 | Complete   | 2026-07-25 |
-| 3. 3D 보드 & 실제 게임 UI | 0/2 | Not started | - |
+| 3. 3D 보드 & 실제 게임 UI | 1/2 | In Progress|  |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |
