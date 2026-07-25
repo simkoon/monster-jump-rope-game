@@ -227,6 +227,67 @@
 }
 .game-positions .is-current { color: var(--sky); font-weight: 900; }
 
+/* ---- setup screen (child re-skin of the Phase 2 harness form) ---- */
+.game-setup {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--lg, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--base, 16px);
+}
+.game-setup-logo { font-size: var(--game-display); font-weight: 900; margin: 0; text-align: center; letter-spacing: -0.02em; }
+.game-setup-sub { font-size: var(--game-caption); font-weight: 800; color: var(--ink-soft); text-align: center; margin: 0 0 var(--sm, 8px); }
+.game-setup-field { display: flex; flex-direction: column; gap: 8px; }
+.game-setup-field > span { font-size: var(--game-caption); font-weight: 800; color: var(--ink-soft); }
+.game-setup-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--md, 12px); }
+.game-setup-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.game-setup-row input[type='text'] {
+  flex: 1; min-width: 160px; min-height: var(--tap-sm); font-family: inherit; font-size: var(--game-body);
+  color: var(--ink); background: var(--panel-2); border: 2px solid var(--line); border-radius: var(--radius-sm); padding: 0 14px; outline: none;
+}
+.game-setup-row input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.game-count-ctl { display: inline-flex; align-items: center; gap: 8px; }
+.game-count-ctl button {
+  min-width: var(--tap-sm); min-height: var(--tap-sm); border-radius: var(--radius-sm); border: 2px solid var(--line);
+  background: var(--panel-2); color: var(--ink); font-size: var(--game-heading); font-weight: 900; cursor: pointer;
+}
+.game-count-ctl button:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.game-count-ctl input {
+  width: 72px; min-height: var(--tap-sm); text-align: center; font-family: inherit; font-size: var(--game-body); font-weight: 900;
+  color: var(--ink); background: var(--panel-2); border: 2px solid var(--line); border-radius: var(--radius-sm); font-variant-numeric: tabular-nums;
+}
+.game-setup-toggle { display: flex; align-items: center; gap: 10px; font-size: var(--game-body); font-weight: 800; }
+.game-setup-toggle input { width: 24px; height: 24px; }
+.game-setup-guard { font-size: var(--game-body); font-weight: 800; color: var(--coral); text-align: center; margin: 0; }
+.game-setup-start { align-self: stretch; }
+
+/* ---- result screen (child re-skin) ---- */
+.game-result {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--3xl, 48px) var(--lg, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--base, 16px);
+  text-align: center;
+}
+.game-result-title { font-size: var(--game-display); font-weight: 900; margin: 0; }
+.game-result-reason { font-size: var(--game-heading); font-weight: 900; margin: 0; color: var(--ink-soft); }
+.game-result-winner { font-size: var(--game-display); font-weight: 900; margin: 0; }
+.game-result-cowinner { font-size: var(--game-body); font-weight: 800; margin: 0; }
+.game-result-pick { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sm, 8px); width: 100%; }
+.game-result-pick legend { font-size: var(--game-body); font-weight: 900; margin-bottom: var(--sm, 8px); }
+.game-result-pick-option {
+  display: flex; align-items: center; gap: 10px; min-height: var(--tap-sm); padding: 0 16px; font-size: var(--game-body); font-weight: 800;
+  background: var(--panel-2); border: 2px solid var(--line); border-radius: var(--radius-sm); cursor: pointer;
+}
+.game-result-pick-option input { width: 22px; height: 22px; }
+.game-result-final { font-size: var(--game-heading); font-weight: 900; margin: 0; }
+.game-result-standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: var(--game-body); font-weight: 800; font-variant-numeric: tabular-nums; }
+.game-result-actions { display: flex; gap: var(--base, 16px); flex-wrap: wrap; justify-content: center; margin-top: var(--sm, 8px); }
+
 /* ---- reduced motion: index.css already kills transitions globally; restated
      here for scope-local clarity and to keep press feedback instant (UI-SPEC). ---- */
 @media (prefers-reduced-motion: reduce) {

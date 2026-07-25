@@ -37,6 +37,10 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(modeSwitch().getByRole('button', { name: '✏️ 편집기' }).className).not.toContain('active');
     // ...and no editor MissionTab content (a seed mission name) is rendered.
     expect(screen.queryByText('양발 모아뛰기')).toBeNull();
+    // The reskinned game view (SetupView, GameApp with no active game) is what mounts:
+    // the 파워점핑 placeholder logo + the --tap 시작 button (03-02, replaces the harness).
+    expect(screen.getByText('파워점핑')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /시작/ })).toBeInTheDocument();
   });
 
   it('keeps the 편집기 reachable via the mode switch', () => {

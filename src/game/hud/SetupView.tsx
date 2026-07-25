@@ -1,11 +1,13 @@
-// src/harness/SetupScreen.tsx — throwaway plain-DOM setup form (SETUP-01..06).
-// Deliberately minimal and disposable: Phase 3 replaces this with the real
-// child-friendly 3D UI (D-09). Big-button/child polish is NOT in scope here.
-// All user-entered text renders through JSX (escaped by default).
+// src/game/hud/SetupView.tsx — the child-facing setup screen (D-09, ART-04). This is the
+// re-skin of the throwaway src/harness/SetupScreen: ALL Phase 2 setup LOGIC is reused
+// verbatim (mode, count, names, characters, team members, board preset, time limit,
+// buildParticipants/boardLengthFor, the canStart empty-library guard → MISSION-07). Only
+// the presentation changes: big --tap/--tap-sm controls + the reused SegmentedControl.
+// Real logo/art is Phase 4 (ART-05); the placeholder text logo stands in for now.
 import { useState } from 'react';
-import { useStore } from '../store';
-import { useGameStore } from './useGameStore';
-import SegmentedControl from '../components/SegmentedControl';
+import { useStore } from '../../store';
+import { useGameStore } from '../../harness/useGameStore';
+import SegmentedControl from '../../components/SegmentedControl';
 import {
   buildParticipants,
   boardLengthFor,
@@ -14,8 +16,8 @@ import {
   DEFAULT_PARTICIPANT_COUNT,
   MAX_PARTICIPANTS,
   type BoardPreset,
-} from '../engine/setup';
-import type { GameConfig } from '../engine/types';
+} from '../../engine/setup';
+import type { GameConfig } from '../../engine/types';
 
 type Mode = 'solo' | 'team';
 type Character = 'boy' | 'girl';
@@ -26,20 +28,19 @@ function setAt<T>(arr: T[], i: number, v: T): T[] {
   return out;
 }
 
-export default function SetupScreen() {
+export default function SetupView() {
   // Live empty-list check (MISSION-07 / D-08): drives the 시작 gate + guidance text.
   const missions = useStore((s) => s.missions);
   const gate = canStart(missions);
 
-  const [mode, setMode] = useState<Mode>('solo'); // SETUP-02 / D-01
-  const [count, setCount] = useState<number>(DEFAULT_PARTICIPANT_COUNT); // SETUP-03 (default 2)
-  const [names, setNames] = useState<string[]>([]); // SETUP-04, sparse by index
-  const [characters, setCharacters] = useState<Character[]>([]); // SETUP-05, sparse by index
-  const [members, setMembers] = useState<string[]>([]); // D-01: raw comma text per team
-  const [preset, setPreset] = useState<BoardPreset>('short'); // D-02 default 짧게
-  const [timeLimitOn, setTimeLimitOn] = useState(true); // D-04 default on (20분)
+  const [mode, setMode] = useState<Mode>('solo');
+  const [count, setCount] = useState<number>(DEFAULT_PARTICIPANT_COUNT);
+  const [names, setNames] = useState<string[]>([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [members, setMembers] = useState<string[]>([]);
+  const [preset, setPreset] = useState<BoardPreset>('short');
+  const [timeLimitOn, setTimeLimitOn] = useState(true);
 
-  // Clamp to the engine bound [1, MAX_PARTICIPANTS] (T-02-05) before rendering rows.
   const clampedCount = Math.min(MAX_PARTICIPANTS, Math.max(1, Number.isFinite(count) ? count : 1));
   const rows = Array.from({ length: clampedCount }, (_, i) => i);
 
@@ -47,7 +48,6 @@ export default function SetupScreen() {
   const rowLabel = isTeam ? '팀' : '플레이어';
 
   function handleStart() {
-    // Team mode (D-01): parse comma-separated member names per team; solo ignores.
     const memberNamesPerParticipant = isTeam
       ? rows.map((i) =>
           (members[i] ?? '')
@@ -67,20 +67,19 @@ export default function SetupScreen() {
     const config: GameConfig = {
       mode,
       participants,
-      boardLength: boardLengthFor(preset), // D-02
-      timeLimitMs: timeLimitOn ? DEFAULT_TIME_LIMIT_MS : null, // D-04
+      boardLength: boardLengthFor(preset),
+      timeLimitMs: timeLimitOn ? DEFAULT_TIME_LIMIT_MS : null,
     };
-    useGameStore.getState().startGame(config); // SETUP-06 (+ MISSION-07 gate inside)
+    useGameStore.getState().startGame(config);
   }
 
   return (
-    <div className="setup">
-      {/* SETUP-01: placeholder text logo — the real original logo is Phase 4 (ART-05). */}
-      <h1 className="setup-logo">파워점핑</h1>
-      <p className="note">신나는 줄넘기 미션 — 게임을 설정하고 시작하세요.</p>
+    <div className="game-setup">
+      {/* Placeholder text logo — the real original logo is Phase 4 (ART-05). */}
+      <h1 className="game-setup-logo">파워점핑</h1>
+      <p className="game-setup-sub">신나는 줄넘기 미션 — 게임을 설정하고 시작하세요.</p>
 
-      {/* SETUP-02 / D-01: 개인전 / 팀전 */}
-      <label className="setup-field">
+      <label className="game-setup-field">
         <span>모드</span>
         <SegmentedControl<Mode>
           ariaLabel="게임 모드"
@@ -93,10 +92,9 @@ export default function SetupScreen() {
         />
       </label>
 
-      {/* SETUP-03: participant/team count, clamped [1, MAX_PARTICIPANTS] */}
-      <label className="setup-field">
+      <label className="game-setup-field">
         <span>{isTeam ? '팀 수' : '인원 수'}</span>
-        <span className="count-ctl">
+        <span className="game-count-ctl">
           <button
             type="button"
             aria-label="줄이기"
@@ -122,10 +120,9 @@ export default function SetupScreen() {
         </span>
       </label>
 
-      {/* SETUP-04/05 (+ D-01 member list): one row per participant/team */}
-      <ul className="setup-rows">
+      <ul className="game-setup-rows">
         {rows.map((i) => (
-          <li key={i} className="setup-row">
+          <li key={i} className="game-setup-row">
             <input
               type="text"
               aria-label={`${rowLabel} ${i + 1} 이름`}
@@ -155,8 +152,7 @@ export default function SetupScreen() {
         ))}
       </ul>
 
-      {/* D-02: board preset 짧게(기본) / 보통 */}
-      <label className="setup-field">
+      <label className="game-setup-field">
         <span>보드 길이</span>
         <SegmentedControl<BoardPreset>
           ariaLabel="보드 길이"
@@ -169,8 +165,7 @@ export default function SetupScreen() {
         />
       </label>
 
-      {/* D-04: time limit toggle, default on at 20분 */}
-      <label className="setup-field">
+      <label className="game-setup-toggle">
         <input
           type="checkbox"
           checked={timeLimitOn}
@@ -180,12 +175,11 @@ export default function SetupScreen() {
       </label>
 
       {/* MISSION-07 / D-08: block start with guidance when the library is empty. */}
-      {!gate.ok && <p className="setup-guard">{gate.reason}</p>}
+      {!gate.ok && <p className="game-setup-guard">{gate.reason}</p>}
 
-      {/* SETUP-06: 시작 */}
       <button
         type="button"
-        className="setup-start"
+        className="game-btn game-setup-start"
         disabled={!gate.ok}
         onClick={handleStart}
       >
