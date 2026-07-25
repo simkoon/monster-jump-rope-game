@@ -63,13 +63,13 @@ Plans:
   4. 말이 멈춘 칸의 이벤트 효과(보너스/함정/앞으로 N칸/뒤로 N칸/한 번 더)가 설정된 확률에 따라 적용되며, "한 번 더"는 같은 플레이어가 추가 턴을 갖고 그 외에는 다음 플레이어로 넘어간다
   5. 어떤 플레이어/팀이 결승 칸에 먼저 도달하면 승리·결과 화면이 표시되고, 다시 시작하거나 시작 화면으로 돌아갈 수 있다
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 **UI hint**: yes
 
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — 헤드리스 게임 엔진 + 격리 RNG(분포 테스트): 순수 TS types/rng/placement/setup/engine — 턴 FSM, 가중치 뽑기, 주사위, 이동(초과 통과 승리), 확률 기반 이벤트 배치(EVENT-06), 승리·시간종료·동점 판정, 팀 공유 말·빈 목록 가드 (LOOP-01·03·04·05·07·08·09, EVENT-06, MISSION-07)
+- [x] 02-01-PLAN.md — 헤드리스 게임 엔진 + 격리 RNG(분포 테스트): 순수 TS types/rng/placement/setup/engine — 턴 FSM, 가중치 뽑기, 주사위, 이동(초과 통과 승리), 확률 기반 이벤트 배치(EVENT-06), 승리·시간종료·동점 판정, 팀 공유 말·빈 목록 가드 (LOOP-01·03·04·05·07·08·09, EVENT-06, MISSION-07)
 
 **Wave 2** *(엔진 위에서 동작 — 02-01 완료 후)*
 
@@ -129,6 +129,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 기반 & 콘텐츠 편집기 | 3/3 | Complete   | 2026-07-25 |
-| 2. 플레이 가능한 핵심 루프 & 설정 | 0/3 | Not started | - |
+| 2. 플레이 가능한 핵심 루프 & 설정 | 1/3 | In Progress|  |
 | 3. 3D 보드 & 실제 게임 UI | 0/2 | Not started | - |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |

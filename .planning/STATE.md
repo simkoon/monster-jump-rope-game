@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: 기반 & 콘텐츠 편집기
+current_phase: 2
+current_phase_name: 플레이 가능한 핵심 루프 & 설정
 status: executing
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-25T11:04:47.145Z"
+last_updated: "2026-07-25T11:04:59.499Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 1 execution started
+last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
+  total_plans: 6
   completed_plans: 3
   percent: 25
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 1 — 기반 & 콘텐츠 편집기
+**Current focus:** Phase 2 — 플레이 가능한 핵심 루프 & 설정
 
 ## Current Position
 
-Phase: 1 (기반 & 콘텐츠 편집기) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-07-25 — Phase 1 execution started
+Phase: 2 (플레이 가능한 핵심 루프 & 설정) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 2
+Last activity: 2026-07-25 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
