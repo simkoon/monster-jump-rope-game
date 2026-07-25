@@ -46,3 +46,9 @@ export const ContentSchema = z.object({
 export type Mission = z.infer<typeof MissionSchema>;
 export type Event = z.infer<typeof EventSchema>;
 export type Content = z.infer<typeof ContentSchema>;
+
+// Effect as a TYPE too (value + type share one name — Zod pattern). Lets the
+// Phase 2 engine `import type { Effect }` without re-declaring the union.
+export type Effect = z.infer<typeof Effect>;
+export type Difficulty = z.infer<typeof Difficulty>;
+export type EventLabel = z.infer<typeof EventLabel>;

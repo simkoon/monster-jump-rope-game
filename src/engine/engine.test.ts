@@ -88,13 +88,22 @@ describe('rollDice — movement + win (D-03 overshoot)', () => {
   });
 
   it('reaching OR passing finish wins immediately with no exact landing and no upper clamp', () => {
-    // position 4 on a length-5 board: any roll 1..6 overshoots → win
-    const g = { ...gameWithBoard(soloConfig(5, 4), new Array(6).fill(null)), phase: 'awaitingRoll' as const };
+    // createGame normalizes positions to 0, so set position AFTER building the game.
+    // position 4 on a length-5 board: roll 6 → afterRoll 10, well past the finish.
+    const base = gameWithBoard(soloConfig(5), new Array(6).fill(null));
+    const g: GameState = {
+      ...base,
+      phase: 'awaitingRoll',
+      config: {
+        ...base.config,
+        participants: base.config.participants.map((p) => ({ ...p, position: 4 })),
+      },
+    };
     const r = rollDice(g, [], fixedRng(0.99)); // roll 6 → afterRoll 10
     expect(r.phase).toBe('gameOver');
     expect(r.endReason).toBe('reached-finish');
     expect(r.winners).toEqual([g.config.participants[0].id]);
-    expect(r.config.participants[0].position).toBe(10); // NOT clamped to 5
+    expect(r.config.participants[0].position).toBe(10); // NOT clamped to the finish (5)
   });
 
   it('a forward event that crosses the finish also wins (LOOP-09)', () => {
@@ -239,17 +248,16 @@ describe('full seeded games', () => {
     const cfg: GameConfig = { mode: 'team', participants: ps, boardLength: 30, timeLimitMs: null };
     const rng = mulberry32(555);
     let g = createGame(cfg, missions, [], rng);
-    // Play several non-extra full turns; assert one token per team the whole time.
-    for (let t = 0; t < 4; t++) {
-      g = drawCard(g, missions, rng);
-      g = judge(g, true);
-      g = rollDice(g, [], rng);
-      if (g.phase === 'gameOver') break;
-      g = advanceTurn(g);
-      expect(g.config.participants).toHaveLength(2); // never one-token-per-member
-    }
-    // After 2 full rounds (4 turns) each team's member index has rotated at least once.
-    const rotated = g.config.participants.some((p) => p.memberTurnIndex > 0);
-    expect(rotated).toBe(true);
+    // First full turn is team A (index 0). After its advanceTurn, team A's member
+    // index must rotate 0→1 while the shared-token count stays at 2 (D-01).
+    expect(g.currentIndex).toBe(0);
+    g = drawCard(g, missions, rng);
+    g = judge(g, true);
+    g = rollDice(g, [], rng);
+    expect(g.phase).toBe('turnResolved'); // board length 30, no events → no early win
+    g = advanceTurn(g);
+    expect(g.currentIndex).toBe(1); // moved to team B
+    expect(g.config.participants[0].memberTurnIndex).toBe(1); // team A rotated its member
+    expect(g.config.participants).toHaveLength(2); // never one-token-per-member
   });
 });
