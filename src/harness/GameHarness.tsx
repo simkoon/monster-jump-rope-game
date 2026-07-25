@@ -1,37 +1,17 @@
-// src/harness/GameHarness.tsx — harness root. Routes between the setup form (no
-// active game) and a MINIMAL active-game placeholder. This active branch is
-// intentionally thin: 02-03 replaces it with the real PlayHarness/ResultScreen.
-// Keeping it here makes 02-02 shippable end-to-end (start a game → see it entered).
+// src/harness/GameHarness.tsx — harness root. Routes the three game screens:
+//   game === null            → SetupScreen  (configure + 시작)
+//   game.phase === 'gameOver' → ResultScreen (winner / 다시 시작 / 시작 화면으로)
+//   otherwise                → PlayHarness  (the full turn loop + countdown)
+// All three screens are throwaway plain-DOM (D-09): Phase 3 replaces them with the 3D UI.
 import { useGameStore } from './useGameStore';
 import SetupScreen from './SetupScreen';
+import PlayHarness from './PlayHarness';
+import ResultScreen from './ResultScreen';
 
 export default function GameHarness() {
   const game = useGameStore((s) => s.game);
 
-  // No game yet → configure and start one (SETUP-01..06).
-  if (!game) return <SetupScreen />;
-
-  const current = game.config.participants[game.currentIndex];
-  return (
-    <div className="game-active">
-      <h2>게임 진행 중</h2>
-      <p>
-        단계: <b>{game.phase}</b>
-      </p>
-      <p>
-        현재 차례: <b>{current?.name}</b>
-      </p>
-      <ol className="game-positions">
-        {game.config.participants.map((p) => (
-          <li key={p.id}>
-            {p.name} — {p.position}칸
-          </li>
-        ))}
-      </ol>
-      {/* LOOP-10 foundation: back to setup. Full play controls arrive in 02-03. */}
-      <button type="button" onClick={() => useGameStore.getState().reset()}>
-        처음으로
-      </button>
-    </div>
-  );
+  if (!game) return <SetupScreen />; // SETUP-01..06
+  if (game.phase === 'gameOver') return <ResultScreen />; // LOOP-09/10
+  return <PlayHarness />; // LOOP-01..08
 }

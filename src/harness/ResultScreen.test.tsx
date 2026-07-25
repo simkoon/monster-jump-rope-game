@@ -48,7 +48,7 @@ describe('ResultScreen — winner / co-winner + restart', () => {
       gameOver([participant('p1', '가', 20), participant('p2', '나', 8)], ['p1'], 'reached-finish'),
     );
     render(<ResultScreen />);
-    expect(screen.getByText(/가/)).toBeInTheDocument();
+    expect(screen.getByText(/승리:/)).toHaveTextContent('가');
     expect(screen.getByRole('button', { name: /다시 시작/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /시작 화면으로/ })).toBeInTheDocument();
   });
