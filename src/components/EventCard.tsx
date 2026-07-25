@@ -9,11 +9,15 @@ const EFFS: Record<Event['eff'], { label: string; ico: string; cls: string }> = 
 interface EventCardProps {
   event: Event;
   pct: number; // normalized display percent (computed over the full event list)
+  // When provided, the card shows the top-right ✏️ edit / 🗑️ delete mini-buttons.
+  onEdit?: (event: Event) => void;
+  onDelete?: (event: Event) => void;
 }
 
-// Read-only event card. effText per D-06/D-07; extra shows no N. Probability
-// block shows normalized % + raw weight and a sun→coral bar at the % width.
-export default function EventCard({ event, pct }: EventCardProps) {
+// Event card. effText per D-06/D-07; extra shows no N칸. Probability block shows
+// the normalized % + raw weight and a sun→coral bar at the % width. All user text
+// (name, label) is rendered as JSX children so React auto-escapes it (T-01-07).
+export default function EventCard({ event, pct, onEdit, onDelete }: EventCardProps) {
   const ef = EFFS[event.eff] ?? EFFS.forward;
   const effText =
     event.eff === 'extra' ? `${ef.ico} ${ef.label}` : `${ef.ico} ${ef.label} ${event.steps}칸`;
@@ -34,6 +38,32 @@ export default function EventCard({ event, pct }: EventCardProps) {
 
   return (
     <div className="card">
+      {(onEdit || onDelete) && (
+        <div className="acts">
+          {onEdit && (
+            <button
+              className="mini"
+              type="button"
+              title="수정"
+              aria-label={`${event.name} 수정`}
+              onClick={() => onEdit(event)}
+            >
+              ✏️
+            </button>
+          )}
+          {onDelete && (
+            <button
+              className="mini del"
+              type="button"
+              title="삭제"
+              aria-label={`${event.name} 삭제`}
+              onClick={() => onDelete(event)}
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+      )}
       <div className="title">{event.name}</div>
       <div className="row">
         <span className={'eff ' + ef.cls}>{effText}</span>
