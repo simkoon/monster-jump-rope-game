@@ -5,8 +5,13 @@ import Tabs, { type TabKey } from './components/Tabs';
 import MissionTab from './components/MissionTab';
 import EventTab from './components/EventTab';
 import Toast from './components/Toast';
+import GameHarness from './harness/GameHarness';
+
+// Top-level view: the content 편집기 (Phase 1 mission/event tabs) or the 게임 harness.
+type View = 'editor' | 'game';
 
 export default function App() {
+  const [view, setView] = useState<View>('editor');
   const [tab, setTab] = useState<TabKey>('mission');
   const missions = useStore((s) => s.missions);
   const events = useStore((s) => s.events);
@@ -18,21 +23,49 @@ export default function App() {
   return (
     <div className="app">
       <Header />
-      <Tabs
-        active={tab}
-        missionCount={missionCount}
-        eventCount={eventCount}
-        onChange={setTab}
-      />
-      <main>
-        <section className="panel">
-          {tab === 'mission' ? <MissionTab /> : <EventTab />}
-        </section>
-      </main>
-      <footer className="note">
-        저장은 이 브라우저에 자동으로 됩니다(새로고침해도 유지). 다른 기기로 옮기거나 백업하려면{' '}
-        <b>내보내기</b>로 파일을 저장하고, <b>가져오기</b>로 불러오세요.
-      </footer>
+      {/* Additive top-level switch — the 미션/이벤트 editor stays exactly as-is. */}
+      <nav className="view-switch" aria-label="화면 전환">
+        <button
+          type="button"
+          className={'tab' + (view === 'editor' ? ' active' : '')}
+          onClick={() => setView('editor')}
+        >
+          ✏️ 편집기
+        </button>
+        <button
+          type="button"
+          className={'tab' + (view === 'game' ? ' active' : '')}
+          onClick={() => setView('game')}
+        >
+          🎮 게임
+        </button>
+      </nav>
+
+      {view === 'editor' ? (
+        <>
+          <Tabs
+            active={tab}
+            missionCount={missionCount}
+            eventCount={eventCount}
+            onChange={setTab}
+          />
+          <main>
+            <section className="panel">
+              {tab === 'mission' ? <MissionTab /> : <EventTab />}
+            </section>
+          </main>
+          <footer className="note">
+            저장은 이 브라우저에 자동으로 됩니다(새로고침해도 유지). 다른 기기로 옮기거나 백업하려면{' '}
+            <b>내보내기</b>로 파일을 저장하고, <b>가져오기</b>로 불러오세요.
+          </footer>
+        </>
+      ) : (
+        <main>
+          <section className="panel">
+            <GameHarness />
+          </section>
+        </main>
+      )}
       <Toast />
     </div>
   );

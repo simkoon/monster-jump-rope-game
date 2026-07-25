@@ -100,7 +100,7 @@ export default function SetupScreen() {
           <button
             type="button"
             aria-label="줄이기"
-            onClick={() => setCount((c) => Math.max(1, clampedCount - 1))}
+            onClick={() => setCount(Math.max(1, clampedCount - 1))}
           >
             −
           </button>
@@ -115,7 +115,7 @@ export default function SetupScreen() {
           <button
             type="button"
             aria-label="늘리기"
-            onClick={() => setCount(() => Math.min(MAX_PARTICIPANTS, clampedCount + 1))}
+            onClick={() => setCount(Math.min(MAX_PARTICIPANTS, clampedCount + 1))}
           >
             +
           </button>
