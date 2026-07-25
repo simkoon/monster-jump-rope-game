@@ -96,9 +96,13 @@ Plans:
 **UI hint**: yes
 
 Plans:
+**Wave 1**
 
-- [ ] 03-01: 이벤트 버스로 엔진과 연결된 3D 씬 (보드, 플레이스홀더 토큰, 주사위, 카드), ANIM_DONE 게이팅, 메시 재사용/dispose, 픽셀비율 상한
-- [ ] 03-02: 던져버릴 하네스를 대체하는 실제 아동용 앱 셸/HUD (큰 단순 버튼, 미션 카드 오버레이, 턴 HUD, 결과 화면) + 태블릿 성능 점검
+- [ ] 03-01-PLAN.md — R3F 스택 설치 + 플레이 가능한 3D 보드 슬라이스: boardLayout/diceRotation 순수 모듈, ANIM_DONE presentation store(busy+watchdog), R3F 씬(보드 타일/토큰/주사위), 토큰 hop 이동(LOOP-06), dpr[1,2]·공유·dispose, PlayView/GameApp로 엔드투엔드 플레이 (LOOP-06)
+
+**Wave 2** *(03-01 완료 후 — 3D 슬라이스 위에 실제 UI)*
+
+- [ ] 03-02-PLAN.md — 실제 아동용 UI로 하네스 교체: game.css 토큰(--tap 72/--tap-sm 56/--hud-h 88 + 4-size 스케일), 플레이 HUD(큰 버튼·미션 카드·턴 HUD·주사위 결과), 설정/결과 리스킨, GameApp 라우팅, 하네스 삭제, 태블릿 성능/누수 점검 (ART-04)
 
 ### Phase 4: 닌텐도풍 아트 & 캐릭터
 
