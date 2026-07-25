@@ -50,7 +50,7 @@
 
 ### 데이터 저장 (DATA)
 
-- [ ] **DATA-01**: 미션·이벤트·설정 데이터는 브라우저(localStorage)에 자동 저장되어 새로고침 후에도 유지된다
+- [x] **DATA-01**: 미션·이벤트·설정 데이터는 브라우저(localStorage)에 자동 저장되어 새로고침 후에도 유지된다
 - [ ] **DATA-02**: 사용자는 미션·이벤트 목록을 파일(JSON)로 내보내기 할 수 있다
 - [ ] **DATA-03**: 사용자는 파일(JSON)에서 미션·이벤트 목록을 가져오기(복원) 할 수 있다
 - [ ] **DATA-04**: 가져오기 시 데이터 형식/버전을 검증해, 잘못된 파일은 기존 데이터를 덮어쓰지 않고 오류를 안내한다
@@ -126,7 +126,7 @@
 | EVENT-04 | Phase 1 | Pending |
 | EVENT-05 | Phase 1 | Pending |
 | EVENT-06 | Phase 2 | Pending |
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |
@@ -137,6 +137,7 @@
 | ART-05 | Phase 4 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 38 total (열거된 ID 기준 — SETUP 6 + LOOP 10 + MISSION 7 + EVENT 6 + DATA 4 + ART 5)
 - Mapped to phases: 38 ✓
 - Unmapped: 0 ✓

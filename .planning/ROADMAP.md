@@ -33,13 +33,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. 편집한 미션·이벤트·설정이 localStorage에 자동 저장되어 새로고침 후에도 그대로 유지된다
   4. 강사가 미션·이벤트 목록을 JSON 파일로 내보내고 다시 가져올 수 있으며, 형식/버전이 잘못된 파일은 기존 데이터를 덮어쓰지 않고 오류가 안내된다
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 **UI hint**: yes
 
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Walking Skeleton: 스캐폴드(Vite/React 19/TS 5.9.3/Tailwind 4/Zustand persist/Zod), 버전 포함 schema.ts, read-guard localStorage 자동 저장, 시드 라이브러리를 보여주는 부팅되는 2탭 셸(읽기 전용) — 새로고침 유지 (R3F는 Phase 3)
+- [x] 01-01-PLAN.md — Walking Skeleton: 스캐폴드(Vite/React 19/TS 5.9.3/Tailwind 4/Zustand persist/Zod), 버전 포함 schema.ts, read-guard localStorage 자동 저장, 시드 라이브러리를 보여주는 부팅되는 2탭 셸(읽기 전용) — 새로고침 유지 (R3F는 Phase 3)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 기반 & 콘텐츠 편집기 | 0/3 | Not started | - |
+| 1. 기반 & 콘텐츠 편집기 | 1/3 | In Progress|  |
 | 2. 플레이 가능한 핵심 루프 & 설정 | 0/3 | Not started | - |
 | 3. 3D 보드 & 실제 게임 UI | 0/2 | Not started | - |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |
