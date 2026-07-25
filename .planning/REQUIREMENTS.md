@@ -9,12 +9,12 @@
 
 ### 시작 & 설정 (SETUP)
 
-- [ ] **SETUP-01**: 사용자는 시작 화면에서 "파워점핑" 오리지널 제목 로고와 시작 버튼을 볼 수 있다
-- [ ] **SETUP-02**: 사용자는 시작 화면에서 개인전 또는 팀전 모드를 선택할 수 있다
-- [ ] **SETUP-03**: 사용자는 플레이어(또는 팀)의 인원 수를 설정할 수 있다
-- [ ] **SETUP-04**: 사용자는 각 플레이어/팀의 이름을 입력할 수 있다
-- [ ] **SETUP-05**: 사용자는 각 플레이어/팀에 캐릭터(남자/여자)를 선택해 배정할 수 있다
-- [ ] **SETUP-06**: 사용자는 설정을 마친 뒤 게임을 시작할 수 있다
+- [x] **SETUP-01**: 사용자는 시작 화면에서 "파워점핑" 오리지널 제목 로고와 시작 버튼을 볼 수 있다
+- [x] **SETUP-02**: 사용자는 시작 화면에서 개인전 또는 팀전 모드를 선택할 수 있다
+- [x] **SETUP-03**: 사용자는 플레이어(또는 팀)의 인원 수를 설정할 수 있다
+- [x] **SETUP-04**: 사용자는 각 플레이어/팀의 이름을 입력할 수 있다
+- [x] **SETUP-05**: 사용자는 각 플레이어/팀에 캐릭터(남자/여자)를 선택해 배정할 수 있다
+- [x] **SETUP-06**: 사용자는 설정을 마친 뒤 게임을 시작할 수 있다
 
 ### 핵심 게임 루프 (LOOP)
 
@@ -37,7 +37,7 @@
 - [x] **MISSION-04**: 사용자는 이름/카테고리 등으로 미션을 검색할 수 있다
 - [x] **MISSION-05**: 사용자는 미션의 난이도를 변경할 수 있다 (예: 쉬움/보통/어려움)
 - [x] **MISSION-06**: 사용자는 미션의 카테고리를 변경할 수 있다
-- [ ] **MISSION-07**: 카드 뽑기는 이 미션 목록에서 뽑으며, 목록이 비어 있으면 게임 시작 전 안내한다
+- [x] **MISSION-07**: 카드 뽑기는 이 미션 목록에서 뽑으며, 목록이 비어 있으면 게임 시작 전 안내한다
 
 ### 이벤트 칸 관리 (EVENT)
 
@@ -97,12 +97,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | Phase 2 | Pending |
-| SETUP-02 | Phase 2 | Pending |
-| SETUP-03 | Phase 2 | Pending |
-| SETUP-04 | Phase 2 | Pending |
-| SETUP-05 | Phase 2 | Pending |
-| SETUP-06 | Phase 2 | Pending |
+| SETUP-01 | Phase 2 | Complete |
+| SETUP-02 | Phase 2 | Complete |
+| SETUP-03 | Phase 2 | Complete |
+| SETUP-04 | Phase 2 | Complete |
+| SETUP-05 | Phase 2 | Complete |
+| SETUP-06 | Phase 2 | Complete |
 | LOOP-01 | Phase 2 | Pending |
 | LOOP-02 | Phase 2 | Pending |
 | LOOP-03 | Phase 2 | Pending |
@@ -119,7 +119,7 @@
 | MISSION-04 | Phase 1 | Complete |
 | MISSION-05 | Phase 1 | Complete |
 | MISSION-06 | Phase 1 | Complete |
-| MISSION-07 | Phase 2 | Pending |
+| MISSION-07 | Phase 2 | Complete |
 | EVENT-01 | Phase 1 | Complete |
 | EVENT-02 | Phase 1 | Complete |
 | EVENT-03 | Phase 1 | Complete |

@@ -6,14 +6,14 @@ current_phase: 2
 current_phase_name: 플레이 가능한 핵심 루프 & 설정
 status: executing
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-25T11:04:59.499Z"
+last_updated: "2026-07-25T12:17:57.848Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 5
   percent: 25
 ---
 
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 ## Current Position
 
 Phase: 2 (플레이 가능한 핵심 루프 & 설정) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 2
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-07-25 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 1 P1 | 1 session | 3 tasks | 26 files |
 | Phase 01 P02 | 9m | 3 tasks | 14 files |
 | Phase 01 P03 | 1 session | 3 tasks | 9 files |
+| Phase 02 P02 | 6 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Added .npmrc legacy-peer-deps to resolve @hookform/resolvers optional valibot peer conflict
 - [Phase ?]: Split vite.config.ts / vitest.config.ts to avoid Vitest bundled-Vite type clash (Vite 8 vs Vitest 3.2.4)
 - [Phase ?]: Added @testing-library/dom@10.4.1 explicitly (react peer not auto-installed under legacy-peer-deps)
+- [Phase ?]: 02-02: useGameStore is the single engine-content bridge; reset() returns to setup
+- [Phase ?]: 02-02: App gains an additive 편집기/게임 top-level switch; Phase-1 Tabs untouched
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T09:53:03.986Z
+Last session: 2026-07-25T12:17:35.655Z
 Stopped at: Phase 1 UI-SPEC approved
 Resume file: .planning/phases/01-foundation-content-editor/01-UI-SPEC.md
