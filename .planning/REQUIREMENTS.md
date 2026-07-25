@@ -41,19 +41,19 @@
 
 ### 이벤트 칸 관리 (EVENT)
 
-- [ ] **EVENT-01**: 사용자는 새 이벤트(이름, 효과 종류, 효과 값, 발생 확률)를 추가할 수 있다
-- [ ] **EVENT-02**: 사용자는 기존 이벤트를 수정할 수 있다
-- [ ] **EVENT-03**: 사용자는 이벤트를 삭제할 수 있다
-- [ ] **EVENT-04**: 사용자는 이벤트의 발생 확률(가중치)을 변경할 수 있다
-- [ ] **EVENT-05**: 지원 이벤트 효과 종류에는 보너스, 함정, 앞으로 N칸, 뒤로 N칸, 한 번 더가 포함된다
+- [x] **EVENT-01**: 사용자는 새 이벤트(이름, 효과 종류, 효과 값, 발생 확률)를 추가할 수 있다
+- [x] **EVENT-02**: 사용자는 기존 이벤트를 수정할 수 있다
+- [x] **EVENT-03**: 사용자는 이벤트를 삭제할 수 있다
+- [x] **EVENT-04**: 사용자는 이벤트의 발생 확률(가중치)을 변경할 수 있다
+- [x] **EVENT-05**: 지원 이벤트 효과 종류에는 보너스, 함정, 앞으로 N칸, 뒤로 N칸, 한 번 더가 포함된다
 - [ ] **EVENT-06**: 보드 칸에 이벤트가 배치되는 방식은 설정된 확률/가중치를 따른다
 
 ### 데이터 저장 (DATA)
 
 - [x] **DATA-01**: 미션·이벤트·설정 데이터는 브라우저(localStorage)에 자동 저장되어 새로고침 후에도 유지된다
-- [ ] **DATA-02**: 사용자는 미션·이벤트 목록을 파일(JSON)로 내보내기 할 수 있다
-- [ ] **DATA-03**: 사용자는 파일(JSON)에서 미션·이벤트 목록을 가져오기(복원) 할 수 있다
-- [ ] **DATA-04**: 가져오기 시 데이터 형식/버전을 검증해, 잘못된 파일은 기존 데이터를 덮어쓰지 않고 오류를 안내한다
+- [x] **DATA-02**: 사용자는 미션·이벤트 목록을 파일(JSON)로 내보내기 할 수 있다
+- [x] **DATA-03**: 사용자는 파일(JSON)에서 미션·이벤트 목록을 가져오기(복원) 할 수 있다
+- [x] **DATA-04**: 가져오기 시 데이터 형식/버전을 검증해, 잘못된 파일은 기존 데이터를 덮어쓰지 않고 오류를 안내한다
 
 ### 디자인 & 아트 (ART)
 
@@ -120,16 +120,16 @@
 | MISSION-05 | Phase 1 | Complete |
 | MISSION-06 | Phase 1 | Complete |
 | MISSION-07 | Phase 2 | Pending |
-| EVENT-01 | Phase 1 | Pending |
-| EVENT-02 | Phase 1 | Pending |
-| EVENT-03 | Phase 1 | Pending |
-| EVENT-04 | Phase 1 | Pending |
-| EVENT-05 | Phase 1 | Pending |
+| EVENT-01 | Phase 1 | Complete |
+| EVENT-02 | Phase 1 | Complete |
+| EVENT-03 | Phase 1 | Complete |
+| EVENT-04 | Phase 1 | Complete |
+| EVENT-05 | Phase 1 | Complete |
 | EVENT-06 | Phase 2 | Pending |
 | DATA-01 | Phase 1 | Complete |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
 | ART-01 | Phase 4 | Pending |
 | ART-02 | Phase 4 | Pending |
 | ART-03 | Phase 4 | Pending |

@@ -13,7 +13,7 @@
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: 기반 & 콘텐츠 편집기** - 강사가 미션·이벤트를 CRUD·검색·편집하고, localStorage 자동 저장 + JSON 내보내기/가져오기로 백업한다
+- [x] **Phase 1: 기반 & 콘텐츠 편집기** - 강사가 미션·이벤트를 CRUD·검색·편집하고, localStorage 자동 저장 + JSON 내보내기/가져오기로 백업한다 (completed 2026-07-25)
 - [ ] **Phase 2: 플레이 가능한 핵심 루프 & 설정** - 검증된 헤드리스 엔진 위에서 단순 버튼 UI로 전체 게임(카드→판정→주사위→이동→이벤트→승리)을 처음부터 끝까지 플레이한다
 - [ ] **Phase 3: 3D 보드 & 실제 게임 UI** - 검증된 루프를 Three.js 3D 보드·토큰·주사위·카드 연출과 아동용 큰 버튼 UI로 시각화한다(캐릭터는 플레이스홀더 토큰)
 - [ ] **Phase 4: 닌텐도풍 아트 & 캐릭터** - 밝고 경쾌한 아트, 표정 있는 남/여 줄넘기 캐릭터, 오리지널 "파워점핑" 로고로 마감한다
@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. 편집한 미션·이벤트·설정이 localStorage에 자동 저장되어 새로고침 후에도 그대로 유지된다
   4. 강사가 미션·이벤트 목록을 JSON 파일로 내보내고 다시 가져올 수 있으며, 형식/버전이 잘못된 파일은 기존 데이터를 덮어쓰지 않고 오류가 안내된다
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 **UI hint**: yes
 
 Plans:
@@ -47,7 +47,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — 이벤트 편집기(추가/수정/삭제, 효과/가중치 실시간 정규화 %) + JSON 내보내기/가져오기(Zod 검증·잘못된 파일은 덮어쓰지 않고 오류 안내)
+- [x] 01-03-PLAN.md — 이벤트 편집기(추가/수정/삭제, 효과/가중치 실시간 정규화 %) + JSON 내보내기/가져오기(Zod 검증·잘못된 파일은 덮어쓰지 않고 오류 안내)
 
 ### Phase 2: 플레이 가능한 핵심 루프 & 설정
 
@@ -121,7 +121,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 기반 & 콘텐츠 편집기 | 2/3 | In Progress|  |
+| 1. 기반 & 콘텐츠 편집기 | 3/3 | Complete   | 2026-07-25 |
 | 2. 플레이 가능한 핵심 루프 & 설정 | 0/3 | Not started | - |
 | 3. 3D 보드 & 실제 게임 UI | 0/2 | Not started | - |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |
