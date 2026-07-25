@@ -31,12 +31,12 @@
 
 ### 미션 관리 (MISSION)
 
-- [ ] **MISSION-01**: 사용자는 새 줄넘기 미션(이름, 설명, 난이도, 카테고리)을 추가할 수 있다
-- [ ] **MISSION-02**: 사용자는 기존 미션의 내용을 수정할 수 있다
-- [ ] **MISSION-03**: 사용자는 미션을 삭제할 수 있다
-- [ ] **MISSION-04**: 사용자는 이름/카테고리 등으로 미션을 검색할 수 있다
-- [ ] **MISSION-05**: 사용자는 미션의 난이도를 변경할 수 있다 (예: 쉬움/보통/어려움)
-- [ ] **MISSION-06**: 사용자는 미션의 카테고리를 변경할 수 있다
+- [x] **MISSION-01**: 사용자는 새 줄넘기 미션(이름, 설명, 난이도, 카테고리)을 추가할 수 있다
+- [x] **MISSION-02**: 사용자는 기존 미션의 내용을 수정할 수 있다
+- [x] **MISSION-03**: 사용자는 미션을 삭제할 수 있다
+- [x] **MISSION-04**: 사용자는 이름/카테고리 등으로 미션을 검색할 수 있다
+- [x] **MISSION-05**: 사용자는 미션의 난이도를 변경할 수 있다 (예: 쉬움/보통/어려움)
+- [x] **MISSION-06**: 사용자는 미션의 카테고리를 변경할 수 있다
 - [ ] **MISSION-07**: 카드 뽑기는 이 미션 목록에서 뽑으며, 목록이 비어 있으면 게임 시작 전 안내한다
 
 ### 이벤트 칸 관리 (EVENT)
@@ -113,12 +113,12 @@
 | LOOP-08 | Phase 2 | Pending |
 | LOOP-09 | Phase 2 | Pending |
 | LOOP-10 | Phase 2 | Pending |
-| MISSION-01 | Phase 1 | Pending |
-| MISSION-02 | Phase 1 | Pending |
-| MISSION-03 | Phase 1 | Pending |
-| MISSION-04 | Phase 1 | Pending |
-| MISSION-05 | Phase 1 | Pending |
-| MISSION-06 | Phase 1 | Pending |
+| MISSION-01 | Phase 1 | Complete |
+| MISSION-02 | Phase 1 | Complete |
+| MISSION-03 | Phase 1 | Complete |
+| MISSION-04 | Phase 1 | Complete |
+| MISSION-05 | Phase 1 | Complete |
+| MISSION-06 | Phase 1 | Complete |
 | MISSION-07 | Phase 2 | Pending |
 | EVENT-01 | Phase 1 | Pending |
 | EVENT-02 | Phase 1 | Pending |
