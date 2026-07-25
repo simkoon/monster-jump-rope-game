@@ -7,6 +7,8 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Mesh, SphereGeometry, MeshStandardMaterial } from 'three';
+import { RoundedBoxGeometry } from 'three-stdlib';
+import { Float } from '@react-three/drei';
 import { FACE_UP_EULER, type DieFace } from '../diceRotation';
 
 // Spin duration (UI-SPEC). Exported so the watchdog budget can include it.
@@ -56,6 +58,8 @@ export default function Dice({ face, rollId, onSettled }: DiceProps) {
   // Shared pip geometry + material (D-08 — one sphere geo reused for every pip).
   const pipGeo = useMemo(() => new SphereGeometry(PIP_R, 10, 10), []);
   const pipMat = useMemo(() => new MeshStandardMaterial({ color: '#173A57' }), []);
+  // Rounded, glossy die body (replaces the sharp cube). Same BOX size → face/pip math holds.
+  const bodyGeo = useMemo(() => new RoundedBoxGeometry(BOX, BOX, BOX, 5, 0.14), []);
   const pips = useMemo(() => {
     const out: Array<{ key: string; pos: [number, number, number] }> = [];
     (Object.keys(PIP_GRID) as unknown as DieFace[]).forEach((f) => {
@@ -70,7 +74,8 @@ export default function Dice({ face, rollId, onSettled }: DiceProps) {
   useEffect(() => () => {
     pipGeo.dispose();
     pipMat.dispose();
-  }, [pipGeo, pipMat]);
+    bodyGeo.dispose();
+  }, [pipGeo, pipMat, bodyGeo]);
 
   // Spin bookkeeping (refs only).
   const prevRollRef = useRef(rollId);
@@ -128,12 +133,15 @@ export default function Dice({ face, rollId, onSettled }: DiceProps) {
   });
 
   return (
-    <mesh ref={meshRef} name="dice" position={DICE_POS}>
-      <boxGeometry args={[BOX, BOX, BOX]} />
-      <meshStandardMaterial color="#FFFFFF" />
-      {pips.map((p) => (
-        <mesh key={p.key} position={p.pos} geometry={pipGeo} material={pipMat} />
-      ))}
-    </mesh>
+    // Gentle idle bob (rotationIntensity 0 — the spin logic owns rotation for face snapping).
+    <Float speed={2} rotationIntensity={0} floatIntensity={0.8}>
+      <mesh ref={meshRef} name="dice" position={DICE_POS} castShadow>
+        <primitive object={bodyGeo} attach="geometry" />
+        <meshStandardMaterial color="#FFFDF4" roughness={0.28} metalness={0.12} />
+        {pips.map((p) => (
+          <mesh key={p.key} position={p.pos} geometry={pipGeo} material={pipMat} />
+        ))}
+      </mesh>
+    </Float>
   );
 }

@@ -5,7 +5,7 @@
 // final hop's arrival it calls onArrive → the orchestrator fires ANIM_DONE (D-07).
 import { useRef, useLayoutEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, Float } from '@react-three/drei';
 import { Group, Vector3 } from 'three';
 import type { Participant } from '../../engine/types';
 import { squarePosition } from '../boardLayout';
@@ -154,24 +154,31 @@ export default function Token({ participant, index, active, move, run, onArrive 
 
   return (
     <group ref={groupRef} name="token">
-      {/* Low-poly placeholder pawn: cylinder body + sphere head. Phase 4 swaps the mesh. */}
-      <mesh position={[0, 0.28, 0]} castShadow>
-        <cylinderGeometry args={[0.22, 0.3, 0.55, 16]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={active ? '#22B0F2' : '#000000'}
-          emissiveIntensity={active ? 0.5 : 0}
-        />
-      </mesh>
-      <mesh position={[0, 0.66, 0]} castShadow>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
+      {/* Cute rounded placeholder pawn (Phase 4 swaps in the real character mesh). The pawn
+          bobs gently via <Float>; the ground ring stays put so the highlight reads clearly. */}
+      <Float speed={2.4} rotationIntensity={0.12} floatIntensity={0.4}>
+        {/* glossy rounded capsule body */}
+        <mesh position={[0, 0.34, 0]} castShadow>
+          <capsuleGeometry args={[0.24, 0.24, 8, 20]} />
+          <meshStandardMaterial
+            color={color}
+            roughness={0.28}
+            metalness={0.06}
+            emissive={active ? '#22B0F2' : '#000000'}
+            emissiveIntensity={active ? 0.28 : 0}
+          />
+        </mesh>
+        {/* glossy round head */}
+        <mesh position={[0, 0.74, 0]} castShadow>
+          <sphereGeometry args={[0.2, 24, 24]} />
+          <meshStandardMaterial color={color} roughness={0.22} metalness={0.06} />
+        </mesh>
+      </Float>
       {/* Active-turn highlight ring on the ground (sky glow). */}
       {active && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.34, 0.44, 24]} />
-          <meshStandardMaterial color="#22B0F2" emissive="#22B0F2" emissiveIntensity={0.6} />
+          <ringGeometry args={[0.34, 0.46, 32]} />
+          <meshStandardMaterial color="#22B0F2" emissive="#22B0F2" emissiveIntensity={0.7} />
         </mesh>
       )}
       {/* Floating name label — color-independent identity (a11y). Skipped when there is no

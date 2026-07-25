@@ -5,7 +5,7 @@
 // via the key). The scene GRAPH lives in <SceneContents> so @react-three/test-renderer can
 // mount it without a WebGL <Canvas> (Pitfall 3).
 import { Canvas } from '@react-three/fiber';
-import { Bounds } from '@react-three/drei';
+import { Bounds, ContactShadows } from '@react-three/drei';
 import type { Participant } from '../../engine/types';
 import BoardTiles from './BoardTiles';
 import Token, { type MoveSpec } from './Token';
@@ -50,8 +50,10 @@ export function SceneContents(props: BoardSceneProps) {
   } = props;
   return (
     <>
-      <hemisphereLight intensity={0.9} />
-      <directionalLight position={[5, 10, 5]} intensity={1.1} />
+      <hemisphereLight intensity={0.75} color="#ffffff" groundColor="#cfe4f5" />
+      <directionalLight position={[6, 12, 6]} intensity={1.15} color="#fff6e0" />
+      {/* Cool rim light for a fresh toy-plastic pop (kawaii/Nintendo lighting). */}
+      <pointLight position={[-6, 6, -4]} intensity={0.45} color="#8fd0ff" />
       {/* Auto-frame the whole path; remount (key) re-fits when the board length changes.
           Only the static tiles drive framing, so token hops never cause refit jitter. */}
       <Bounds key={boardLength} fit clip margin={1.2}>
@@ -86,6 +88,18 @@ export default function BoardScene(props: BoardSceneProps) {
       onCreated={({ gl }) => gl.setClearColor(themeClearColor())}
     >
       <SceneContents {...props} />
+      {/* Soft grounding shadow under the whole board — big polish, no light shadow-maps
+          needed. Kept in the Canvas (not SceneContents) so the headless scene test, which
+          mounts SceneContents without WebGL, never instantiates its render target. */}
+      <ContactShadows
+        position={[0, -0.14, 0]}
+        scale={40}
+        blur={2.6}
+        far={4}
+        opacity={0.34}
+        resolution={512}
+        color="#123a58"
+      />
     </Canvas>
   );
 }
