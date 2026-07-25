@@ -37,7 +37,7 @@
 }
 
 * { box-sizing:border-box; }
-body { margin:0; }
+body { margin:0; font-family:var(--font); color:var(--ink); background:var(--bg); -webkit-text-size-adjust:100%; }
 .app { font-family:var(--font); color:var(--ink); background:
     radial-gradient(1200px 500px at 80% -10%, rgba(30,155,255,.18), transparent 60%),
     radial-gradient(900px 400px at -10% 110%, rgba(255,194,46,.18), transparent 60%),
