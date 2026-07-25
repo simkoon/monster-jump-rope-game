@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: 기반 & 콘텐츠 편집기** - 강사가 미션·이벤트를 CRUD·검색·편집하고, localStorage 자동 저장 + JSON 내보내기/가져오기로 백업한다 (completed 2026-07-25)
 - [x] **Phase 2: 플레이 가능한 핵심 루프 & 설정** - 검증된 헤드리스 엔진 위에서 단순 버튼 UI로 전체 게임(카드→판정→주사위→이동→이벤트→승리)을 처음부터 끝까지 플레이한다 (completed 2026-07-25)
-- [ ] **Phase 3: 3D 보드 & 실제 게임 UI** - 검증된 루프를 Three.js 3D 보드·토큰·주사위·카드 연출과 아동용 큰 버튼 UI로 시각화한다(캐릭터는 플레이스홀더 토큰)
+- [x] **Phase 3: 3D 보드 & 실제 게임 UI** - 검증된 루프를 Three.js 3D 보드·토큰·주사위·카드 연출과 아동용 큰 버튼 UI로 시각화한다(캐릭터는 플레이스홀더 토큰) (completed 2026-07-25)
 - [ ] **Phase 4: 닌텐도풍 아트 & 캐릭터** - 밝고 경쾌한 아트, 표정 있는 남/여 줄넘기 캐릭터, 오리지널 "파워점핑" 로고로 마감한다
 
 ## Phase Details
@@ -92,7 +92,7 @@ Plans:
   3. 게임 전체 흐름(시작→플레이→결과)이 크고 단순하며 텍스트가 최소화된 아동용 버튼 UI로 조작된다
   4. 여러 게임을 연속으로 진행해도 3D 리소스 누수 없이(GPU 메모리 안정) 대상 태블릿에서 원활하게 동작한다
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 **UI hint**: yes
 
 Plans:
@@ -102,7 +102,7 @@ Plans:
 
 **Wave 2** *(03-01 완료 후 — 3D 슬라이스 위에 실제 UI)*
 
-- [ ] 03-02-PLAN.md — 실제 아동용 UI로 하네스 교체: game.css 토큰(--tap 72/--tap-sm 56/--hud-h 88 + 4-size 스케일), 플레이 HUD(큰 버튼·미션 카드·턴 HUD·주사위 결과), 설정/결과 리스킨, GameApp 라우팅, 하네스 삭제, 태블릿 성능/누수 점검 (ART-04)
+- [x] 03-02-PLAN.md — 실제 아동용 UI로 하네스 교체: game.css 토큰(--tap 72/--tap-sm 56/--hud-h 88 + 4-size 스케일), 플레이 HUD(큰 버튼·미션 카드·턴 HUD·주사위 결과), 설정/결과 리스킨, GameApp 라우팅, 하네스 삭제, 태블릿 성능/누수 점검 (ART-04)
 
 ### Phase 4: 닌텐도풍 아트 & 캐릭터
 
@@ -134,5 +134,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. 기반 & 콘텐츠 편집기 | 3/3 | Complete   | 2026-07-25 |
 | 2. 플레이 가능한 핵심 루프 & 설정 | 3/3 | Complete   | 2026-07-25 |
-| 3. 3D 보드 & 실제 게임 UI | 1/2 | In Progress|  |
+| 3. 3D 보드 & 실제 게임 UI | 2/2 | Complete   | 2026-07-25 |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |

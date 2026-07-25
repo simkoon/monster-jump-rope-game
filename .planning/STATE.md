@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 3
 current_phase_name: 3D 보드 & 실제 게임 UI
-status: executing
+status: verifying
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-25T14:41:06.844Z"
+last_updated: "2026-07-25T14:54:10.876Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 3 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
-  percent: 50
+  completed_plans: 8
+  percent: 75
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 Phase: 3 (3D 보드 & 실제 게임 UI) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-25 — Phase 3 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | 7 | 2 tasks | 5 files |
 | Phase 02 P03 | 7 | 2 tasks | 5 files |
 | Phase 03 P01 | 32 | 2 tasks | 19 files |
+| Phase 03 P02 | 6min | 2 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 03-01: R3F scene gates on a presentation busy flag (usePresentation) with a deadlock-proof watchdog; the pure engine stays unblocked (ANIM_DONE, D-07).
 - [Phase ?]: 03-01: App defaults to 게임 mode routing to GameApp; 편집기 reachable via the mode switch (D-10).
 - [Phase ?]: 03-01: R3F stack exact-pinned (three/@types/three 0.185.1 lockstep, Pitfall 5); no physics engine — tween dice (D-02/D-05).
+- [Phase 03-02]: HUD components are presentational (props-driven); PlayView owns store wiring + ANIM_DONE sequence
+- [Phase 03-02]: game.css declares only additive tokens (--tap/--tap-sm/--hud-h + 40/26/20/15), reusing Phase 1 hues verbatim (no palette fork)
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T14:40:32.867Z
+Last session: 2026-07-25T14:53:50.347Z
 Stopped at: Phase 1 UI-SPEC approved
 Resume file: .planning/phases/01-foundation-content-editor/01-UI-SPEC.md
