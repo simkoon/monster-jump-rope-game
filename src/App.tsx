@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useStore } from './store';
 import { normalizedPercents } from './lib/normalize';
+import type { Mission } from './schema';
 import Header from './components/Header';
 import Tabs, { type TabKey } from './components/Tabs';
 import MissionCard from './components/MissionCard';
+import MissionModal from './components/MissionModal';
 import EventCard from './components/EventCard';
 import Toast from './components/Toast';
 
@@ -11,6 +13,14 @@ export default function App() {
   const [tab, setTab] = useState<TabKey>('mission');
   const missions = useStore((s) => s.missions);
   const events = useStore((s) => s.events);
+
+  // Mission editor modal state (Task 3 relocates this into MissionTab).
+  const [missionOpen, setMissionOpen] = useState(false);
+  const [editingMission, setEditingMission] = useState<Mission | null>(null);
+  const openAddMission = () => {
+    setEditingMission(null);
+    setMissionOpen(true);
+  };
 
   // Tab counts always reflect the full, unfiltered lists (UI-SPEC).
   const missionCount = missions.length;
@@ -29,21 +39,28 @@ export default function App() {
       <main>
         <section className="panel">
           {tab === 'mission' ? (
-            missions.length ? (
-              <div className="grid">
-                {missions.map((m) => (
-                  <MissionCard key={m.id} mission={m} />
-                ))}
+            <>
+              <div className="toolbar">
+                <button className="add" type="button" onClick={openAddMission}>
+                  ＋ 새 미션
+                </button>
               </div>
-            ) : (
-              <div className="empty">
-                <div className="big" aria-hidden="true">
-                  🎴
+              {missions.length ? (
+                <div className="grid">
+                  {missions.map((m) => (
+                    <MissionCard key={m.id} mission={m} />
+                  ))}
                 </div>
-                <h3>아직 미션이 없어요</h3>
-                <p>‘＋ 새 미션’으로 첫 미션을 만들어요!</p>
-              </div>
-            )
+              ) : (
+                <div className="empty">
+                  <div className="big" aria-hidden="true">
+                    🎴
+                  </div>
+                  <h3>아직 미션이 없어요</h3>
+                  <p>‘＋ 새 미션’으로 첫 미션을 만들어요!</p>
+                </div>
+              )}
+            </>
           ) : events.length ? (
             <div className="grid">
               {events.map((e) => (
@@ -65,6 +82,11 @@ export default function App() {
         저장은 이 브라우저에 자동으로 됩니다(새로고침해도 유지). 다른 기기로 옮기거나 백업하려면{' '}
         <b>내보내기</b>로 파일을 저장하고, <b>가져오기</b>로 불러오세요.
       </footer>
+      <MissionModal
+        open={missionOpen}
+        mission={editingMission}
+        onClose={() => setMissionOpen(false)}
+      />
       <Toast />
     </div>
   );
