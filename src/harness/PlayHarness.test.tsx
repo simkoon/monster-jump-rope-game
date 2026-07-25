@@ -64,7 +64,8 @@ describe('PlayHarness — phase-driven loop', () => {
   });
 
   it('awaitingDraw → 카드 뽑기 button calls draw() (LOOP-01)', () => {
-    const drawSpy = vi.spyOn(useGameStore.getState(), 'draw');
+    // mockImplementation isolates the click from real state transitions.
+    const drawSpy = vi.spyOn(useGameStore.getState(), 'draw').mockImplementation(() => {});
     setGame(baseState({ phase: 'awaitingDraw' }));
     render(<PlayHarness />);
     fireEvent.click(screen.getByRole('button', { name: /카드 뽑기/ }));
@@ -72,7 +73,7 @@ describe('PlayHarness — phase-driven loop', () => {
   });
 
   it('awaitingJudgement shows mission name/desc/difficulty large + 성공/실패 (LOOP-02/03/04)', () => {
-    const judgeSpy = vi.spyOn(useGameStore.getState(), 'judge');
+    const judgeSpy = vi.spyOn(useGameStore.getState(), 'judge').mockImplementation(() => {});
     setGame(baseState({ phase: 'awaitingJudgement', card: card() }));
     render(<PlayHarness />);
     expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
@@ -85,7 +86,7 @@ describe('PlayHarness — phase-driven loop', () => {
   });
 
   it('awaitingRoll → 주사위 굴리기 button calls roll() (LOOP-05)', () => {
-    const rollSpy = vi.spyOn(useGameStore.getState(), 'roll');
+    const rollSpy = vi.spyOn(useGameStore.getState(), 'roll').mockImplementation(() => {});
     setGame(baseState({ phase: 'awaitingRoll', card: card() }));
     render(<PlayHarness />);
     fireEvent.click(screen.getByRole('button', { name: /주사위 굴리기/ }));
@@ -93,7 +94,7 @@ describe('PlayHarness — phase-driven loop', () => {
   });
 
   it('turnResolved shows roll + landing (from→to, label) and 다음 calls next() (LOOP-07)', () => {
-    const nextSpy = vi.spyOn(useGameStore.getState(), 'next');
+    const nextSpy = vi.spyOn(useGameStore.getState(), 'next').mockImplementation(() => {});
     setGame(
       baseState({
         phase: 'turnResolved',
@@ -102,7 +103,7 @@ describe('PlayHarness — phase-driven loop', () => {
       }),
     );
     render(<PlayHarness />);
-    expect(screen.getByText(/3/)).toBeInTheDocument(); // roll shown
+    expect(screen.getByText(/주사위/)).toHaveTextContent('3'); // roll shown
     expect(screen.getByText('보너스')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /다음/ }));
     expect(nextSpy).toHaveBeenCalledTimes(1);
@@ -130,7 +131,8 @@ describe('PlayHarness — phase-driven loop', () => {
       }),
     );
     render(<PlayHarness />);
-    expect(screen.getByText(/파랑팀/)).toBeInTheDocument();
+    // 파랑팀 shows in both the turn banner and the position list.
+    expect(screen.getAllByText(/파랑팀/).length).toBeGreaterThan(0);
     expect(screen.getByText(/영희/)).toBeInTheDocument(); // memberTurnIndex 1 → 영희
   });
 
