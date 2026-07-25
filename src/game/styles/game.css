@@ -1,0 +1,235 @@
+/* ============================================================
+   game.css — game-screen tokens + child play HUD (Phase 3, 03-02)
+   EXTENDS src/styles/index.css (Phase 1 approved tokens). Adds ONLY:
+   (1) larger tap-target spacing tokens, (2) a game-screen 4-size type
+   scale, and (3) game-screen component classes. NO new hues, radii, or
+   weights — every color/shadow/radius is inherited verbatim (UI-SPEC).
+   ============================================================ */
+
+:root {
+  /* Child + tablet tap-target tokens (UI-SPEC Spacing Scale — additive, ×4). */
+  --tap: 72px;      /* min height of every PRIMARY game button */
+  --tap-sm: 56px;   /* min height of SECONDARY controls */
+  --hud-h: 88px;    /* fixed height of the top turn-HUD bar */
+
+  /* Game-screen type scale — EXACTLY 4 sizes (UI-SPEC Typography). Scoped to
+     the game screen; the editor keeps its own 22/18/15/12 scale. */
+  --game-display: 40px; /* turn name, dice number, result title, winner */
+  --game-heading: 26px; /* mission name, event headline, result reason */
+  --game-body: 20px;    /* button labels, member sub-line, description */
+  --game-caption: 15px; /* difficulty badge, timer, 칸 suffix, hints */
+}
+
+/* ---- full-viewport play stage (NOT the 1080px editor container) ---- */
+.game-stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--ink);
+}
+
+/* The DOM HUD is an absolute overlay above the <Canvas>; pointer events pass
+   through the empty regions to keep the board visible, controls stay tappable. */
+.game-hud {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: max(var(--base, 16px), env(safe-area-inset-top))
+           max(var(--lg, 20px), env(safe-area-inset-right))
+           max(var(--lg, 20px), env(safe-area-inset-bottom))
+           max(var(--lg, 20px), env(safe-area-inset-left));
+  pointer-events: none;
+}
+.game-hud > * { pointer-events: auto; }
+
+/* ---- shared big game button (UI-SPEC Component Inventory) ---- */
+.game-btn {
+  min-height: var(--tap);
+  min-width: 200px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: var(--game-body);
+  color: #fff;
+  background: linear-gradient(160deg, var(--sky), var(--sky-deep));
+  border-radius: 20px;
+  padding: 0 24px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.08s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.game-btn:active { transform: translateY(2px); box-shadow: none; }
+.game-btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.game-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+/* Semantic fills — encode meaning; text label always present (color independence). */
+.game-btn--success { background: var(--grass); }
+.game-btn--danger { background: var(--coral); }
+.game-btn--neutral { background: var(--panel-2); color: var(--ink); border: 2px solid var(--line); }
+
+/* Secondary control (UI-SPEC --tap-sm). */
+.game-btn--sm {
+  min-height: var(--tap-sm);
+  min-width: 0;
+  font-size: var(--game-body);
+  font-weight: 800;
+  border-radius: var(--radius-sm);
+  padding: 0 18px;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 2px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.08s;
+}
+.game-btn--sm:active { transform: translateY(2px); box-shadow: none; }
+.game-btn--sm:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+/* ---- top turn HUD bar ---- */
+.game-topbar {
+  min-height: var(--hud-h);
+  display: flex;
+  align-items: center;
+  gap: var(--base, 16px);
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 12px var(--lg, 20px);
+}
+.game-turn-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sky) 14%, var(--panel));
+  border: 2px solid var(--sky);
+}
+.game-turn-name { font-size: var(--game-display); font-weight: 900; line-height: 1.1; }
+.game-turn-name .suffix { font-size: var(--game-caption); font-weight: 800; color: var(--ink-soft); }
+.game-turn-member { font-size: var(--game-body); font-weight: 800; color: var(--ink-soft); }
+.game-topbar .spacer { flex: 1; }
+.game-clock {
+  font-size: var(--game-caption);
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- bottom controls region ---- */
+.game-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--xl, 24px);
+}
+.game-controls {
+  display: flex;
+  gap: var(--xl, 24px);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ---- mission card overlay (centered) ---- */
+.game-mission-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--lg, 20px);
+  pointer-events: auto;
+}
+.game-mission-card {
+  background: var(--panel);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  padding: 32px;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--base, 16px);
+}
+.game-mission-name { font-size: var(--game-heading); font-weight: 900; line-height: 1.2; margin: 0; }
+.game-mission-desc { font-size: var(--game-body); font-weight: 800; color: var(--ink-soft); line-height: 1.35; margin: 0; }
+.game-diff-badge {
+  align-self: center;
+  font-size: var(--game-caption);
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 999px;
+  color: #fff;
+}
+.game-diff-badge.easy { background: var(--grass); }
+.game-diff-badge.normal { background: var(--sun); color: #5a3a00; }
+.game-diff-badge.hard { background: var(--coral); }
+.game-judge { display: flex; gap: var(--xl, 24px); justify-content: center; margin-top: var(--sm, 8px); }
+
+/* ---- dice result + move + event panel ---- */
+.game-resolved {
+  background: var(--panel);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--md, 12px);
+  min-width: 280px;
+}
+.game-roll { font-size: var(--game-display); font-weight: 900; margin: 0; font-variant-numeric: tabular-nums; }
+.game-move { font-size: var(--game-body); font-weight: 800; margin: 0; font-variant-numeric: tabular-nums; }
+.game-event {
+  font-size: var(--game-heading);
+  font-weight: 900;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.game-event.eff-forward { color: var(--grass); }
+.game-event.eff-backward { color: var(--coral); }
+.game-event.eff-extra { color: var(--grape); }
+.game-event-chip {
+  font-size: var(--game-caption);
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: #fff;
+}
+.game-event-chip.bonus { background: var(--grape); }
+.game-event-chip.trap { background: var(--coral); }
+
+/* ---- position readout strip ---- */
+.game-positions {
+  list-style: none;
+  margin: var(--base, 16px) 0 0;
+  padding: 8px 14px;
+  display: flex;
+  gap: var(--base, 16px);
+  flex-wrap: wrap;
+  justify-content: center;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--game-body);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.game-positions .is-current { color: var(--sky); font-weight: 900; }
+
+/* ---- reduced motion: index.css already kills transitions globally; restated
+     here for scope-local clarity and to keep press feedback instant (UI-SPEC). ---- */
+@media (prefers-reduced-motion: reduce) {
+  .game-btn,
+  .game-btn--sm { transition: none; }
+}

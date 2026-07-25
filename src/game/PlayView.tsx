@@ -1,27 +1,26 @@
-// src/game/PlayView.tsx — the playable 3D slice: <BoardScene> + a THIN phase-driven DOM
-// control overlay (the polished child HUD replaces this in 03-02). It orchestrates the
-// ANIM_DONE flow (D-07): pressing 주사위 굴리기 sets busy, calls the engine roll(), plays the
-// dice spin → then the token hop, and only clears busy (revealing the resolved panel + 다음)
-// when the token arrives. A watchdog guarantees busy can never stay stuck (Pitfall 1).
+// src/game/PlayView.tsx — the playable 3D slice: <BoardScene> + the child-facing DOM HUD
+// (03-02). It orchestrates the ANIM_DONE flow (D-07): pressing 주사위 굴리기 sets busy, calls
+// the engine roll(), plays the dice spin → then the token hop, and only clears busy
+// (revealing the resolved panel + 다음) when the token arrives. A watchdog guarantees busy
+// can never stay stuck (Pitfall 1).
 //
 // The countdown clock is DOM-owned and reused verbatim from the harness pattern (D-04): it
 // computes remaining ms from Date.now(), stops at gameOver, and clears on unmount (no leak).
+//
+// The thin 03-01 controls are replaced by the composed HUD: TurnHud (top), MissionOverlay
+// (centered card at awaitingJudgement), ControlsBar + DiceResultPanel (bottom), and the
+// PositionReadout strip. All big-button controls are gated by usePresentation.busy (ART-04).
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../harness/useGameStore';
 import { usePresentation } from './usePresentation';
 import BoardScene from './scene/BoardScene';
 import { type MoveSpec, HOP_S } from './scene/Token';
 import { DICE_S } from './scene/Dice';
-import type { Difficulty } from '../schema';
-
-const DIFF_LABEL: Record<Difficulty, string> = { easy: '쉬움', normal: '보통', hard: '어려움' };
-
-function formatClock(ms: number): string {
-  const total = Math.ceil(Math.max(0, ms) / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
+import TurnHud from './hud/TurnHud';
+import MissionOverlay from './hud/MissionOverlay';
+import ControlsBar from './hud/ControlsBar';
+import DiceResultPanel from './hud/DiceResultPanel';
+import PositionReadout from './hud/PositionReadout';
 
 // Animation sub-sequence within a single roll: dice spin → token hop → idle.
 type Seq = 'idle' | 'dice' | 'token';
@@ -110,7 +109,7 @@ export default function PlayView() {
   }
 
   return (
-    <div className="game-stage" style={{ position: 'relative', width: '100%', height: '100vh' }}>
+    <div className="game-stage">
       <BoardScene
         boardLength={config.boardLength}
         participants={config.participants}
@@ -124,89 +123,42 @@ export default function PlayView() {
       />
 
       {/* DOM HUD overlay — siblings of the Canvas (ART-04 big tap targets, a11y). */}
-      <div className="game-hud" aria-live="polite">
-        <header className="game-topbar">
-          {timeLimitMs != null && (
-            <span className="game-clock" aria-label="남은 시간">
-              ⏱️ {formatClock(remainingMs ?? timeLimitMs)}
-            </span>
-          )}
-          <button type="button" onClick={() => useGameStore.getState().end('manual')}>
-            지금 순위로 마치기
-          </button>
-        </header>
+      <div className="game-hud">
+        <TurnHud
+          currentName={current.name}
+          isTeam={isTeam}
+          activeMember={activeMember}
+          timeLimitMs={timeLimitMs}
+          remainingMs={remainingMs}
+          onManualEnd={() => useGameStore.getState().end('manual')}
+        />
 
-        <div className="game-turn-banner">
-          <strong>{current.name}</strong> 차례
-          {isTeam && (
-            <span className="game-member">
-              {' '}
-              — 이번엔 <strong>{activeMember}</strong> 님이 도전!
-            </span>
-          )}
-        </div>
-
-        {/* Phase-driven controls — hidden while busy so no double-tap skips the engine (D-07). */}
-        {!busy && p === 'awaitingDraw' && (
-          <section className="game-controls">
-            <button type="button" onClick={() => useGameStore.getState().draw()}>
-              🎴 카드 뽑기
-            </button>
-          </section>
-        )}
-
+        {/* Centered mission card + 성공/실패 at awaitingJudgement (hidden while busy). */}
         {!busy && p === 'awaitingJudgement' && card && (
-          <section className="game-controls game-mission">
-            <h2 className="game-mission-name">{card.mission.name}</h2>
-            {card.mission.desc && <p className="game-mission-desc">{card.mission.desc}</p>}
-            <p className="game-mission-diff">{DIFF_LABEL[card.mission.diff]}</p>
-            <div className="game-judge">
-              <button type="button" onClick={() => useGameStore.getState().judge(true)}>
-                ✅ 성공
-              </button>
-              <button type="button" onClick={() => useGameStore.getState().judge(false)}>
-                ❌ 실패
-              </button>
-            </div>
-          </section>
+          <MissionOverlay
+            mission={card.mission}
+            onJudge={(success) => useGameStore.getState().judge(success)}
+          />
         )}
 
-        {!busy && p === 'awaitingRoll' && (
-          <section className="game-controls">
-            <button type="button" onClick={handleRoll}>
-              🎲 주사위 굴리기
-            </button>
-          </section>
-        )}
-
-        {!busy && p === 'turnResolved' && lastLanding && (
-          <section className="game-controls game-resolved">
-            <p className="game-roll">
-              🎲 <strong>{lastRoll}</strong>
-            </p>
-            <p className="game-move">
-              {lastLanding.from}칸 → <strong>{lastLanding.to}칸</strong>
-            </p>
-            {lastLanding.eff === 'forward' && (
-              <p className="game-event eff-forward">➡️ 앞으로!</p>
+        {/* Bottom controls region: dice result (polite live) + phase-driven buttons. */}
+        <div className="game-bottom">
+          <div aria-live="polite">
+            {!busy && p === 'turnResolved' && lastLanding && (
+              <DiceResultPanel lastRoll={lastRoll} lastLanding={lastLanding} />
             )}
-            {lastLanding.eff === 'backward' && (
-              <p className="game-event eff-backward">⬅️ 뒤로!</p>
-            )}
-            {lastLanding.extraTurn && <p className="game-event eff-extra">🔁 한 번 더!</p>}
-            <button type="button" onClick={() => useGameStore.getState().next()}>
-              다음 ➡️
-            </button>
-          </section>
-        )}
+          </div>
 
-        <ol className="game-positions">
-          {config.participants.map((pt, i) => (
-            <li key={pt.id} className={i === currentIndex ? 'is-current' : undefined}>
-              {pt.name} — {pt.position}칸
-            </li>
-          ))}
-        </ol>
+          <ControlsBar
+            phase={p}
+            busy={busy}
+            onDraw={() => useGameStore.getState().draw()}
+            onRoll={handleRoll}
+            onNext={() => useGameStore.getState().next()}
+          />
+
+          <PositionReadout participants={config.participants} currentIndex={currentIndex} />
+        </div>
       </div>
     </div>
   );
