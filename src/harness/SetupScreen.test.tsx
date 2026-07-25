@@ -39,10 +39,14 @@ describe('SetupScreen', () => {
     setMissions([mission('a')]);
     render(<SetupScreen />);
     expect(screen.getByText('파워점핑')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '개인전' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '팀전' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '짧게' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '보통' })).toBeInTheDocument();
+    // Mode + preset segmented controls are present as labeled groups...
+    expect(screen.getByRole('group', { name: '게임 모드' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '보드 길이' })).toBeInTheDocument();
+    // ...with all four toggle labels rendered (selected toggles resolve by text,
+    // an accessible-name quirk of the pressed-button markup).
+    for (const label of ['개인전', '팀전', '짧게', '보통']) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
   it('team mode reveals member-name inputs and starts a shared-token game (D-01)', () => {
