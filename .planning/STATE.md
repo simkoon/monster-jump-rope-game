@@ -1,0 +1,87 @@
+---
+gsd_state_version: '1.0'  # placeholder; syncStateFrontmatter overwrites on first state.* call
+status: planning
+progress:
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 10
+  completed_plans: 0
+  percent: 0
+---
+
+# Project State
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-07-25)
+
+**Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
+**Current focus:** Phase 1 — 기반 & 콘텐츠 편집기
+
+## Current Position
+
+Phase: 1 of 4 (기반 & 콘텐츠 편집기)
+Plan: 0 of 3 in current phase
+Status: Ready to plan
+Last activity: 2026-07-25 — ROADMAP.md created, 38 v1 requirements mapped across 4 phases
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: — min
+- Total execution time: 0.0 hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: —
+
+*Updated after each plan completion*
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [Roadmap]: 헤드리스 게임 엔진을 3D 이전에 검증(Phase 2가 3D 없이 플레이 가능) — 프로젝트 최대 리스크 감소책.
+- [Roadmap]: 콘텐츠 편집기(Phase 1)를 게임 루프보다 먼저 — 미션 없이는 카드를 뽑을 수 없고, 편집이 핵심 가치.
+- [Roadmap]: 3D 캐릭터 아트는 Phase 4로 시간 상자 격리 — 플레이 가능 루프를 절대 막지 않도록.
+
+### Pending Todos
+
+[From .planning/todos/pending/ — ideas captured during sessions]
+
+None yet.
+
+### Blockers/Concerns
+
+[Issues that affect future work]
+
+- [Roadmap]: REQUIREMENTS.md 헤더가 "34 total"로 기재되어 있으나 실제 열거된 v1 요구사항은 38개(SETUP 6 + LOOP 10 + MISSION 7 + EVENT 6 + DATA 4 + ART 5). 로드맵은 38개 전부를 매핑함. 헤더 수치 정정 필요.
+- [Phase 1]: 이벤트 확률/가중치 입력·정규화 UX 모델 미정 (연구: --research-phase 대상).
+- [Phase 3]: R3F vs 바닐라 Three.js 및 dispose/ANIM_DONE 패턴 확정 필요. 대상 태블릿 사양 확보로 성능 예산 설정 필요.
+- [Phase 2]: 승리 조건(정확 도착 vs 초과 통과, 동시 도착 무승부) 엔진 설계에서 확정 필요.
+
+## Deferred Items
+
+Items acknowledged and carried forward from previous milestone close:
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| *(none)* | | | |
+
+## Session Continuity
+
+Last session: 2026-07-25
+Stopped at: ROADMAP.md 및 STATE.md 생성, REQUIREMENTS.md traceability 갱신
+Resume file: None

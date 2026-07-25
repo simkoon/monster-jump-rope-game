@@ -97,13 +97,52 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (로드맵 생성 시 채워짐) | — | Pending |
+| SETUP-01 | Phase 2 | Pending |
+| SETUP-02 | Phase 2 | Pending |
+| SETUP-03 | Phase 2 | Pending |
+| SETUP-04 | Phase 2 | Pending |
+| SETUP-05 | Phase 2 | Pending |
+| SETUP-06 | Phase 2 | Pending |
+| LOOP-01 | Phase 2 | Pending |
+| LOOP-02 | Phase 2 | Pending |
+| LOOP-03 | Phase 2 | Pending |
+| LOOP-04 | Phase 2 | Pending |
+| LOOP-05 | Phase 2 | Pending |
+| LOOP-06 | Phase 3 | Pending |
+| LOOP-07 | Phase 2 | Pending |
+| LOOP-08 | Phase 2 | Pending |
+| LOOP-09 | Phase 2 | Pending |
+| LOOP-10 | Phase 2 | Pending |
+| MISSION-01 | Phase 1 | Pending |
+| MISSION-02 | Phase 1 | Pending |
+| MISSION-03 | Phase 1 | Pending |
+| MISSION-04 | Phase 1 | Pending |
+| MISSION-05 | Phase 1 | Pending |
+| MISSION-06 | Phase 1 | Pending |
+| MISSION-07 | Phase 2 | Pending |
+| EVENT-01 | Phase 1 | Pending |
+| EVENT-02 | Phase 1 | Pending |
+| EVENT-03 | Phase 1 | Pending |
+| EVENT-04 | Phase 1 | Pending |
+| EVENT-05 | Phase 1 | Pending |
+| EVENT-06 | Phase 2 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| ART-01 | Phase 4 | Pending |
+| ART-02 | Phase 4 | Pending |
+| ART-03 | Phase 4 | Pending |
+| ART-04 | Phase 3 | Pending |
+| ART-05 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 34 total
-- Mapped to phases: 0 (로드맵 생성 대기)
-- Unmapped: 34 ⚠️
+- v1 requirements: 38 total (열거된 ID 기준 — SETUP 6 + LOOP 10 + MISSION 7 + EVENT 6 + DATA 4 + ART 5)
+- Mapped to phases: 38 ✓
+- Unmapped: 0 ✓
+
+> 참고: 이전 헤더에 "34 total"로 기재되어 있었으나 실제 열거된 v1 요구사항 ID는 38개다. 로드맵은 38개 전부를 정확히 한 phase씩에 매핑했다. (Phase 1: 15, Phase 2: 17, Phase 3: 2, Phase 4: 4)
 
 ---
 *Requirements defined: 2026-07-25*
-*Last updated: 2026-07-25 after initial definition*
+*Last updated: 2026-07-25 after roadmap traceability mapping*
