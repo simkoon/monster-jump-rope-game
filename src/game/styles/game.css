@@ -55,24 +55,25 @@
   font-weight: 900;
   font-size: var(--game-body);
   color: #fff;
-  background: linear-gradient(160deg, var(--sky), var(--sky-deep));
-  border-radius: 20px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sky) 80%, #fff), var(--sky) 52%, var(--sky-deep));
+  border-radius: 22px;
   padding: 0 24px;
-  box-shadow: var(--shadow-sm);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
+  box-shadow: var(--shadow-sm), var(--gloss);
   transition: transform 0.08s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
 }
-.game-btn:active { transform: translateY(2px); box-shadow: none; }
+.game-btn:active { transform: translateY(3px); box-shadow: var(--gloss); }
 .game-btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 .game-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
 
 /* Semantic fills — encode meaning; text label always present (color independence). */
-.game-btn--success { background: var(--grass); }
-.game-btn--danger { background: var(--coral); }
-.game-btn--neutral { background: var(--panel-2); color: var(--ink); border: 2px solid var(--line); }
+.game-btn--success { background: linear-gradient(180deg, color-mix(in srgb, var(--grass) 82%, #fff), var(--grass) 55%, color-mix(in srgb, var(--grass) 74%, #000)); }
+.game-btn--danger { background: linear-gradient(180deg, color-mix(in srgb, var(--coral) 84%, #fff), var(--coral) 55%, color-mix(in srgb, var(--coral) 74%, #000)); }
+.game-btn--neutral { background: var(--panel-2); color: var(--ink); border: 2px solid var(--line); box-shadow: var(--shadow-sm); text-shadow: none; }
 
 /* Secondary control (UI-SPEC --tap-sm). */
 .game-btn--sm {

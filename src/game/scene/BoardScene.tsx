@@ -30,9 +30,9 @@ function themeClearColor(): string {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-color-scheme: dark)').matches
   ) {
-    return '#0E1B2A';
+    return '#0C1A2B';
   }
-  return '#EAF3FC';
+  return '#E7F5FF';
 }
 
 // The scene graph WITHOUT <Canvas> — mounted directly by tests (no WebGL needed).

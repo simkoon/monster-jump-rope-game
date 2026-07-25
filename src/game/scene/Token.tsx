@@ -16,7 +16,7 @@ export const HOP_S = 0.18;
 // Fixed placeholder token colors, assigned by participant index (UI-SPEC color order).
 // Cycles at 6 (index % 6) for participants 7–8 — the <Html> name label guarantees
 // color-independent identity, so a repeated hue is acceptable (Open Question 1).
-export const TOKEN_COLORS = ['#1E9BFF', '#FF5A5A', '#26C97E', '#FFC22E', '#8B5CF6', '#FFA92E'] as const;
+export const TOKEN_COLORS = ['#22B0F2', '#FF5C7A', '#25D6A0', '#FFCB2E', '#9A7DFF', '#FF80B5'] as const;
 
 export function tokenColor(index: number): string {
   return TOKEN_COLORS[index % TOKEN_COLORS.length];
@@ -159,7 +159,7 @@ export default function Token({ participant, index, active, move, run, onArrive 
         <cylinderGeometry args={[0.22, 0.3, 0.55, 16]} />
         <meshStandardMaterial
           color={color}
-          emissive={active ? '#1E9BFF' : '#000000'}
+          emissive={active ? '#22B0F2' : '#000000'}
           emissiveIntensity={active ? 0.5 : 0}
         />
       </mesh>
@@ -171,7 +171,7 @@ export default function Token({ participant, index, active, move, run, onArrive 
       {active && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.34, 0.44, 24]} />
-          <meshStandardMaterial color="#1E9BFF" emissive="#1E9BFF" emissiveIntensity={0.6} />
+          <meshStandardMaterial color="#22B0F2" emissive="#22B0F2" emissiveIntensity={0.6} />
         </mesh>
       )}
       {/* Floating name label — color-independent identity (a11y). Skipped when there is no

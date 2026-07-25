@@ -41,13 +41,13 @@ export default function BoardTiles({ boardLength }: BoardTilesProps) {
         receiveShadow
       >
         <boxGeometry args={[1, 0.2, 1]} />
-        <meshStandardMaterial color="#F4F8FD" />
+        <meshStandardMaterial color="#F1F8FE" />
       </instancedMesh>
 
       {/* Finish tile — highlighted (--sun emissive) + flag label. */}
       <mesh name="finish-tile" position={[finish.x, 0, finish.z]} receiveShadow>
         <boxGeometry args={[1, 0.26, 1]} />
-        <meshStandardMaterial color="#FFC22E" emissive="#FFC22E" emissiveIntensity={0.45} />
+        <meshStandardMaterial color="#FFCB2E" emissive="#FFCB2E" emissiveIntensity={0.45} />
       </mesh>
       {typeof document !== 'undefined' && (
         <Html center distanceFactor={10} position={[finish.x, 0.6, finish.z]}>

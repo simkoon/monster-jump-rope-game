@@ -55,7 +55,7 @@ export default function Dice({ face, rollId, onSettled }: DiceProps) {
 
   // Shared pip geometry + material (D-08 — one sphere geo reused for every pip).
   const pipGeo = useMemo(() => new SphereGeometry(PIP_R, 10, 10), []);
-  const pipMat = useMemo(() => new MeshStandardMaterial({ color: '#16324A' }), []);
+  const pipMat = useMemo(() => new MeshStandardMaterial({ color: '#173A57' }), []);
   const pips = useMemo(() => {
     const out: Array<{ key: string; pos: [number, number, number] }> = [];
     (Object.keys(PIP_GRID) as unknown as DieFace[]).forEach((f) => {
