@@ -6,9 +6,9 @@ current_phase: 3
 current_phase_name: 3D 보드 & 실제 게임 UI
 status: verifying
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-25T14:54:10.876Z"
-last_activity: 2026-07-25
-last_activity_desc: Phase 3 execution started
+last_updated: "2026-07-26T00:00:00.000Z"
+last_activity: 2026-07-26
+last_activity_desc: "Quick task: 디자인 에셋 요구사항서 작성 (Phase 4 준비)"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -99,6 +99,12 @@ None yet.
 - [Phase 1]: 이벤트 확률/가중치 입력·정규화 UX 모델 미정 (연구: --research-phase 대상).
 - [Phase 3]: R3F vs 바닐라 Three.js 및 dispose/ANIM_DONE 패턴 확정 필요. 대상 태블릿 사양 확보로 성능 예산 설정 필요.
 - [Phase 2]: 승리 조건(정확 도착 vs 초과 통과, 동시 도착 무승부) 엔진 설계에서 확정 필요.
+
+## Quick Tasks Completed
+
+| Date | Slug | Outcome |
+|------|------|---------|
+| 2026-07-26 | design-asset-request | `.planning/ASSET-REQUEST.md` — Phase 4(ART-01/02/03/05) 디자인 에셋 요구사항서. 코드 실측 규격 고정, 표정=2×2 텍스처 아틀라스 계약, `Outfit` 슬롯 tint 계약, 미확정 7건 회신 대기 |
 
 ## Deferred Items
 
