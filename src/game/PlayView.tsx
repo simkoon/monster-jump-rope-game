@@ -1,8 +1,8 @@
 // src/game/PlayView.tsx — the playable 3D slice: <BoardScene> + the child-facing DOM HUD
 // (03-02). It orchestrates the ANIM_DONE flow (D-07): pressing 주사위 굴리기 sets busy, calls
-// the engine roll(), plays the dice spin → then the token hop, and only clears busy
-// (revealing the resolved panel + 다음) when the token arrives. A watchdog guarantees busy
-// can never stay stuck (Pitfall 1).
+// the engine roll(), plays the dice spin → the destination preview → then the token hop, and
+// only clears busy (revealing the resolved panel + 다음) when the token arrives. A watchdog
+// guarantees busy can never stay stuck (Pitfall 1).
 //
 // The countdown clock is DOM-owned and reused verbatim from the harness pattern (D-04): it
 // computes remaining ms from Date.now(), stops at gameOver, and clears on unmount (no leak).
@@ -16,14 +16,16 @@ import { usePresentation } from './usePresentation';
 import BoardScene from './scene/BoardScene';
 import { type MoveSpec, HOP_S } from './scene/Token';
 import { DICE_S } from './scene/Dice';
+import { PREVIEW_S } from './scene/MoveHighlight';
 import TurnHud from './hud/TurnHud';
 import MissionOverlay from './hud/MissionOverlay';
 import ControlsBar from './hud/ControlsBar';
 import DiceResultPanel from './hud/DiceResultPanel';
 import PositionReadout from './hud/PositionReadout';
 
-// Animation sub-sequence within a single roll: dice spin → token hop → idle.
-type Seq = 'idle' | 'dice' | 'token';
+// Animation sub-sequence within a single roll: dice spin → destination preview → token hop
+// → idle. The 'preview' beat is what makes the board readable BEFORE the token moves.
+type Seq = 'idle' | 'dice' | 'preview' | 'token';
 
 export default function PlayView() {
   const game = useGameStore((s) => s.game);
@@ -34,6 +36,14 @@ export default function PlayView() {
   const [seq, setSeq] = useState<Seq>('idle');
   const [move, setMove] = useState<MoveSpec | null>(null);
   const watchdogCancel = useRef<(() => void) | null>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPreviewTimer = () => {
+    if (previewTimer.current != null) {
+      clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+  };
 
   // DOM-owned countdown (Pitfall 1 / D-04). Re-arms on phase change; clears on unmount.
   const startedAtRef = useRef<number | null>(null);
@@ -57,8 +67,16 @@ export default function PlayView() {
     return () => clearInterval(id);
   }, [phase, timeLimitMs]);
 
-  // Clear any pending watchdog if the view unmounts mid-animation.
-  useEffect(() => () => watchdogCancel.current?.(), []);
+  // Clear any pending watchdog AND the preview timer if the view unmounts mid-animation.
+  // A winning turn unmounts PlayView (GameApp switches to ResultView) the moment the token
+  // arrives, so a surviving timer would setState on an unmounted component.
+  useEffect(
+    () => () => {
+      watchdogCancel.current?.();
+      if (previewTimer.current != null) clearTimeout(previewTimer.current);
+    },
+    [],
+  );
 
   if (!game) return null; // GameApp only mounts this with an active game.
 
@@ -85,10 +103,12 @@ export default function PlayView() {
     const to = g2.config.participants[idx].position;
     const afterRoll = from + roll;
     const hops = Math.abs(afterRoll - from) + Math.abs(to - afterRoll);
-    // Deadlock guard: dice spin + every hop + buffer (Pitfall 1).
+    // Deadlock guard: dice spin + destination preview + every hop (+ the store's buffer).
+    // PREVIEW_S MUST be included — omitting it makes the watchdog fire mid-hop, releasing busy
+    // early so the controls and the win screen pop up while the token is still moving.
     watchdogCancel.current = usePresentation
       .getState()
-      .startWatchdog(DICE_S * 1000 + hops * HOP_S * 1000);
+      .startWatchdog(DICE_S * 1000 + PREVIEW_S * 1000 + hops * HOP_S * 1000);
 
     const nextId = rollId + 1;
     setRollId(nextId);
@@ -96,16 +116,24 @@ export default function PlayView() {
     setSeq('dice');
   }
 
+  // The die has stopped → hold the token still and let the board show WHERE it is going for
+  // PREVIEW_S, then start the hop.
   function handleDiceSettled() {
-    setSeq('token');
+    clearPreviewTimer(); // defensive: a re-entrant settle must not stack timers
+    setSeq('preview');
+    previewTimer.current = setTimeout(() => {
+      previewTimer.current = null;
+      setSeq('token');
+    }, PREVIEW_S * 1000);
   }
 
   function handleTokenArrive() {
+    clearPreviewTimer();
     watchdogCancel.current?.();
     watchdogCancel.current = null;
     usePresentation.getState().signalAnimDone();
     setSeq('idle');
-    setMove(null);
+    setMove(null); // clearing the move also removes the highlight
   }
 
   return (
@@ -118,7 +146,7 @@ export default function PlayView() {
         runToken={seq === 'token'}
         // Never during 'dice': revealing the destination before the face is readable would
         // make the dice animation pointless (D-E).
-        highlight={seq === 'token' ? move : null}
+        highlight={seq === 'preview' || seq === 'token' ? move : null}
         rollId={rollId}
         face={lastRoll}
         onDiceSettled={handleDiceSettled}
