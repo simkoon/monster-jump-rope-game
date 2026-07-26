@@ -8,7 +8,7 @@ status: verifying
 stopped_at: Phase 1 UI-SPEC approved
 last_updated: "2026-07-26T00:00:00.000Z"
 last_activity: 2026-07-26
-last_activity_desc: "Quick task: 디자인 에셋 요구사항서 작성 (Phase 4 준비)"
+last_activity_desc: "Quick task 260726-lbq: 주사위 목적지 하이라이트 (LOOP-05/06/07)"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -84,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 03-01: R3F stack exact-pinned (three/@types/three 0.185.1 lockstep, Pitfall 5); no physics engine — tween dice (D-02/D-05).
 - [Phase 03-02]: HUD components are presentational (props-driven); PlayView owns store wiring + ANIM_DONE sequence
 - [Phase 03-02]: game.css declares only additive tokens (--tap/--tap-sm/--hud-h + 40/26/20/15), reusing Phase 1 hues verbatim (no palette fork)
+- [quick-lbq]: 목적지 하이라이트는 <Bounds> 밖에 마운트한다 — 안에 넣으면 롤마다 카메라가 리프레임된다
+- [quick-lbq]: planHighlight가 모든 반환 인덱스를 [0, boardLength]로 클램프한다 — 엔진은 오버슛 승리를 클램프하지 않으므로(D-03) 없으면 마커가 보드 밖에 생성된다
+- [quick-lbq]: 애니메이션 시간을 늘리는 변경은 반드시 PlayView의 startWatchdog 예산에 더한다 — 누락 시 watchdog이 홉 도중 busy를 조기 해제한다
 
 ### Pending Todos
 
@@ -105,6 +108,7 @@ None yet.
 | Date | Slug | Outcome |
 |------|------|---------|
 | 2026-07-26 | design-asset-request | `.planning/ASSET-REQUEST.md` — Phase 4(ART-01/02/03/05) 디자인 에셋 요구사항서. 코드 실측 규격 고정, 표정=2×2 텍스처 아틀라스 계약, `Outfit` 슬롯 tint 계약, 미확정 7건 회신 대기 |
+| 2026-07-26 | 260726-lbq-move-destination | 주사위 확정 → 토큰 이동 전 목적지 하이라이트(LOOP-05/06/07). `planHighlight` 순수 모델 + `MoveHighlight` 씬 레이어(경유 점·목적지 링·이벤트 핀·칸 라벨) + `PlayView` `preview` 비트. 182 tests green. 브라우저 human-check 5건 대기 |
 
 ## Deferred Items
 
@@ -116,6 +120,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T14:53:50.347Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-foundation-content-editor/01-UI-SPEC.md
+Last session: 2026-07-26
+Stopped at: Completed quick task 260726-lbq (move destination highlight) — browser human-check pending
+Resume file: .planning/quick/260726-lbq-move-destination/260726-lbq-SUMMARY.md
