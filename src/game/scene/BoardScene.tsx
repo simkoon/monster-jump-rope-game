@@ -10,6 +10,7 @@ import type { Participant } from '../../engine/types';
 import BoardTiles from './BoardTiles';
 import Token, { type MoveSpec } from './Token';
 import Dice from './Dice';
+import MoveHighlight from './MoveHighlight';
 
 export interface BoardSceneProps {
   boardLength: number;
@@ -17,6 +18,9 @@ export interface BoardSceneProps {
   activeIndex: number;
   move: MoveSpec | null; // the active token's pending move (null when idle)
   runToken: boolean; // false while the dice spins → active token holds at `from`
+  // The move whose destination the board should mark, or null. REQUIRED (not optional) so a
+  // missed wiring is a type error rather than a silently invisible feature.
+  highlight: MoveSpec | null;
   rollId: number;
   face: number | null;
   onDiceSettled: () => void;
@@ -43,6 +47,7 @@ export function SceneContents(props: BoardSceneProps) {
     activeIndex,
     move,
     runToken,
+    highlight,
     rollId,
     face,
     onDiceSettled,
@@ -59,6 +64,9 @@ export function SceneContents(props: BoardSceneProps) {
       <Bounds key={boardLength} fit clip margin={1.2}>
         <BoardTiles boardLength={boardLength} />
       </Bounds>
+      {/* OUTSIDE <Bounds> on purpose: inside, every roll would add the markers to the framing
+          set and the camera would re-fit mid-turn (visible jump). */}
+      <MoveHighlight move={highlight} boardLength={boardLength} visible={highlight !== null} />
       {participants.map((p, i) => (
         <Token
           key={p.id}

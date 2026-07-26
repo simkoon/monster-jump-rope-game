@@ -116,6 +116,9 @@ export default function PlayView() {
         activeIndex={currentIndex}
         move={move}
         runToken={seq === 'token'}
+        // Never during 'dice': revealing the destination before the face is readable would
+        // make the dice animation pointless (D-E).
+        highlight={seq === 'token' ? move : null}
         rollId={rollId}
         face={lastRoll}
         onDiceSettled={handleDiceSettled}

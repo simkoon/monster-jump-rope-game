@@ -42,7 +42,8 @@ function buildPath(from: number, afterRoll: number, to: number): number[] {
   return path;
 }
 
-function prefersReducedMotion(): boolean {
+// Exported so MoveHighlight reuses this exact check instead of re-implementing it.
+export function prefersReducedMotion(): boolean {
   return (
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
@@ -174,9 +175,11 @@ export default function Token({ participant, index, active, move, run, onArrive 
           <meshStandardMaterial color={color} roughness={0.22} metalness={0.06} />
         </mesh>
       </Float>
-      {/* Active-turn highlight ring on the ground (sky glow). */}
+      {/* Active-turn highlight ring on the ground (sky glow). y=0.22 — path tile tops sit at
+          0.15 and the finish tile at 0.19, so the old 0.02 ring was buried inside the tile
+          and never actually visible on screen. */}
       {active && (
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.22, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.34, 0.46, 32]} />
           <meshStandardMaterial color="#22B0F2" emissive="#22B0F2" emissiveIntensity={0.7} />
         </mesh>

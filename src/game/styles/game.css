@@ -334,3 +334,18 @@
   .game-btn,
   .game-btn--sm { transition: none; }
 }
+
+/* ---- 3D board overlay: move destination pill (reuses existing tokens only). ---- */
+.move-dest-label {
+  display: inline-block;
+  background: var(--panel);
+  color: var(--ink);
+  border: 2px solid var(--grape);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--game-caption);
+  font-weight: 900;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
