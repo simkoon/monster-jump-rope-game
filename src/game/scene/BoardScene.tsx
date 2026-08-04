@@ -14,6 +14,8 @@ import {
 } from '../animation';
 import { planHighlight } from '../moveHighlight';
 
+export type TokenPose = 'rope' | 'cheer' | 'hurt' | 'walk';
+
 export interface BoardSceneProps {
   boardLength: number;
   participants: Participant[];
@@ -23,16 +25,18 @@ export interface BoardSceneProps {
   highlight: MoveSpec | null;
   rollId: number;
   face: number | null;
+  tokenPoses?: Partial<Record<string, TokenPose>>;
+  walkFrame?: number;
   onDiceSettled: () => void;
   onTokenArrive: () => void;
 }
 
 const TOKEN_COLORS = ['#22B0F2', '#FF5C7A', '#25D6A0', '#FFCB2E', '#9A7DFF', '#FF80B5'] as const;
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/cc0/kenney`;
-const SPRITE_SRC: Record<Participant['character'], string> = {
-  boy: `${ASSET_BASE}/toon-characters/boy-rope.png`,
-  girl: `${ASSET_BASE}/toon-characters/girl-rope.png`,
-};
+function spriteSrc(character: Participant['character'], pose: TokenPose, walkFrame = 0): string {
+  const suffix = pose === 'walk' ? `walk${walkFrame % 4}` : pose === 'cheer' ? 'cheer0' : pose;
+  return `${ASSET_BASE}/toon-characters/${character}-${suffix}.png`;
+}
 
 function diceIcon(face: number | null): string | null {
   if (face == null || face < 1 || face > 6) return null;
@@ -56,22 +60,35 @@ function arrowFor(index: number, boardLength: number): string {
   }
 }
 
-function TokenSprite({ participant, index, active }: { participant: Participant; index: number; active: boolean }) {
+function TokenSprite({
+  participant,
+  index,
+  active,
+  pose,
+  walkFrame = 0,
+}: {
+  participant: Participant;
+  index: number;
+  active: boolean;
+  pose: TokenPose;
+  walkFrame?: number;
+}) {
   return (
     <span
-      className={`board-token ${active ? 'is-active' : ''}`}
+      className={`board-token is-${pose} ${active ? 'is-active' : ''}`}
       style={{ '--token-color': tokenColor(index) } as CSSProperties}
       aria-label={`${participant.name} 말`}
       title={participant.name}
+      data-pose={pose}
     >
-      <img src={SPRITE_SRC[participant.character]} alt="" draggable={false} />
+      <img src={spriteSrc(participant.character, pose, walkFrame)} alt="" draggable={false} />
       <span className="board-token-name">{participant.name}</span>
     </span>
   );
 }
 
 export function SceneContents(props: BoardSceneProps) {
-  const { boardLength, participants, activeIndex, move, runToken, highlight, rollId, face } = props;
+  const { boardLength, participants, activeIndex, move, runToken, highlight, rollId, face, tokenPoses = {}, walkFrame = 0 } = props;
   const rows = rowCountFor(boardLength);
   const displaySquares = useMemo(
     () => Array.from({ length: boardLength + 1 }, (_, square) => square),
@@ -123,7 +140,10 @@ export function SceneContents(props: BoardSceneProps) {
               {isDest && <span className="board-marker board-marker--dest" aria-hidden="true">도착</span>}
               {isFinal && <span className="board-marker board-marker--final" aria-hidden="true">이벤트</span>}
               <span className="board-token-stack">
-                {here.map(({ p, i }) => <TokenSprite key={p.id} participant={p} index={i} active={i === activeIndex} />)}
+                {here.map(({ p, i }) => {
+                  const pose: TokenPose = i === activeIndex && runToken ? 'walk' : tokenPoses[p.id] ?? 'rope';
+                  return <TokenSprite key={p.id} participant={p} index={i} active={i === activeIndex} pose={pose} walkFrame={walkFrame} />;
+                })}
               </span>
             </li>
           );
@@ -142,8 +162,19 @@ export function SceneContents(props: BoardSceneProps) {
 export default function BoardScene(props: BoardSceneProps) {
   const { move, runToken, rollId, face, boardLength, onDiceSettled, onTokenArrive } = props;
   const [activeSquare, setActiveSquare] = useState<number | null>(null);
+  const [walkFrame, setWalkFrame] = useState(0);
   const settledRollRef = useRef(0);
   const tokenMoveRef = useRef(0);
+  const diceSettledRef = useRef(onDiceSettled);
+  const tokenArriveRef = useRef(onTokenArrive);
+
+  useEffect(() => {
+    diceSettledRef.current = onDiceSettled;
+  }, [onDiceSettled]);
+
+  useEffect(() => {
+    tokenArriveRef.current = onTokenArrive;
+  }, [onTokenArrive]);
 
   useEffect(() => {
     if (!move) {
@@ -157,12 +188,12 @@ export default function BoardScene(props: BoardSceneProps) {
     if (rollId <= 0 || face == null || settledRollRef.current === rollId) return;
     settledRollRef.current = rollId;
     if (prefersReducedMotion()) {
-      onDiceSettled();
+      diceSettledRef.current();
       return;
     }
-    const id = setTimeout(onDiceSettled, DICE_S * 1000);
+    const id = setTimeout(() => diceSettledRef.current(), DICE_S * 1000);
     return () => clearTimeout(id);
-  }, [rollId, face, onDiceSettled]);
+  }, [rollId, face]);
 
   useEffect(() => {
     if (!move || !runToken || tokenMoveRef.current === move.id) return;
@@ -170,7 +201,7 @@ export default function BoardScene(props: BoardSceneProps) {
     const path = buildDisplayMovePath(move, boardLength);
     if (path.length === 0 || prefersReducedMotion()) {
       setActiveSquare(clampSquare(move.to, boardLength));
-      onTokenArrive();
+      tokenArriveRef.current();
       return;
     }
     let i = 0;
@@ -179,12 +210,23 @@ export default function BoardScene(props: BoardSceneProps) {
       i += 1;
       if (i >= path.length) {
         clearInterval(id);
-        onTokenArrive();
+        tokenArriveRef.current();
       }
     }, HOP_S * 1000);
     return () => clearInterval(id);
-  }, [move, runToken, boardLength, onTokenArrive]);
+  }, [move, runToken, boardLength]);
 
-  const sceneProps = activeSquare == null || !move ? props : { ...props, participants: props.participants.map((p, i) => i === props.activeIndex ? { ...p, position: activeSquare } : p) };
-  return <SceneContents {...sceneProps} />;
+  useEffect(() => {
+    if (!runToken) {
+      setWalkFrame(0);
+      return;
+    }
+    const id = setInterval(() => setWalkFrame((frame) => (frame + 1) % 4), Math.max(90, HOP_S * 500));
+    return () => clearInterval(id);
+  }, [runToken]);
+
+  const sceneProps = activeSquare == null || !move
+    ? props
+    : { ...props, participants: props.participants.map((p, i) => i === props.activeIndex ? { ...p, position: activeSquare } : p) };
+  return <SceneContents {...sceneProps} walkFrame={walkFrame} />;
 }

@@ -3,7 +3,7 @@
 // mapping, busy-gating (D-07), difficulty/event copy, aria-live regions, and that PRIMARY
 // buttons carry the --tap sizing class (game-btn).
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 
 // Mock the R3F Canvas root — PlayView renders the DOM HUD; the 3D scene is not under test.
 vi.mock('../scene/BoardScene', () => ({ default: () => null }));
@@ -81,7 +81,10 @@ beforeEach(() => {
   useGameStore.setState({ game: null, remainingMs: null, startBlockedReason: null });
   usePresentation.setState({ busy: false });
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('PlayView HUD — phase → visible controls (FSM, ART-04/D-07)', () => {
   it('awaitingDraw shows 🎴 카드 뽑기', () => {
@@ -130,6 +133,31 @@ describe('PlayView HUD — phase → visible controls (FSM, ART-04/D-07)', () =>
     usePresentation.setState({ busy: true });
     render(<PlayView />);
     expect(screen.queryByRole('button', { name: /성공/ })).toBeNull();
+  });
+
+  it('mission success shows a short presentation reaction before awaitingRoll', () => {
+    vi.useFakeTimers();
+    setGame(baseState({ phase: 'awaitingJudgement', card: card() }));
+    render(<PlayView />);
+    fireEvent.click(screen.getByRole('button', { name: /성공/ }));
+    expect(usePresentation.getState().busy).toBe(true);
+    expect(useGameStore.getState().game?.phase).toBe('awaitingJudgement');
+    act(() => vi.advanceTimersByTime(650));
+    expect(usePresentation.getState().busy).toBe(false);
+    expect(useGameStore.getState().game?.phase).toBe('awaitingRoll');
+  });
+
+  it('mission failure shows a short presentation reaction before advancing turn', () => {
+    vi.useFakeTimers();
+    setGame(baseState({ phase: 'awaitingJudgement', card: card() }));
+    render(<PlayView />);
+    fireEvent.click(screen.getByRole('button', { name: /실패/ }));
+    expect(usePresentation.getState().busy).toBe(true);
+    expect(useGameStore.getState().game?.currentIndex).toBe(0);
+    act(() => vi.advanceTimersByTime(650));
+    expect(usePresentation.getState().busy).toBe(false);
+    expect(useGameStore.getState().game?.phase).toBe('awaitingDraw');
+    expect(useGameStore.getState().game?.currentIndex).toBe(1);
   });
 
   it('the turn HUD exposes an aria-live region announcing the current turn', () => {

@@ -1,11 +1,13 @@
 // src/game/scene/scene.test.tsx — DOM 2D board structure assertions (Phase 3.1).
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { SceneContents } from './BoardScene';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, act } from '@testing-library/react';
+import BoardScene, { SceneContents } from './BoardScene';
 import type { MoveSpec } from '../animation';
 import { buildParticipants } from '../../engine/setup';
 
 const noop = () => {};
+
+afterEach(() => vi.useRealTimers());
 
 function renderScene(boardLength: number, count: number, highlight: MoveSpec | null = null) {
   const participants = buildParticipants(
@@ -21,6 +23,7 @@ function renderScene(boardLength: number, count: number, highlight: MoveSpec | n
       activeIndex={0}
       move={null}
       runToken={false}
+      tokenPoses={{}}
       rollId={0}
       face={null}
       highlight={highlight}
@@ -48,10 +51,92 @@ describe('BoardScene 2D DOM structure', () => {
     expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/girl-rope.png'))).toBe(true);
   });
 
+  it('switches Kenney token sprites for cheer, hurt, and walk poses', () => {
+    const participants = buildParticipants('solo', 2, ['P1', 'P2'], ['boy', 'girl']);
+    const { container, rerender } = render(
+      <SceneContents
+        boardLength={6}
+        participants={participants}
+        activeIndex={0}
+        move={null}
+        runToken={false}
+        tokenPoses={{ p1: 'cheer', p2: 'hurt' }}
+        rollId={0}
+        face={null}
+        highlight={null}
+        onDiceSettled={noop}
+        onTokenArrive={noop}
+      />,
+    );
+    let srcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src') ?? '');
+    expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/boy-cheer0.png'))).toBe(true);
+    expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/girl-hurt.png'))).toBe(true);
+    rerender(
+      <SceneContents
+        boardLength={6}
+        participants={participants}
+        activeIndex={0}
+        move={{ id: 1, from: 0, afterRoll: 2, to: 2 }}
+        runToken={true}
+        tokenPoses={{}}
+        walkFrame={2}
+        rollId={1}
+        face={2}
+        highlight={null}
+        onDiceSettled={noop}
+        onTokenArrive={noop}
+      />,
+    );
+    srcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src') ?? '');
+    expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/boy-walk2.png'))).toBe(true);
+  });
+
   it('shows dice face text without WebGL', () => {
     renderScene(6, 2);
     expect(screen.getByText('주사위')).toBeInTheDocument();
     expect(screen.getByText('?')).toBeInTheDocument();
+  });
+});
+
+describe('BoardScene animation timers', () => {
+  it('keeps dice-settled timer alive across parent callback re-renders', () => {
+    vi.useFakeTimers();
+    const participants = buildParticipants('solo', 2, ['P1', 'P2'], ['boy', 'girl']);
+    const firstSettled = vi.fn();
+    const secondSettled = vi.fn();
+    const { rerender } = render(
+      <BoardScene
+        boardLength={6}
+        participants={participants}
+        activeIndex={0}
+        move={{ id: 1, from: 0, afterRoll: 2, to: 2 }}
+        runToken={false}
+        tokenPoses={{}}
+        rollId={1}
+        face={2}
+        highlight={null}
+        onDiceSettled={firstSettled}
+        onTokenArrive={noop}
+      />,
+    );
+    rerender(
+      <BoardScene
+        boardLength={6}
+        participants={participants}
+        activeIndex={0}
+        move={{ id: 1, from: 0, afterRoll: 2, to: 2 }}
+        runToken={false}
+        tokenPoses={{}}
+        rollId={1}
+        face={2}
+        highlight={null}
+        onDiceSettled={secondSettled}
+        onTokenArrive={noop}
+      />,
+    );
+    act(() => vi.advanceTimersByTime(800));
+    expect(firstSettled).not.toHaveBeenCalled();
+    expect(secondSettled).toHaveBeenCalledTimes(1);
   });
 });
 

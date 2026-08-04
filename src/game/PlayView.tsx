@@ -13,7 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../harness/useGameStore';
 import { usePresentation } from './usePresentation';
-import BoardScene from './scene/BoardScene';
+import BoardScene, { type TokenPose } from './scene/BoardScene';
 import { type MoveSpec, HOP_S, DICE_S, PREVIEW_S } from './animation';
 import TurnHud from './hud/TurnHud';
 import MissionOverlay from './hud/MissionOverlay';
@@ -24,6 +24,8 @@ import PositionReadout from './hud/PositionReadout';
 // Animation sub-sequence within a single roll: dice spin → destination preview → token hop
 // → idle. The 'preview' beat is what makes the board readable BEFORE the token moves.
 type Seq = 'idle' | 'dice' | 'preview' | 'token';
+type PoseMap = Partial<Record<string, TokenPose>>;
+const REACTION_MS = 650;
 
 export default function PlayView() {
   const game = useGameStore((s) => s.game);
@@ -33,6 +35,8 @@ export default function PlayView() {
   const [rollId, setRollId] = useState(0);
   const [seq, setSeq] = useState<Seq>('idle');
   const [move, setMove] = useState<MoveSpec | null>(null);
+  const [tokenPoses, setTokenPoses] = useState<PoseMap>({});
+  const reactionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const watchdogCancel = useRef<(() => void) | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -41,6 +45,17 @@ export default function PlayView() {
       clearTimeout(previewTimer.current);
       previewTimer.current = null;
     }
+  };
+
+  const clearReactionTimer = () => {
+    if (reactionTimer.current != null) {
+      clearTimeout(reactionTimer.current);
+      reactionTimer.current = null;
+    }
+  };
+
+  const setActivePose = (participantId: string, pose: TokenPose) => {
+    setTokenPoses({ [participantId]: pose });
   };
 
   // DOM-owned countdown (Pitfall 1 / D-04). Re-arms on phase change; clears on unmount.
@@ -72,6 +87,7 @@ export default function PlayView() {
     () => () => {
       watchdogCancel.current?.();
       if (previewTimer.current != null) clearTimeout(previewTimer.current);
+      if (reactionTimer.current != null) clearTimeout(reactionTimer.current);
     },
     [],
   );
@@ -84,10 +100,26 @@ export default function PlayView() {
     current.memberNames[current.memberTurnIndex] ?? current.memberNames[0] ?? current.name;
   const isTeam = config.mode === 'team';
 
+  function handleJudge(success: boolean) {
+    clearReactionTimer();
+    if (!game) return;
+    const activeId = game.config.participants[game.currentIndex].id;
+    setActivePose(activeId, success ? 'cheer' : 'hurt');
+    usePresentation.getState().beginAnim();
+    reactionTimer.current = setTimeout(() => {
+      reactionTimer.current = null;
+      useGameStore.getState().judge(success);
+      usePresentation.getState().signalAnimDone();
+      if (!success) setTokenPoses({});
+    }, REACTION_MS);
+  }
+
   function handleRoll() {
     if (!game) return;
     const from = game.config.participants[game.currentIndex].position;
     const idx = game.currentIndex;
+    const activeId = game.config.participants[idx].id;
+    setActivePose(activeId, 'rope');
     usePresentation.getState().beginAnim();
 
     useGameStore.getState().roll();
@@ -130,6 +162,9 @@ export default function PlayView() {
     watchdogCancel.current?.();
     watchdogCancel.current = null;
     usePresentation.getState().signalAnimDone();
+    const settledGame = useGameStore.getState().game;
+    const activeId = settledGame?.config.participants[settledGame.currentIndex]?.id;
+    if (activeId) setActivePose(activeId, 'cheer');
     setSeq('idle');
     setMove(null); // clearing the move also removes the highlight
   }
@@ -147,6 +182,7 @@ export default function PlayView() {
         highlight={seq === 'preview' || seq === 'token' ? move : null}
         rollId={rollId}
         face={lastRoll}
+        tokenPoses={tokenPoses}
         onDiceSettled={handleDiceSettled}
         onTokenArrive={handleTokenArrive}
       />
@@ -166,7 +202,7 @@ export default function PlayView() {
         {!busy && p === 'awaitingJudgement' && card && (
           <MissionOverlay
             mission={card.mission}
-            onJudge={(success) => useGameStore.getState().judge(success)}
+            onJudge={handleJudge}
           />
         )}
 
@@ -183,7 +219,7 @@ export default function PlayView() {
             busy={busy}
             onDraw={() => useGameStore.getState().draw()}
             onRoll={handleRoll}
-            onNext={() => useGameStore.getState().next()}
+            onNext={() => { setTokenPoses({}); useGameStore.getState().next(); }}
           />
 
           <PositionReadout participants={config.participants} currentIndex={currentIndex} boardLength={config.boardLength} />

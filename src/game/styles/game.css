@@ -555,6 +555,9 @@
   transition: transform .16s ease-out;
 }
 .board-token.is-active { transform: translateY(-8px) scale(1.08); filter: drop-shadow(0 8px 0 rgba(34,176,242,.18)); }
+.board-token.is-cheer.is-active { transform: translateY(-14px) rotate(-3deg) scale(1.14); }
+.board-token.is-hurt.is-active { transform: translateY(-4px) rotate(5deg) scale(1.04); filter: drop-shadow(0 8px 0 rgba(255,92,122,.20)); }
+.board-token.is-walk.is-active { animation: tokenWalkBounce .28s ease-in-out infinite alternate; }
 .board-token img {
   width: 100%;
   height: auto;
@@ -631,6 +634,7 @@
 .game-positions .remain { color: var(--ink-soft); font-size: var(--game-caption); }
 @keyframes boardPulse { from { transform: scale(.96); opacity: .66; } to { transform: scale(1.04); opacity: 1; } }
 @keyframes diceWiggle { 0% { transform: translateX(-50%) rotate(-9deg) scale(.96); } 45% { transform: translateX(-50%) rotate(7deg) scale(1.05); } 100% { transform: translateX(-50%) rotate(0) scale(1); } }
+@keyframes tokenWalkBounce { from { transform: translateY(-7px) rotate(-2deg) scale(1.08); } to { transform: translateY(-15px) rotate(2deg) scale(1.12); } }
 
 @media (max-width: 760px) {
   .board-2d { inset: calc(var(--hud-h) + 20px) 10px 178px 10px; border-radius: 24px; padding: 10px; }

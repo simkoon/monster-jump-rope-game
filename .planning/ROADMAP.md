@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: 플레이 가능한 핵심 루프 & 설정** - 검증된 헤드리스 엔진 위에서 단순 버튼 UI로 전체 게임(카드→판정→주사위→이동→이벤트→승리)을 처음부터 끝까지 플레이한다 (completed 2026-07-25)
 - [x] **Phase 3: 3D 보드 & 실제 게임 UI** - 검증된 루프를 Three.js 3D 보드·토큰·주사위·카드 연출과 아동용 큰 버튼 UI로 시각화한다(캐릭터는 플레이스홀더 토큰) (completed 2026-07-25)
 - [x] **Phase 3.1: 2D 렌더링 전환 & CC0 에셋 파이프라인** (INSERTED) - Three.js/R3F 3D 씬을 DOM+SVG+CSS 2D 렌더링으로 완전 교체하고, Kenney CC0 에셋 팩을 도입한다 (completed 2026-08-04)
-- [ ] **Phase 4: 닌텐도풍 아트 & 캐릭터** - 밝고 경쾌한 아트, 표정 있는 남/여 줄넘기 캐릭터, 오리지널 "파워점핑" 로고로 마감한다
+- [x] **Phase 4: 닌텐도풍 아트 & 캐릭터** - 밝고 경쾌한 아트, 표정 있는 남/여 줄넘기 캐릭터, 오리지널 "파워점핑" 로고로 마감한다 (completed 2026-08-04)
 
 ## Phase Details
 
@@ -145,13 +145,13 @@ Plans:
   3. 캐릭터가 성공·실패·이동 등 상황에 따라 다양한 표정으로 반응한다
   4. 시작 화면에 실제 브랜드를 쓰지 않은 오리지널 "파워점핑" 제목 로고가 표시된다
 
-**Plans**: 1/2 plans complete
+**Plans**: 2/2 plans complete
 **UI hint**: yes
 
 Plans:
 
 - [x] 04-01-PLAN.md — 모든 화면에 적용되는 닌텐도풍 비주얼 시스템 + 오리지널 "파워점핑" 로고
-- [ ] 04-02: Kenney 기반 남/여 2D 줄넘기 캐릭터의 상황별 표정/포즈 전환(성공/실패/이동) — walk/cheer/hurt 포즈 우선, 시간 상자
+- [x] 04-02-PLAN.md — Kenney 기반 남/여 2D 줄넘기 캐릭터의 상황별 표정/포즈 전환(성공/실패/이동) — walk/cheer/hurt 포즈 우선
 
 ## Progress
 
@@ -164,4 +164,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. 플레이 가능한 핵심 루프 & 설정 | 3/3 | Complete   | 2026-07-25 |
 | 3. 3D 보드 & 실제 게임 UI | 2/2 | Complete   | 2026-07-25 |
 | 3.1. 2D 렌더링 전환 & CC0 에셋 파이프라인 | 2/2 | Complete | 2026-08-04 |
-| 4. 닌텐도풍 아트 & 캐릭터 | 1/2 | In progress | - |
+| 4. 닌텐도풍 아트 & 캐릭터 | 2/2 | Complete | 2026-08-04 |
