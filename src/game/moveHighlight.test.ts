@@ -2,7 +2,7 @@
 // Same style as boardLayout.test.ts: direct pure-function calls, no R3F, no DOM.
 import { describe, it, expect } from 'vitest';
 import { planHighlight, MAX_STEP_MARKERS } from './moveHighlight';
-import type { MoveSpec } from './scene/Token';
+import type { MoveSpec } from './animation';
 
 const mv = (from: number, afterRoll: number, to: number): MoveSpec => ({
   id: 1,

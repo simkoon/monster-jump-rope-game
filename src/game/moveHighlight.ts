@@ -6,7 +6,7 @@
 // Given the roll the engine already resolved ({ from, afterRoll, to }), this decides which
 // squares the board should mark: the in-between step dots, the dice destination ring, and —
 // when an event moved the player again — the final event square.
-import type { MoveSpec } from './scene/Token';
+import type { MoveSpec } from './animation';
 
 // Fixed capacity of the step-dot instancedMesh. A die caps at 6, so at most 5 squares sit
 // strictly between `from` and the destination; 8 leaves headroom. Keeping this a CONSTANT is

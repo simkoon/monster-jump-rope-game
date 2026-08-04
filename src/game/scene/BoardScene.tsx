@@ -1,25 +1,25 @@
-// src/game/scene/BoardScene.tsx — the R3F <Canvas> root (D-01/D-08, RESEARCH Pattern 1).
-// Fixed slightly-tilted isometric camera (NO OrbitControls / no free orbit per UI-SPEC),
-// dpr capped [1,2] for tablets, theme-driven clear color, hemisphere + directional light,
-// and drei <Bounds fit> auto-framing the whole boardLength+1 path (re-fit on length change
-// via the key). The scene GRAPH lives in <SceneContents> so @react-three/test-renderer can
-// mount it without a WebGL <Canvas> (Pitfall 3).
-import { Canvas } from '@react-three/fiber';
-import { Bounds, ContactShadows } from '@react-three/drei';
+// src/game/scene/BoardScene.tsx — Phase 3.1 DOM/SVG 2D board (no Three/R3F).
+// It keeps the PlayView ANIM_DONE contract: dice settles → destination preview → token hops
+// → onTokenArrive. The engine remains the source of truth; this layer is presentation only.
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Participant } from '../../engine/types';
-import BoardTiles from './BoardTiles';
-import Token, { type MoveSpec } from './Token';
-import Dice from './Dice';
-import MoveHighlight from './MoveHighlight';
+import { rowColOf, rowCountFor, directionOf } from '../boardLayout';
+import {
+  buildDisplayMovePath,
+  clampSquare,
+  DICE_S,
+  HOP_S,
+  prefersReducedMotion,
+  type MoveSpec,
+} from '../animation';
+import { planHighlight } from '../moveHighlight';
 
 export interface BoardSceneProps {
   boardLength: number;
   participants: Participant[];
   activeIndex: number;
-  move: MoveSpec | null; // the active token's pending move (null when idle)
-  runToken: boolean; // false while the dice spins → active token holds at `from`
-  // The move whose destination the board should mark, or null. REQUIRED (not optional) so a
-  // missed wiring is a type error rather than a silently invisible feature.
+  move: MoveSpec | null;
+  runToken: boolean;
   highlight: MoveSpec | null;
   rollId: number;
   face: number | null;
@@ -27,87 +27,152 @@ export interface BoardSceneProps {
   onTokenArrive: () => void;
 }
 
-// Theme-driven clear color: sky-tinted in light, deep navy in dark (UI-SPEC Color).
-function themeClearColor(): string {
-  if (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  ) {
-    return '#0C1A2B';
-  }
-  return '#E7F5FF';
+const TOKEN_COLORS = ['#22B0F2', '#FF5C7A', '#25D6A0', '#FFCB2E', '#9A7DFF', '#FF80B5'] as const;
+const SPRITE_SRC: Record<Participant['character'], string> = {
+  boy: '/assets/cc0/character-boy.svg',
+  girl: '/assets/cc0/character-girl.svg',
+};
+
+function tokenColor(index: number): string {
+  return TOKEN_COLORS[index % TOKEN_COLORS.length];
 }
 
-// The scene graph WITHOUT <Canvas> — mounted directly by tests (no WebGL needed).
-export function SceneContents(props: BoardSceneProps) {
-  const {
-    boardLength,
-    participants,
-    activeIndex,
-    move,
-    runToken,
-    highlight,
-    rollId,
-    face,
-    onDiceSettled,
-    onTokenArrive,
-  } = props;
+function arrowFor(index: number, boardLength: number): string {
+  switch (directionOf(index, boardLength)) {
+    case 'right':
+      return '→';
+    case 'left':
+      return '←';
+    case 'down':
+      return '↓';
+    case 'finish':
+      return '🏁';
+  }
+}
+
+function TokenSprite({ participant, index, active }: { participant: Participant; index: number; active: boolean }) {
   return (
-    <>
-      <hemisphereLight intensity={0.75} color="#ffffff" groundColor="#cfe4f5" />
-      <directionalLight position={[6, 12, 6]} intensity={1.15} color="#fff6e0" />
-      {/* Cool rim light for a fresh toy-plastic pop (kawaii/Nintendo lighting). */}
-      <pointLight position={[-6, 6, -4]} intensity={0.45} color="#8fd0ff" />
-      {/* Auto-frame the whole path; remount (key) re-fits when the board length changes.
-          Only the static tiles drive framing, so token hops never cause refit jitter. */}
-      <Bounds key={boardLength} fit clip margin={1.2}>
-        <BoardTiles boardLength={boardLength} />
-      </Bounds>
-      {/* OUTSIDE <Bounds> on purpose: inside, every roll would add the markers to the framing
-          set and the camera would re-fit mid-turn (visible jump). */}
-      <MoveHighlight move={highlight} boardLength={boardLength} visible={highlight !== null} />
-      {participants.map((p, i) => (
-        <Token
-          key={p.id}
-          participant={p}
-          index={i}
-          active={i === activeIndex}
-          move={i === activeIndex ? move : null}
-          run={i === activeIndex ? runToken : false}
-          onArrive={onTokenArrive}
-        />
-      ))}
-      <Dice face={face} rollId={rollId} onSettled={onDiceSettled} />
-    </>
+    <span
+      className={`board-token ${active ? 'is-active' : ''}`}
+      style={{ '--token-color': tokenColor(index) } as CSSProperties}
+      aria-label={`${participant.name} 말`}
+      title={participant.name}
+    >
+      <img src={SPRITE_SRC[participant.character]} alt="" draggable={false} />
+      <span className="board-token-name">{participant.name}</span>
+    </span>
+  );
+}
+
+export function SceneContents(props: BoardSceneProps) {
+  const { boardLength, participants, activeIndex, move, runToken, highlight, rollId, face } = props;
+  const rows = rowCountFor(boardLength);
+  const displaySquares = useMemo(
+    () => Array.from({ length: boardLength + 1 }, (_, square) => square),
+    [boardLength],
+  );
+  const highlightPlan = useMemo(
+    () => (highlight ? planHighlight(highlight, boardLength) : null),
+    [highlight, boardLength],
+  );
+
+  const activeSquare = move
+    ? clampSquare(runToken ? move.to : move.from, boardLength)
+    : clampSquare(participants[activeIndex]?.position ?? 0, boardLength);
+
+  return (
+    <section
+      className="board-2d"
+      aria-label="진행 방향과 결승점이 보이는 2D 보드"
+      style={{ '--board-cols': 6, '--board-rows': rows } as CSSProperties}
+    >
+      <div className="board-title-row" aria-hidden="true">
+        <span>START</span>
+        <span className="board-title-row__finish">FINISH 🏁</span>
+      </div>
+      <ol className="board-grid">
+        {displaySquares.map((square) => {
+          const rc = rowColOf(square);
+          const isFinish = square === boardLength;
+          const isStep = highlightPlan?.steps.includes(square) ?? false;
+          const isDest = highlightPlan?.dest === square;
+          const isFinal = highlightPlan?.final === square;
+          const here = participants
+            .map((p, i) => ({ p, i }))
+            .filter(({ p, i }) => clampSquare(i === activeIndex ? activeSquare : p.position, boardLength) === square);
+          return (
+            <li
+              key={square}
+              className={`board-square ${isFinish ? 'is-finish' : ''} ${isStep ? 'is-step' : ''} ${isDest ? 'is-dest' : ''} ${isFinal ? `is-final is-${highlightPlan?.finalDir}` : ''}`}
+              style={{ gridColumn: rc.x + 1, gridRow: rc.row + 1 } as CSSProperties}
+              aria-label={`${square}번 칸${isFinish ? ', 결승' : ''}`}
+            >
+              <span className="board-square__num">{square}</span>
+              <span className="board-square__arrow" aria-hidden="true">{arrowFor(square, boardLength)}</span>
+              {isFinish && <span className="board-finish-landmark" aria-hidden="true">🏁</span>}
+              {isDest && <span className="board-marker board-marker--dest" aria-hidden="true">도착</span>}
+              {isFinal && <span className="board-marker board-marker--final" aria-hidden="true">이벤트</span>}
+              <span className="board-token-stack">
+                {here.map(({ p, i }) => <TokenSprite key={p.id} participant={p} index={i} active={i === activeIndex} />)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <div className={`board-dice ${rollId > 0 ? 'has-rolled' : ''}`} aria-live="polite">
+        <span className="board-dice__label">주사위</span>
+        <strong className="board-dice__face">{face ?? '?'}</strong>
+      </div>
+    </section>
   );
 }
 
 export default function BoardScene(props: BoardSceneProps) {
-  return (
-    <Canvas
-      className="board-canvas"
-      dpr={[1, 2]} // D-08 pixelRatio cap for tablets
-      // frameloop="always" for reliability (avoids the Pitfall 4 demand-freeze). demand +
-      // per-frame invalidate() is an optional battery optimisation the 03-02 perf check may enable.
-      frameloop="always"
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
-      camera={{ position: [8, 11, 12], fov: 40 }}
-      onCreated={({ gl }) => gl.setClearColor(themeClearColor())}
-    >
-      <SceneContents {...props} />
-      {/* Soft grounding shadow under the whole board — big polish, no light shadow-maps
-          needed. Kept in the Canvas (not SceneContents) so the headless scene test, which
-          mounts SceneContents without WebGL, never instantiates its render target. */}
-      <ContactShadows
-        position={[0, -0.14, 0]}
-        scale={40}
-        blur={2.6}
-        far={4}
-        opacity={0.34}
-        resolution={512}
-        color="#123a58"
-      />
-    </Canvas>
-  );
+  const { move, runToken, rollId, face, boardLength, onDiceSettled, onTokenArrive } = props;
+  const [activeSquare, setActiveSquare] = useState<number | null>(null);
+  const settledRollRef = useRef(0);
+  const tokenMoveRef = useRef(0);
+
+  useEffect(() => {
+    if (!move) {
+      setActiveSquare(null);
+      return;
+    }
+    setActiveSquare(clampSquare(move.from, boardLength));
+  }, [move?.id, move?.from, boardLength]);
+
+  useEffect(() => {
+    if (rollId <= 0 || face == null || settledRollRef.current === rollId) return;
+    settledRollRef.current = rollId;
+    if (prefersReducedMotion()) {
+      onDiceSettled();
+      return;
+    }
+    const id = setTimeout(onDiceSettled, DICE_S * 1000);
+    return () => clearTimeout(id);
+  }, [rollId, face, onDiceSettled]);
+
+  useEffect(() => {
+    if (!move || !runToken || tokenMoveRef.current === move.id) return;
+    tokenMoveRef.current = move.id;
+    const path = buildDisplayMovePath(move, boardLength);
+    if (path.length === 0 || prefersReducedMotion()) {
+      setActiveSquare(clampSquare(move.to, boardLength));
+      onTokenArrive();
+      return;
+    }
+    let i = 0;
+    const id = setInterval(() => {
+      setActiveSquare(path[i]);
+      i += 1;
+      if (i >= path.length) {
+        clearInterval(id);
+        onTokenArrive();
+      }
+    }, HOP_S * 1000);
+    return () => clearInterval(id);
+  }, [move, runToken, boardLength, onTokenArrive]);
+
+  const sceneProps = activeSquare == null || !move ? props : { ...props, participants: props.participants.map((p, i) => i === props.activeIndex ? { ...p, position: activeSquare } : p) };
+  return <SceneContents {...sceneProps} />;
 }

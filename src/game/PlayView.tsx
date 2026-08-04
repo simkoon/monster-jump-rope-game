@@ -1,4 +1,4 @@
-// src/game/PlayView.tsx — the playable 3D slice: <BoardScene> + the child-facing DOM HUD
+// src/game/PlayView.tsx — the playable 2D slice: <BoardScene> + the child-facing DOM HUD
 // (03-02). It orchestrates the ANIM_DONE flow (D-07): pressing 주사위 굴리기 sets busy, calls
 // the engine roll(), plays the dice spin → the destination preview → then the token hop, and
 // only clears busy (revealing the resolved panel + 다음) when the token arrives. A watchdog
@@ -14,9 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../harness/useGameStore';
 import { usePresentation } from './usePresentation';
 import BoardScene from './scene/BoardScene';
-import { type MoveSpec, HOP_S } from './scene/Token';
-import { DICE_S } from './scene/Dice';
-import { PREVIEW_S } from './scene/MoveHighlight';
+import { type MoveSpec, HOP_S, DICE_S, PREVIEW_S } from './animation';
 import TurnHud from './hud/TurnHud';
 import MissionOverlay from './hud/MissionOverlay';
 import ControlsBar from './hud/ControlsBar';
@@ -188,7 +186,7 @@ export default function PlayView() {
             onNext={() => useGameStore.getState().next()}
           />
 
-          <PositionReadout participants={config.participants} currentIndex={currentIndex} />
+          <PositionReadout participants={config.participants} currentIndex={currentIndex} boardLength={config.boardLength} />
         </div>
       </div>
     </div>

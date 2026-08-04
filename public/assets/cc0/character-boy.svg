@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="boy jump rope character">
+  <title>Boy jump rope character</title>
+  <circle cx="64" cy="64" r="60" fill="#BEE7FF"/>
+  <path d="M25 75C22 52 35 31 64 31s42 21 39 44" fill="none" stroke="#22B0F2" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="64" cy="45" r="22" fill="#FFD7B5"/>
+  <path d="M42 42c5-18 36-22 45 0-8-7-32-9-45 0z" fill="#173A57"/>
+  <circle cx="56" cy="48" r="3" fill="#173A57"/><circle cx="72" cy="48" r="3" fill="#173A57"/>
+  <path d="M56 58c5 5 12 5 17 0" fill="none" stroke="#173A57" stroke-width="4" stroke-linecap="round"/>
+  <path d="M43 105c4-26 13-40 21-40s17 14 21 40" fill="#25D6A0"/>
+  <path d="M44 72l-20 18M84 72l20 18" stroke="#FFD7B5" stroke-width="8" stroke-linecap="round"/>
+  <path d="M31 85c-17 3-17 18-2 22M97 85c17 3 17 18 2 22" fill="none" stroke="#9A7DFF" stroke-width="5" stroke-linecap="round"/>
+  <path d="M54 103l-9 16M74 103l9 16" stroke="#173A57" stroke-width="7" stroke-linecap="round"/>
+</svg>

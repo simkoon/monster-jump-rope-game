@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: 3D 보드 & 실제 게임 UI
-status: verifying
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-26T00:00:00.000Z"
-last_activity: 2026-07-26
-last_activity_desc: "Quick task 260726-lbq: 주사위 목적지 하이라이트 (LOOP-05/06/07)"
+current_phase: 3.1
+current_phase_name: 2D 렌더링 전환 & CC0 에셋 파이프라인
+status: implementation
+stopped_at: 03.1-01 complete — 2D renderer migration implemented and verified; Kenney asset ingestion follow-up
+last_updated: "2026-08-04T13:17:53+09:00"
+last_activity: 2026-08-04
+last_activity_desc: "03.1-01 2D 렌더링 전환 구현 + build/test/browser smoke 통과"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 3
   total_plans: 8
   completed_plans: 8
-  percent: 75
+  percent: 60
 ---
 
 # Project State
@@ -24,16 +24,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 3 — 3D 보드 & 실제 게임 UI
+**Current focus:** Phase 3.1 — 2D 렌더링 전환 & CC0 에셋 파이프라인
 
 ## Current Position
 
-Phase: 3 (3D 보드 & 실제 게임 UI) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
-Last activity: 2026-07-25 — Phase 3 execution started
+Phase: 3.1 (2D 렌더링 전환 & CC0 에셋 파이프라인) — IN PROGRESS
+Plan: 1 of 1 implemented for renderer migration slice
+Status: 03.1-01 구현 및 자동/브라우저 smoke 검증 완료; Kenney 실제 에셋 반입은 follow-up
+Last activity: 2026-08-04 — 03.1-01 2D 렌더링 전환 구현 + 자동/브라우저 smoke 검증
 
-Progress: [░░░░░░░░░░] 0%
+**전환 배경:** 3D 캐릭터·표정 아트를 조달할 수단이 없는 반면 2D는 CC0 무료 에셋으로 즉시 조달 가능(Kenney 표정 12종×색상 6종 확보 검증됨). Phase 3의 R3F 씬은 Phase 3.1에서 DOM+SVG+CSS로 교체된다.
+
+**전환으로 무효화되는 선행 작업:**
+- Phase 3 검증(VERIFICATION.md 미작성) — 3D 씬 대상이라 2D 전환 후 재정의 필요
+- quick `260726-lbq` 브라우저 human-check 5건 — 전부 R3F/`<Bounds>` 카메라 등 3D 전용 항목이라 무효
+- `.planning/ASSET-REQUEST.md` 미확정 7건 — 3D(2×2 텍스처 아틀라스, Outfit tint) 전제라 2D 기준 재작성 필요
+
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -103,6 +110,10 @@ None yet.
 - [Phase 3]: R3F vs 바닐라 Three.js 및 dispose/ANIM_DONE 패턴 확정 필요. 대상 태블릿 사양 확보로 성능 예산 설정 필요.
 - [Phase 2]: 승리 조건(정확 도착 vs 초과 통과, 동시 도착 무승부) 엔진 설계에서 확정 필요.
 
+### Roadmap Evolution
+
+- Phase 3.1 inserted after Phase 3: 3D→2D 렌더링 전환 & CC0 에셋 파이프라인 (사용자 결정 2026-07-26) (URGENT)
+
 ## Quick Tasks Completed
 
 | Date | Slug | Outcome |
@@ -120,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26
-Stopped at: Completed quick task 260726-lbq (move destination highlight) — browser human-check pending
-Resume file: .planning/quick/260726-lbq-move-destination/260726-lbq-SUMMARY.md
+Last session: 2026-08-04
+Stopped at: 03.1-01 2D renderer migration implemented; build/test/browser smoke passed
+Resume file: .planning/phases/03.1-2d-render-cc0-assets/03.1-01-SUMMARY.md
