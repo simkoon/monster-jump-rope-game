@@ -1,8 +1,17 @@
 # CC0 Asset Notice
 
-These simple SVG jump-rope character sprites were created for the PowerJumping prototype and are dedicated to the public domain via CC0 1.0.
+This folder contains CC0 assets used by the PowerJumping prototype.
 
-- `character-boy.svg` — CC0 1.0
-- `character-girl.svg` — CC0 1.0
+## Project-created placeholders
 
-No trademarks, third-party characters, or brand assets are included.
+- `character-boy.svg` — project-created placeholder, CC0 1.0; kept as fallback only.
+- `character-girl.svg` — project-created placeholder, CC0 1.0; kept as fallback only.
+
+## Kenney assets
+
+See `kenney/NOTICE.md` plus the original license files:
+
+- `kenney/toon-characters/License.txt`
+- `kenney/board-game-icons/License.txt`
+
+Both imported Kenney packs are Creative Commons Zero (CC0) 1.0.

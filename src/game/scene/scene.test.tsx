@@ -14,7 +14,7 @@ function renderScene(boardLength: number, count: number, highlight: MoveSpec | n
     Array.from({ length: count }, (_, i) => `P${i + 1}`),
     Array.from({ length: count }, (_, i): 'boy' | 'girl' => (i % 2 === 0 ? 'boy' : 'girl')),
   );
-  render(
+  return render(
     <SceneContents
       boardLength={boardLength}
       participants={participants}
@@ -38,11 +38,14 @@ describe('BoardScene 2D DOM structure', () => {
     expect(screen.getByLabelText('진행 방향과 결승점이 보이는 2D 보드')).toBeInTheDocument();
   });
 
-  it('renders one character sprite token per participant', () => {
-    renderScene(6, 4);
+  it('renders one Kenney character sprite token per participant', () => {
+    const { container } = renderScene(6, 4);
     expect(screen.getAllByLabelText(/말$/)).toHaveLength(4);
     expect(screen.getByTitle('P1')).toBeInTheDocument();
     expect(screen.getByTitle('P4')).toBeInTheDocument();
+    const srcs = Array.from(container.querySelectorAll('img')).map((img) => img.getAttribute('src') ?? '');
+    expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/boy-rope.png'))).toBe(true);
+    expect(srcs.some((src) => src.includes('/assets/cc0/kenney/toon-characters/girl-rope.png'))).toBe(true);
   });
 
   it('shows dice face text without WebGL', () => {

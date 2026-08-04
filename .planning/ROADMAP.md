@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: 기반 & 콘텐츠 편집기** - 강사가 미션·이벤트를 CRUD·검색·편집하고, localStorage 자동 저장 + JSON 내보내기/가져오기로 백업한다 (completed 2026-07-25)
 - [x] **Phase 2: 플레이 가능한 핵심 루프 & 설정** - 검증된 헤드리스 엔진 위에서 단순 버튼 UI로 전체 게임(카드→판정→주사위→이동→이벤트→승리)을 처음부터 끝까지 플레이한다 (completed 2026-07-25)
 - [x] **Phase 3: 3D 보드 & 실제 게임 UI** - 검증된 루프를 Three.js 3D 보드·토큰·주사위·카드 연출과 아동용 큰 버튼 UI로 시각화한다(캐릭터는 플레이스홀더 토큰) (completed 2026-07-25)
-- [ ] **Phase 3.1: 2D 렌더링 전환 & CC0 에셋 파이프라인** (INSERTED) - Three.js/R3F 3D 씬을 DOM+SVG+CSS 2D 렌더링으로 완전 교체하고, Kenney CC0 에셋 팩을 도입한다
+- [x] **Phase 3.1: 2D 렌더링 전환 & CC0 에셋 파이프라인** (INSERTED) - Three.js/R3F 3D 씬을 DOM+SVG+CSS 2D 렌더링으로 완전 교체하고, Kenney CC0 에셋 팩을 도입한다 (completed 2026-08-04)
 - [ ] **Phase 4: 닌텐도풍 아트 & 캐릭터** - 밝고 경쾌한 아트, 표정 있는 남/여 줄넘기 캐릭터, 오리지널 "파워점핑" 로고로 마감한다
 
 ## Phase Details
@@ -124,12 +124,13 @@ Plans:
   7. CC0 에셋이 `public/assets/`에 라이선스 파일과 함께 배치되고, 출처·라이선스가 문서로 추적된다 (프로젝트 IP 제약 준수)
   8. 전환 후에도 기존 테스트가 모두 통과하며(엔진·편집기·스토어 테스트 무변경), 아동용 큰 버튼 UI 조작성(ART-04)이 유지된다
 
-**Plans**: 0 plans
+**Plans**: 2/2 plans complete
 **UI hint**: yes
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 3.1 to break down)
+- [x] 03.1-01-PLAN.md — Three/R3F 보드를 DOM/CSS 2D 보드로 교체, 진행 방향/결승점/순위/남은거리 가독성 복구, 임시 CC0 캐릭터 토큰 적용
+- [x] 03.1-02-PLAN.md — 실제 Kenney Toon Characters / Board Game Icons CC0 에셋 선별 반입, BASE_URL 경로 수정, 토큰/깃발/주사위 아이콘 연결
 
 ### Phase 4: 닌텐도풍 아트 & 캐릭터
 
@@ -150,7 +151,7 @@ Plans:
 Plans:
 
 - [ ] 04-01: 모든 화면에 적용되는 닌텐도풍 비주얼 시스템 + 오리지널 "파워점핑" 로고
-- [ ] 04-02: 플레이스홀더 토큰을 대체하는 남/여 3D 줄넘기 캐릭터 + 상황별 표정(성공/실패/이동) — 텍스처 스왑 우선, 시간 상자
+- [ ] 04-02: Kenney 기반 남/여 2D 줄넘기 캐릭터의 상황별 표정/포즈 전환(성공/실패/이동) — walk/cheer/hurt 포즈 우선, 시간 상자
 
 ## Progress
 
@@ -162,4 +163,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. 기반 & 콘텐츠 편집기 | 3/3 | Complete   | 2026-07-25 |
 | 2. 플레이 가능한 핵심 루프 & 설정 | 3/3 | Complete   | 2026-07-25 |
 | 3. 3D 보드 & 실제 게임 UI | 2/2 | Complete   | 2026-07-25 |
+| 3.1. 2D 렌더링 전환 & CC0 에셋 파이프라인 | 2/2 | Complete | 2026-08-04 |
 | 4. 닌텐도풍 아트 & 캐릭터 | 0/2 | Not started | - |

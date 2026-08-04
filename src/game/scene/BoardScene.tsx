@@ -28,10 +28,16 @@ export interface BoardSceneProps {
 }
 
 const TOKEN_COLORS = ['#22B0F2', '#FF5C7A', '#25D6A0', '#FFCB2E', '#9A7DFF', '#FF80B5'] as const;
+const ASSET_BASE = `${import.meta.env.BASE_URL}assets/cc0/kenney`;
 const SPRITE_SRC: Record<Participant['character'], string> = {
-  boy: '/assets/cc0/character-boy.svg',
-  girl: '/assets/cc0/character-girl.svg',
+  boy: `${ASSET_BASE}/toon-characters/boy-rope.png`,
+  girl: `${ASSET_BASE}/toon-characters/girl-rope.png`,
 };
+
+function diceIcon(face: number | null): string | null {
+  if (face == null || face < 1 || face > 6) return null;
+  return `${ASSET_BASE}/board-game-icons/dice_${face}.png`;
+}
 
 function tokenColor(index: number): string {
   return TOKEN_COLORS[index % TOKEN_COLORS.length];
@@ -109,7 +115,11 @@ export function SceneContents(props: BoardSceneProps) {
             >
               <span className="board-square__num">{square}</span>
               <span className="board-square__arrow" aria-hidden="true">{arrowFor(square, boardLength)}</span>
-              {isFinish && <span className="board-finish-landmark" aria-hidden="true">🏁</span>}
+              {isFinish && (
+                <span className="board-finish-landmark" aria-hidden="true">
+                  <img src={`${ASSET_BASE}/board-game-icons/flag_square.png`} alt="" draggable={false} />
+                </span>
+              )}
               {isDest && <span className="board-marker board-marker--dest" aria-hidden="true">도착</span>}
               {isFinal && <span className="board-marker board-marker--final" aria-hidden="true">이벤트</span>}
               <span className="board-token-stack">
@@ -121,7 +131,9 @@ export function SceneContents(props: BoardSceneProps) {
       </ol>
       <div className={`board-dice ${rollId > 0 ? 'has-rolled' : ''}`} aria-live="polite">
         <span className="board-dice__label">주사위</span>
-        <strong className="board-dice__face">{face ?? '?'}</strong>
+        <strong className="board-dice__face">
+          {diceIcon(face) ? <img src={diceIcon(face)!} alt="" draggable={false} /> : '?'}
+        </strong>
       </div>
     </section>
   );

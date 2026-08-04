@@ -430,9 +430,12 @@
   box-shadow: 0 7px 0 rgba(255,159,28,.32), 0 0 0 7px rgba(255,203,46,.18);
 }
 .board-finish-landmark {
-  font-size: clamp(26px, 4vw, 46px);
+  display: grid;
+  place-items: center;
+  width: clamp(28px, 4vw, 46px);
   filter: drop-shadow(0 3px 0 rgba(0,0,0,.12));
 }
+.board-finish-landmark img { width: 100%; height: auto; display: block; }
 .board-square.is-step::after,
 .board-square.is-dest::after,
 .board-square.is-final::before {
@@ -509,6 +512,16 @@
   width: 100%;
   height: auto;
   display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 0 rgba(23,58,87,.16));
+}
+.board-token::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 74%;
+  aspect-ratio: 1;
+  bottom: 14%;
   border-radius: 999px;
   background: color-mix(in srgb, var(--token-color) 18%, #fff);
   border: 3px solid var(--token-color);
@@ -559,6 +572,7 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+.board-dice__face img { width: 32px; height: 32px; object-fit: contain; }
 .game-positions li { display: inline-flex; align-items: center; gap: 7px; }
 .game-positions .rank {
   border-radius: 999px;
