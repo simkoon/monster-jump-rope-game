@@ -22,8 +22,11 @@ export default function App() {
   const eventCount = events.length;
 
   return (
-    <div className="app">
-      <Header />
+    <div className={`app app--${view}`}>
+      <Header
+        context={view === 'game' ? '게임' : '콘텐츠 편집기'}
+        subtitle={view === 'game' ? '카드 미션을 성공하고 결승까지 점프해요' : '줄넘기 미션과 이벤트 칸을 자유롭게 만들어요'}
+      />
       {/* Additive top-level switch — the 미션/이벤트 editor stays exactly as-is. */}
       <nav className="view-switch" aria-label="화면 전환">
         <button
@@ -50,8 +53,8 @@ export default function App() {
             eventCount={eventCount}
             onChange={setTab}
           />
-          <main>
-            <section className="panel">
+          <main className="editor-main">
+            <section className="panel panel--editor-shell">
               {tab === 'mission' ? <MissionTab /> : <EventTab />}
             </section>
           </main>
@@ -61,8 +64,8 @@ export default function App() {
           </footer>
         </>
       ) : (
-        <main>
-          <section className="panel">
+        <main className="game-main">
+          <section className="panel panel--game-shell">
             <GameApp />
           </section>
         </main>

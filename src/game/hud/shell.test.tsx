@@ -72,10 +72,11 @@ describe('SetupView — empty-library guard (MISSION-07)', () => {
     expect(game!.phase).toBe('awaitingDraw');
   });
 
-  it('renders the 파워점핑 placeholder logo + a --tap 시작 button (ART-04)', () => {
+  it('renders the original 파워점핑 logo + a --tap 시작 button (ART-05/ART-04)', () => {
     setMissions([mission('a')]);
-    render(<SetupView />);
+    const { container } = render(<SetupView />);
     expect(screen.getByText('파워점핑')).toBeInTheDocument();
+    expect(container.querySelector('.pj-logo--hero')).not.toBeNull();
     expect(screen.getByRole('button', { name: /시작/ }).className).toContain('game-btn');
   });
 
@@ -97,7 +98,8 @@ describe('ResultView — winner / co-winner + restart (D-05/LOOP-10)', () => {
 
   it('single winner shows the winner + both restart controls', () => {
     setGame(gameOver([participant('p1', '가', 20), participant('p2', '나', 8)], ['p1'], 'reached-finish'));
-    render(<ResultView />);
+    const { container } = render(<ResultView />);
+    expect(container.querySelector('.pj-logo--compact')).not.toBeNull();
     expect(screen.getByText(/승리:/)).toHaveTextContent('가');
     expect(screen.getByRole('button', { name: /다시 시작/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /시작 화면으로/ })).toBeInTheDocument();

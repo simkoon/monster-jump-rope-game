@@ -3,11 +3,11 @@
 // verbatim (mode, count, names, characters, team members, board preset, time limit,
 // buildParticipants/boardLengthFor, the canStart empty-library guard → MISSION-07). Only
 // the presentation changes: big --tap/--tap-sm controls + the reused SegmentedControl.
-// Real logo/art is Phase 4 (ART-05); the placeholder text logo stands in for now.
 import { useState } from 'react';
 import { useStore } from '../../store';
 import { useGameStore } from '../../harness/useGameStore';
 import SegmentedControl from '../../components/SegmentedControl';
+import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import {
   buildParticipants,
   boardLengthFor,
@@ -75,9 +75,13 @@ export default function SetupView() {
 
   return (
     <div className="game-setup">
-      {/* Placeholder text logo — the real original logo is Phase 4 (ART-05). */}
-      <h1 className="game-setup-logo">파워점핑</h1>
-      <p className="game-setup-sub">신나는 줄넘기 미션 — 게임을 설정하고 시작하세요.</p>
+      <PowerJumpingLogo
+        as="h1"
+        variant="hero"
+        subtitle="신나는 줄넘기 미션"
+        className="game-setup-logo"
+      />
+      <p className="game-setup-sub">게임을 설정하고 시작하세요.</p>
 
       <label className="game-setup-field">
         <span>모드</span>

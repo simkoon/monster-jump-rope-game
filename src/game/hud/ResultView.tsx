@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../../harness/useGameStore';
 import type { EndReason } from '../../engine/types';
+import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 
 const REASON_COPY: Record<EndReason, string> = {
   'reached-finish': '결승선에 먼저 도착했어요!',
@@ -27,6 +28,11 @@ export default function ResultView() {
 
   return (
     <div className="game-result">
+      <PowerJumpingLogo
+        variant="compact"
+        subtitle="오늘의 점핑 결과"
+        className="game-result-logo"
+      />
       <h1 className="game-result-title">게임 끝!</h1>
       {endReason && <p className="game-result-reason">{REASON_COPY[endReason]}</p>}
 

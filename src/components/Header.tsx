@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { exportContent, importContent } from '../lib/io';
 import ConfirmDialog from './ConfirmDialog';
+import PowerJumpingLogo from './PowerJumpingLogo';
 
 type Theme = 'light' | 'dark';
 const THEME_KEY = 'powerjumping_theme';
@@ -11,7 +12,15 @@ function storedTheme(): Theme | null {
   return v === 'light' || v === 'dark' ? v : null;
 }
 
-export default function Header() {
+interface HeaderProps {
+  context?: string;
+  subtitle?: string;
+}
+
+export default function Header({
+  context = '콘텐츠 편집기',
+  subtitle = '줄넘기 미션과 이벤트 칸을 자유롭게 만들어요',
+}: HeaderProps) {
   const [theme, setTheme] = useState<Theme | null>(() => storedTheme());
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Holds the confirmed-import callback while the overwrite ConfirmDialog is open.
@@ -56,13 +65,12 @@ export default function Header() {
   return (
     <header className="top">
       <div className="logo">
-        <div className="mark" aria-hidden="true">
-          🤸
-        </div>
-        <div>
-          <h1>파워점핑 · 콘텐츠 편집기</h1>
-          <p>줄넘기 미션과 이벤트 칸을 자유롭게 만들어요</p>
-        </div>
+        <PowerJumpingLogo
+          as="h1"
+          variant="compact"
+          context={context}
+          subtitle={subtitle}
+        />
       </div>
       <div className="spacer" />
       <button className="iconbtn" type="button" onClick={onExport} title="내보내기">
