@@ -652,3 +652,175 @@
   .board-dice.has-rolled { animation: none; }
   .board-token { transition: none; }
 }
+
+/* ---- Phase 4.1: iPhone-first playing viewport ---- */
+.app--playing .game-stage {
+  min-height:100vh;
+  min-height:100svh;
+  min-height:100dvh;
+  height:100vh;
+  height:100svh;
+  height:100dvh;
+  overflow:hidden;
+}
+.app--playing .game-hud {
+  padding:max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+@media (max-width: 560px) {
+  .app--playing .game-topbar {
+    min-height:52px;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto auto;
+    align-items:center;
+    padding:8px 10px;
+    border-radius:20px;
+  }
+  .app--playing .game-topbar .spacer { display:none; }
+  .app--playing .game-topbar .game-btn--sm {
+    width:56px;
+    min-width:56px;
+    overflow:hidden;
+    white-space:nowrap;
+    font-size:0;
+  }
+  .app--playing .game-topbar .game-btn--sm::before {
+    content:'마치기';
+    font-size:13px;
+  }
+  .app--playing .game-turn-pill {
+    min-width:0;
+    padding:6px 10px;
+    border-width:2px;
+  }
+  .app--playing .game-turn-name {
+    max-width:48vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:20px;
+  }
+  .app--playing .game-turn-member,
+  .app--playing .game-clock {
+    font-size:12px;
+  }
+  .app--playing .game-topbar .game-btn--sm {
+    min-height:40px;
+    padding:0 10px;
+    font-size:13px;
+  }
+  .app--playing .board-2d {
+    inset: 74px max(6px, env(safe-area-inset-right)) calc(166px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    border-radius:22px;
+    padding:8px;
+    gap:6px;
+  }
+  .app--playing .board-title-row {
+    font-size:11px;
+  }
+  .app--playing .board-grid {
+    --cell-gap:5px;
+    grid-template-columns:repeat(var(--board-cols), minmax(30px, 1fr));
+    grid-template-rows:repeat(var(--board-rows), minmax(34px, 1fr));
+    align-content:stretch;
+  }
+  .app--playing .board-square {
+    min-height:34px;
+    border-radius:13px;
+    border-width:2px;
+    box-shadow:0 3px 0 rgba(23,58,87,.07), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .app--playing .board-square__num {
+    font-size:9px;
+    top:3px;
+    left:4px;
+  }
+  .app--playing .board-square__arrow {
+    font-size:13px;
+    right:4px;
+    bottom:2px;
+  }
+  .app--playing .board-finish-landmark { width:26px; }
+  .app--playing .board-token {
+    width:30px;
+    min-width:24px;
+  }
+  .app--playing .board-dice {
+    top:8px;
+    min-width:86px;
+    gap:5px;
+    padding:5px 9px;
+    border-radius:15px;
+  }
+  .app--playing .board-dice__label { font-size:11px; }
+  .app--playing .board-dice__face {
+    width:32px;
+    height:32px;
+    border-radius:10px;
+    border-width:2px;
+    font-size:20px;
+  }
+  .app--playing .board-dice__face img { width:24px; height:24px; }
+  .app--playing .game-bottom {
+    gap:8px;
+  }
+  .app--playing .game-controls {
+    width:100%;
+    gap:8px;
+  }
+  .app--playing .game-controls .game-btn {
+    min-height:52px;
+    flex:1 1 100%;
+    font-size:16px;
+    border-radius:18px;
+  }
+  .app--playing .game-resolved {
+    width:100%;
+    padding:12px 12px;
+    border-width:2px;
+    border-radius:20px;
+    gap:6px;
+  }
+  .app--playing .game-roll { font-size:26px; }
+  .app--playing .game-move { font-size:15px; }
+  .app--playing .game-event { font-size:18px; }
+  .app--playing .game-positions {
+    width:100%;
+    margin:0;
+    padding:7px 8px;
+    border-radius:18px;
+    gap:7px;
+    justify-content:space-between;
+    font-size:13px;
+  }
+  .app--playing .game-positions li {
+    flex:1 1 46%;
+    min-width:0;
+    gap:4px;
+  }
+  .app--playing .game-positions .remain {
+    display:block;
+    font-size:11px;
+  }
+  .app--playing .game-mission-card {
+    max-width:calc(100vw - 24px);
+    padding:18px 14px;
+    border-radius:22px;
+  }
+  .app--playing .game-judge .game-btn {
+    min-height:54px;
+  }
+}
+@media (max-width: 390px), (max-height: 760px) {
+  .app--playing .board-2d {
+    inset: 72px 5px calc(154px + env(safe-area-inset-bottom)) 5px;
+    padding:6px;
+  }
+  .app--playing .board-grid {
+    --cell-gap:4px;
+    grid-template-rows:repeat(var(--board-rows), minmax(30px, 1fr));
+  }
+  .app--playing .board-square { min-height:30px; border-radius:11px; }
+  .app--playing .board-token { width:26px; min-width:22px; }
+  .app--playing .game-positions { font-size:12px; }
+  .app--playing .game-controls .game-btn { min-height:48px; }
+}

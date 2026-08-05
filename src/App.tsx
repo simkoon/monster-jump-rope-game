@@ -6,6 +6,7 @@ import MissionTab from './components/MissionTab';
 import EventTab from './components/EventTab';
 import Toast from './components/Toast';
 import GameApp from './game/GameApp';
+import { useGameStore } from './harness/useGameStore';
 
 // Top-level view: the content 편집기 (Phase 1 mission/event tabs) or the 게임 (3D board).
 type View = 'editor' | 'game';
@@ -16,13 +17,15 @@ export default function App() {
   const [tab, setTab] = useState<TabKey>('mission');
   const missions = useStore((s) => s.missions);
   const events = useStore((s) => s.events);
+  const activeGame = useGameStore((s) => s.game);
 
   // Tab counts always reflect the full, unfiltered lists (UI-SPEC).
   const missionCount = missions.length;
   const eventCount = events.length;
+  const isPlaying = view === 'game' && activeGame !== null;
 
   return (
-    <div className={`app app--${view}`}>
+    <div className={`app app--${view}${isPlaying ? ' app--playing' : ''}`}>
       <Header
         context={view === 'game' ? '게임' : '콘텐츠 편집기'}
         subtitle={view === 'game' ? '카드 미션을 성공하고 결승까지 점프해요' : '줄넘기 미션과 이벤트 칸을 자유롭게 만들어요'}

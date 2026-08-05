@@ -153,10 +153,30 @@ Plans:
 - [x] 04-01-PLAN.md — 모든 화면에 적용되는 닌텐도풍 비주얼 시스템 + 오리지널 "파워점핑" 로고
 - [x] 04-02-PLAN.md — Kenney 기반 남/여 2D 줄넘기 캐릭터의 상황별 표정/포즈 전환(성공/실패/이동) — walk/cheer/hurt 포즈 우선
 
+### Phase 4.1: iPhone-first modern polish
+
+**Goal**: iPhone에서 플레이 화면이 깨지지 않도록 active game을 fullscreen play shell로 전환하고, 설정/편집기/앱 shell은 Apple/Toss-like modern clean style로 정리하면서 게임 보드는 Nintendo-like playful feel을 유지한다.
+**Mode:** mvp
+**Depends on**: Phase 4
+**Requirements**: ART-04, ART-05, LOOP-06
+**Success Criteria** (what must be TRUE):
+
+  1. active game 중에는 global header/view switch가 숨겨져 iPhone viewport 전체를 게임에 쓴다
+  2. 390px portrait에서 topbar, board, card button, rank strip이 서로 겹치거나 잘리지 않는다
+  3. setup/editor shell은 더 모던하고 깔끔한 카드/버튼/배경 톤을 가진다
+  4. game board는 기존 playful/Nintendo-like 컬러와 캐릭터 감성을 유지한다
+
+**Plans**: 1/1 plans complete
+**UI hint**: yes
+
+Plans:
+
+- [x] 04.1-01-PLAN.md — iPhone fullscreen play shell, modern Apple/Toss-like app chrome, compact Nintendo-like game stage
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -165,3 +185,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 3. 3D 보드 & 실제 게임 UI | 2/2 | Complete   | 2026-07-25 |
 | 3.1. 2D 렌더링 전환 & CC0 에셋 파이프라인 | 2/2 | Complete | 2026-08-04 |
 | 4. 닌텐도풍 아트 & 캐릭터 | 2/2 | Complete | 2026-08-04 |
+| 4.1. iPhone-first modern polish | 1/1 | Complete | 2026-08-05 |

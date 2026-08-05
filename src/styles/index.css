@@ -368,3 +368,171 @@ main { max-width:1080px; margin:0 auto; }
 
 .hidden{ display:none!important; }
 footer.note{ max-width:1080px; margin:20px auto 0; padding:0 24px; font-size:12.5px; color:var(--ink-soft); line-height:1.6; }
+
+/* ---- Phase 4.1: Apple/Toss-like app shell + iPhone playing mode ---- */
+:root {
+  --modern-bg:#F5F7FB;
+  --modern-panel:rgba(255,255,255,.92);
+  --modern-line:rgba(15,23,42,.08);
+  --modern-shadow:0 18px 48px rgba(15,23,42,.08), 0 2px 8px rgba(15,23,42,.04);
+  --modern-shadow-sm:0 10px 28px rgba(15,23,42,.07);
+}
+:root[data-theme="dark"] {
+  --modern-bg:#0B1220;
+  --modern-panel:rgba(17,24,39,.9);
+  --modern-line:rgba(255,255,255,.10);
+  --modern-shadow:0 18px 48px rgba(0,0,0,.34), 0 2px 8px rgba(0,0,0,.2);
+  --modern-shadow-sm:0 10px 28px rgba(0,0,0,.24);
+}
+body {
+  background:
+    radial-gradient(circle at 18% -8%, color-mix(in srgb, var(--sky) 16%, transparent), transparent 32%),
+    linear-gradient(180deg, var(--modern-bg), color-mix(in srgb, var(--modern-bg) 92%, #fff));
+}
+.app {
+  min-height:100svh;
+  min-height:100dvh;
+  padding-bottom:max(42px, env(safe-area-inset-bottom));
+}
+header.top {
+  padding:max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+  gap:10px;
+}
+.logo { min-width:0; }
+.iconbtn,
+.add,
+.btn-primary,
+.btn-cancel,
+.chip,
+.seg button,
+.search,
+.card,
+.modal,
+.panel,
+.game-setup,
+.game-result {
+  box-shadow:var(--modern-shadow-sm);
+}
+.iconbtn,
+.chip,
+.seg button,
+.search,
+.field input[type=text],
+.field textarea,
+.field input[type=number],
+.catadd input,
+.btn-cancel {
+  background:var(--modern-panel);
+  border-color:var(--modern-line);
+}
+.iconbtn {
+  min-height:42px;
+  border-width:1px;
+  border-radius:14px;
+  padding:9px 13px;
+  font-weight:800;
+}
+.view-switch {
+  margin:6px auto 0;
+  padding:6px 20px 0;
+  align-items:center;
+}
+.view-switch .tab {
+  border:1px solid var(--modern-line);
+  border-radius:999px;
+  padding:10px 18px;
+  background:var(--modern-panel);
+  box-shadow:var(--modern-shadow-sm);
+}
+.view-switch .tab.active {
+  background:linear-gradient(180deg, #3182F6, #1C64F2);
+  box-shadow:0 12px 28px rgba(49,130,246,.22);
+}
+.panel {
+  border:1px solid var(--modern-line);
+  border-radius:28px;
+  background:var(--modern-panel);
+  box-shadow:var(--modern-shadow);
+}
+.panel--editor-shell { border-radius:28px; }
+.panel--game-shell { margin-top:8px; }
+.card {
+  border-width:1px;
+  border-color:var(--modern-line);
+  border-radius:22px;
+  background:var(--modern-panel);
+}
+.game-setup,
+.game-result {
+  border:1px solid var(--modern-line);
+  border-radius:32px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88)),
+    radial-gradient(circle at 18% 8%, rgba(49,130,246,.12), transparent 30%);
+  box-shadow:var(--modern-shadow);
+}
+.game-setup-sub { color:color-mix(in srgb, var(--ink-soft) 82%, #64748B); }
+.game-setup-row input[type='text'],
+.game-count-ctl input,
+.game-count-ctl button,
+.game-result-pick-option {
+  border-width:1px;
+  border-color:var(--modern-line);
+  background:rgba(248,250,252,.92);
+  box-shadow:none;
+}
+.game-btn {
+  border-width:0;
+  border-radius:20px;
+  box-shadow:0 14px 30px rgba(34,176,242,.24), inset 0 1px 0 rgba(255,255,255,.42);
+}
+.game-btn--neutral,
+.game-btn--sm {
+  border-width:1px;
+  border-color:var(--modern-line);
+  background:var(--modern-panel);
+  box-shadow:var(--modern-shadow-sm);
+}
+.app--playing {
+  padding:0;
+  overflow:hidden;
+  background:transparent;
+}
+.app--playing > header.top,
+.app--playing > .view-switch {
+  display:none;
+}
+.app--playing .game-main,
+.app--playing .panel--game-shell {
+  max-width:none;
+  width:100%;
+  margin:0;
+}
+.app--playing .panel--game-shell {
+  border-radius:0;
+}
+@media (max-width: 700px) {
+  header.top {
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:center;
+  }
+  header.top .spacer { display:none; }
+  .logo { grid-column:1 / -1; }
+  .pj-logo--compact .pj-logo__word { font-size:25px; }
+  .pj-logo--compact .pj-logo__subtitle { font-size:11.5px; }
+  .iconbtn { min-height:40px; padding:8px 10px; font-size:13px; }
+  .view-switch {
+    padding:6px 14px 0;
+    gap:8px;
+  }
+  .view-switch .tab {
+    flex:1;
+    border-radius:16px;
+    padding:11px 10px;
+  }
+  main { width:100%; }
+  .panel { margin:0 12px; padding:14px; border-radius:24px; }
+  .panel--game-shell { margin:0 10px; padding:0; }
+  .game-setup { width:100%; max-width:none; border-radius:26px; }
+}

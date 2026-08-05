@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 4
-current_phase_name: 닌텐도풍 아트 & 캐릭터
+current_phase: 4.1
+current_phase_name: iPhone-first modern polish
 status: complete
-stopped_at: 04-02 complete — character poses/expressions implemented and browser-smoke verified
-last_updated: "2026-08-04T15:24:15+09:00"
-last_activity: 2026-08-04
-last_activity_desc: "04-02 Kenney 캐릭터 성공/실패/이동 포즈 전환 구현/검증"
+stopped_at: 04.1-01 complete — iPhone fullscreen play shell and modern polish implemented, build/test/CDP smoke verified
+last_updated: "2026-08-05T11:00:24+09:00"
+last_activity: 2026-08-05
+last_activity_desc: "04.1-01 iPhone 깨짐 수정 + Apple/Toss-like shell + Nintendo-like game stage polish"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 13
+  completed_plans: 13
   percent: 100
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 4 — 닌텐도풍 아트 & 캐릭터
+**Current focus:** Phase 4.1 — iPhone-first modern polish
 
 ## Current Position
 
-Phase: 4 (닌텐도풍 아트 & 캐릭터) — COMPLETE
-Plan: 2 of 2 implemented for Phase 4
-Status: 04-02 구현 및 자동/브라우저 smoke 검증 완료; Phase 4 완료
-Last activity: 2026-08-04 — 04-02 캐릭터 포즈/표정 전환 구현/검증
+Phase: 4.1 (iPhone-first modern polish) — COMPLETE
+Plan: 1 of 1 implemented for Phase 4.1
+Status: 04.1-01 구현 및 build/test/CDP iPhone smoke 검증 완료; Phase 4.1 완료
+Last activity: 2026-08-05 — 04.1-01 iPhone 깨짐 수정 + 모던 shell polish
 
 **전환 배경:** 3D 캐릭터·표정 아트를 조달할 수단이 없는 반면 2D는 CC0 무료 에셋으로 즉시 조달 가능(Kenney 표정 12종×색상 6종 확보 검증됨). Phase 3의 R3F 씬은 Phase 3.1에서 DOM+SVG+CSS로 교체된다.
 
@@ -131,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-04
-Stopped at: 04-02 character pose/expression switching implemented; build/test/browser smoke passed
-Resume file: .planning/phases/04-nintendo-style-art-characters/04-02-SUMMARY.md
+Last session: 2026-08-05
+Stopped at: 04.1-01 iPhone-first modern polish implemented; build/test/CDP iPhone smoke passed
+Resume file: .planning/phases/04.1-iphone-modern-polish/04.1-01-SUMMARY.md

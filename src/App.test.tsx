@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import { useStore } from './store';
+import { useGameStore } from './harness/useGameStore';
 import { seedContent } from './seed';
 import type { Mission } from './schema';
 
 function resetToSeed() {
   localStorage.clear();
+  useGameStore.getState().reset();
   const s = seedContent();
   useStore.setState({ version: s.version, categories: s.categories, missions: s.missions, events: s.events });
 }
@@ -44,6 +46,14 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(document.querySelector('.app--game')).not.toBeNull();
     expect(document.querySelector('.panel--game-shell')).not.toBeNull();
     expect(screen.getByRole('button', { name: /시작/ })).toBeInTheDocument();
+  });
+
+  it('adds a fullscreen playing shell class after the game starts on iPhone-sized layouts', async () => {
+    const { container } = render(<App />);
+    expect(container.querySelector('.app--playing')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /시작/ }));
+    await waitFor(() => expect(container.querySelector('.app')?.className).toContain('app--playing'));
+    expect(container.querySelector('.game-stage')).not.toBeNull();
   });
 
   it('keeps the 편집기 reachable via the mode switch', () => {
