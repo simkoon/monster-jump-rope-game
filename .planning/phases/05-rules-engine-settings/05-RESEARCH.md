@@ -716,14 +716,16 @@ it.each(seeds(500))('seed %i: 불변식', (seed) => {
 | A5 | 출발 보너스 "한 턴 최대 1회"에서 extra 턴은 별개의 턴으로 본다(extra 턴에서 새 바퀴를 넘으면 다시 받을 수 있음) | Pattern 3/6 | 낮음 — 바퀴 기록이 이중 지급을 막으므로 실제로 받으려면 한 바퀴를 새로 돌아야 한다 |
 | A6 | 재셔플 직후 직전 카드가 맨 위면 피하는 처리는 선택 사항 | Pattern 5 | 매우 낮음 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **최종 파일 이름(`types.ts`/`engine.ts` 유지 vs 새 이름)**
+1. **최종 파일 이름(`types.ts`/`engine.ts` 유지 vs 새 이름)** — RESOLVED: 새 이름으로 추가한 뒤 교체한다.
    - What we know: 단계별 green 유지와 이름 유지는 동시에 하기 어렵다(Pattern 8).
    - Recommendation: planner가 고른다. 계획 수를 줄이고 싶으면 B와 C를 합쳐 이름을 유지하고, 위험을 줄이고 싶으면 새 이름으로 추가한 뒤 교체한다.
-2. **"다시 하기"가 콘텐츠와 설정을 다시 스냅샷할지**
+   - Resolution (planner, 05-03/05-05): v2 타입·FSM은 새 파일 `src/engine/state.ts` + `src/engine/game.ts`에 만든다(05-03 — v1 `engine.ts`/`types.ts`/`placement.ts`는 손대지 않아 빌드 green 유지). 05-05 Task 1이 harness를 새 엔진으로 옮기고 v1 `engine.ts`/`types.ts`/`placement.ts`와 그 테스트를 `git rm`으로 지운다. 최종 이름은 `state.ts`/`game.ts`이며 `types.ts`/`engine.ts`라는 이름은 남지 않는다.
+2. **"다시 하기"가 콘텐츠와 설정을 다시 스냅샷할지** — RESOLVED: 다시 스냅샷한다(권고안 채택).
    - What we know: D-27은 "다시 하기/처음으로"만 정했다.
    - Recommendation: 같은 참가자·같은 라운드 수로 하되, 콘텐츠·설정(실패 규칙·보너스·보드 크기)은 **새로 스냅샷**하고 보드도 새로 섞는다. 판 사이에 강사가 미션을 고쳤다면 반영되는 쪽이 자연스럽다.
+   - Resolution (planner, 05-05): `useGameStore.restart`는 끝난 게임의 모드·참가자(id·이름·동물)·`rules.rounds`로 `startGame`을 다시 실행해 미션·이벤트·설정(failRule·startBonus·boardSize)을 새로 스냅샷하고 보드를 새로 섞으며 별은 0으로 돌아간다. 05-05 Task 1 harness 테스트("restart 전에 boardSize를 24로 바꾸면 새 보드 길이 24")와 Task 3 결과 화면 `🔁 다시 하기` 테스트로 고정한다.
 
 ## Environment Availability
 
