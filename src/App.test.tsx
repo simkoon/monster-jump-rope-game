@@ -3,12 +3,14 @@ import { render, screen, within, fireEvent, waitFor } from '@testing-library/rea
 import App from './App';
 import { useStore } from './store';
 import { useGameStore } from './harness/useGameStore';
+import { useSettings, DEFAULT_SETTINGS } from './settings';
 import { seedContent } from './seed';
 import type { Mission } from './schema';
 
 function resetToSeed() {
   localStorage.clear();
   useGameStore.getState().reset();
+  useSettings.setState({ ...DEFAULT_SETTINGS }); // settings changed by one test never leak into another
   const s = seedContent();
   useStore.setState({ version: s.version, categories: s.categories, missions: s.missions, events: s.events });
 }
@@ -40,20 +42,45 @@ describe('App shell — default 게임 entry (D-10)', () => {
     // ...and no editor MissionTab content (a seed mission name) is rendered.
     expect(screen.queryByText('양발 모아뛰기')).toBeNull();
     // The reskinned game view (SetupView, GameApp with no active game) is what mounts:
-    // the original Phase 4 파워점핑 logo + the --tap 시작 button.
+    // the original Phase 4 파워점핑 logo + the --tap 게임 시작 button. The header logo's
+    // aria-label is composed as '파워점핑 {context} {subtitle}' (PowerJumpingLogo).
     expect(screen.getAllByText('파워점핑').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByLabelText('파워점핑 게임 카드 미션을 성공하고 결승까지 점프해요')).toBeInTheDocument();
+    expect(screen.getByLabelText('파워점핑 게임 주사위를 굴리고 줄넘기 미션으로 별을 모아요')).toBeInTheDocument();
     expect(document.querySelector('.app--game')).not.toBeNull();
     expect(document.querySelector('.panel--game-shell')).not.toBeNull();
-    expect(screen.getByRole('button', { name: /시작/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
   });
 
   it('adds a fullscreen playing shell class after the game starts on iPhone-sized layouts', async () => {
     const { container } = render(<App />);
     expect(container.querySelector('.app--playing')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /시작/ }));
+    fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
     await waitFor(() => expect(container.querySelector('.app')?.className).toContain('app--playing'));
     expect(container.querySelector('.game-stage')).not.toBeNull();
+  });
+
+  it('plays one full game from 게임 시작 to the result screen, then 🔁 다시 하기 (Phase 5 goal)', () => {
+    useSettings.setState({ defaultRounds: 1, boardSize: 16, failRule: 'noStar' });
+    const { container } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
+    expect(container.querySelector('.game-stage.temp-play')).not.toBeNull();
+    expect(container.querySelector('.game-round')!.textContent).toBe('라운드1/1');
+
+    const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
+    let clicks = 0;
+    while (!screen.queryByText('게임 끝!') && clicks < 40) {
+      const btn = labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
+      expect(btn).toBeTruthy();
+      fireEvent.click(btn!);
+      clicks++;
+    }
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    expect(screen.getByText('1라운드를 모두 마쳤어요!')).toBeInTheDocument();
+    expect(screen.getByText(/^🏆 (공동 )?우승! /)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    expect(container.querySelector('.game-round')!.textContent).toBe('라운드1/1');
+    expect(useGameStore.getState().game!.board.length).toBe(16);
   });
 
   it('keeps the 편집기 reachable via the mode switch', () => {
