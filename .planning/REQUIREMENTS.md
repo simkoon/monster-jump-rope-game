@@ -130,13 +130,62 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| DATA-05 | Phase 5 | Pending |
+| DATA-06 | Phase 5 | Pending |
+| DATA-07 | Phase 5 | Pending |
+| CFG-01 | Phase 5 | Pending |
+| CFG-02 | Phase 5 | Pending |
+| CFG-03 | Phase 5 | Pending |
+| CFG-04 | Phase 5 | Pending |
+| SETUP-07 | Phase 5 | Pending |
+| SETUP-08 | Phase 5 | Pending |
+| SETUP-09 | Phase 5 | Pending |
+| BOARD-01 | Phase 6 | Pending |
+| BOARD-02 | Phase 6 | Pending |
+| BOARD-03 | Phase 6 | Pending |
+| BOARD-04 | Phase 5 | Pending |
+| BOARD-05 | Phase 7 | Pending |
+| TURN-01 | Phase 5 | Pending |
+| TURN-02 | Phase 5 | Pending |
+| TURN-03 | Phase 5 | Pending |
+| TURN-04 | Phase 5 | Pending |
+| TURN-05 | Phase 5 | Pending |
+| TURN-06 | Phase 5 | Pending |
+| TURN-07 | Phase 5 | Pending |
+| TURN-08 | Phase 5 | Pending |
+| ROUND-01 | Phase 5 | Pending |
+| ROUND-02 | Phase 6 | Pending |
+| ROUND-03 | Phase 5 | Pending |
+| ROUND-04 | Phase 5 | Pending |
+| HUD-01 | Phase 6 | Pending |
+| HUD-02 | Phase 6 | Pending |
+| HUD-03 | Phase 6 | Pending |
+| HUD-04 | Phase 6 | Pending |
+| CHAR-01 | Phase 7 | Pending |
+| CHAR-02 | Phase 7 | Pending |
+| CHAR-03 | Phase 7 | Pending |
+| FX-01 | Phase 8 | Pending |
+| FX-02 | Phase 8 | Pending |
+| FX-03 | Phase 8 | Pending |
+| FX-04 | Phase 8 | Pending |
+| FX-05 | Phase 8 | Pending |
+| FX-06 | Phase 8 | Pending |
+| END-01 | Phase 8 | Pending |
+| END-02 | Phase 8 | Pending |
+| END-03 | Phase 8 | Pending |
+| AUDIO-01 | Phase 8 | Pending |
+| AUDIO-02 | Phase 8 | Pending |
+| STAB-01 | Phase 8 | Pending |
+| STAB-02 | Phase 6 | Pending |
+| STAB-03 | Phase 8 | Pending |
+| STAB-04 | Phase 6 | Pending |
 
 **Coverage:**
 
 - v2.0 requirements: 49 total (DATA 3 + CFG 4 + SETUP 3 + BOARD 5 + TURN 8 + ROUND 4 + HUD 4 + CHAR 3 + FX 6 + END 3 + AUDIO 2 + STAB 4)
-- Mapped to phases: 0 (로드맵 작성 시 채움)
-- Unmapped: 49
+- Mapped to phases: 49 (Phase 5: 22 · Phase 6: 10 · Phase 7: 4 · Phase 8: 13)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-22*
-*Last updated: 2026-10-22 after milestone v2.0 requirements definition*
+*Last updated: 2026-10-22 after v2.0 roadmap creation (traceability filled, Phases 5–8)*

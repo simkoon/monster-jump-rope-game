@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 status: planning
-last_updated: "2026-10-22T09:27:36.647Z"
+last_updated: "2026-10-22T10:11:47.000Z"
 last_activity: 2026-10-22
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-22)
 
 **Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Milestone v2.0 3D 블루마블 재구축 — 요구사항 정의 중
+**Current focus:** Milestone v2.0 3D 블루마블 재구축 — Phase 5 새 규칙 엔진 & 강사 설정
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-10-22 — Milestone v2.0 started
+Phase: 5 of 8 (v2.0 4개 단계 중 1번째) — 새 규칙 엔진 & 강사 설정
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-22 — v2.0 로드맵 작성 (Phases 5–8, 49/49 요구사항 매핑)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -65,6 +67,11 @@ Last activity: 2026-10-22 — Milestone v2.0 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [v2.0 Roadmap]: 순서는 규칙·데이터 헤드리스 고정(Phase 5, 임시 DOM 화면으로 한 판 끝까지) → 3D 순환판·연출 디렉터·DOM 화면 정보(6) → 치비 동물 캐릭터(7) → 성공 연출·시상식·사운드·안정성(8). 연구 SUMMARY의 4단계 제안을 그대로 채택.
+- [v2.0 Roadmap]: 데이터 보존(DATA-05/06/07)은 Phase 5에, 그것도 엔진 작업보다 먼저 — 강사 콘텐츠 손실은 복구 비용이 가장 크다. v1 픽스처(저장 데이터·백업 파일) 테스트가 선행 조건.
+- [v2.0 Roadmap]: Phase 6의 말은 임시 말이고 Phase 7에서 치비 캐릭터로 교체한다. 3D 공간 안에는 한글 텍스트를 두지 않는다(글자는 모두 DOM, STAB-04).
+- [v2.0 Roadmap]: 동물 선택(SETUP-07)은 데이터 모델 교체(boy/girl → animal) 때문에 Phase 5에서 처리하고, 실제 3D 동물 모습은 Phase 7에서 입힌다. 점수판 정렬·대응(HUD-01)은 Phase 6, 동물 아이콘화는 Phase 7.
+- [v2.0 Roadmap]: 같은 칸 다중 말 구분(BOARD-05)은 캐릭터 크기에 좌우되므로 Phase 7.
 - [Roadmap]: 헤드리스 게임 엔진을 3D 이전에 검증(Phase 2가 3D 없이 플레이 가능) — 프로젝트 최대 리스크 감소책.
 - [Roadmap]: 콘텐츠 편집기(Phase 1)를 게임 루프보다 먼저 — 미션 없이는 카드를 뽑을 수 없고, 편집이 핵심 가치.
 - [Roadmap]: 3D 캐릭터 아트는 Phase 4로 시간 상자 격리 — 플레이 가능 루프를 절대 막지 않도록.
@@ -92,14 +99,19 @@ None yet.
 
 [Issues that affect future work]
 
-- [Roadmap]: REQUIREMENTS.md 헤더가 "34 total"로 기재되어 있으나 실제 열거된 v1 요구사항은 38개(SETUP 6 + LOOP 10 + MISSION 7 + EVENT 6 + DATA 4 + ART 5). 로드맵은 38개 전부를 매핑함. 헤더 수치 정정 필요.
-- [Phase 1]: 이벤트 확률/가중치 입력·정규화 UX 모델 미정 (연구: --research-phase 대상).
-- [Phase 3]: R3F vs 바닐라 Three.js 및 dispose/ANIM_DONE 패턴 확정 필요. 대상 태블릿 사양 확보로 성능 예산 설정 필요.
-- [Phase 2]: 승리 조건(정확 도착 vs 초과 통과, 동시 도착 무승부) 엔진 설계에서 확정 필요.
+v1.0 시기의 항목(요구사항 개수 표기, 이벤트 확률 UX, R3F vs 바닐라, 승리 조건)은 v1.0 완료로 해소되어 정리함.
+
+- [Phase 5]: discuss-phase에서 확정할 정책 — "한 번 더"를 마지막 라운드 마지막 플레이어에게 허용할지, 판정 되돌리기 범위(직전 1회 스냅샷이면 충분한지), 예상 소요 시간 계산식(참가자 × 라운드 × 약 45초 가정).
+- [Phase 5]: 강사 설정은 별도 persist 키에 저장하고 콘텐츠 스키마 버전은 올리지 않는 방향(DATA-07: 백업 파일에 설정 미포함). 그래도 v1 픽스처 테스트는 필수 — 현재 `store.ts`의 identity `migrate`는 버전 상향 시 강사 미션을 시드로 덮어쓸 수 있다.
+- [Phase 6]: 연구 플래그 — iOS Safari WebGL 컨텍스트 손실 복구(`<Canvas key>` 리마운트, R3F v9 내부 동작)와 세로 화면 카메라 맞춤은 공식 문서가 없어 실기기 스파이크 필요.
+- [Phase 7]: 연구 플래그 — 코드로 만든 캐릭터의 "귀여움"은 디자인 스파이크/스케치 권장(견본보다 확실히 더 귀엽게). 동물 종 수(6~8종) 확정, 8인 드로우콜 예산(약 150, 추정) 실측.
+- [Phase 8]: 연구 플래그 — 3D 앵커 → DOM 점수판 별 비행 좌표 정합(리사이즈·safe-area) 짧은 스파이크.
+- [Phase 8]: STAB-03 실기기 UAT(iPhone·iPad Safari)가 완료 조건 — 강사(사용자) 기기 확인 일정 필요.
 
 ### Roadmap Evolution
 
 - Phase 3.1 inserted after Phase 3: 3D→2D 렌더링 전환 & CC0 에셋 파이프라인 (사용자 결정 2026-07-26) (URGENT)
+- 2026-10-22: v2.0 로드맵 작성 — Phases 5–8 (5 새 규칙 엔진 & 강사 설정 → 6 3D 순환판 & 게임 화면 → 7 치비 동물 캐릭터 & 표정 → 8 퀘스트 성공 연출 & 시상식 & 마감), 요구사항 49/49 매핑
 
 ## Quick Tasks Completed
 
@@ -118,6 +130,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-05
-Stopped at: 04.1-01 iPhone-first modern polish implemented; build/test/CDP iPhone smoke passed
-Resume file: .planning/phases/04.1-iphone-modern-polish/04.1-01-SUMMARY.md
+Last session: 2026-10-22
+Stopped at: v2.0 로드맵 작성 완료 (Phases 5–8) — 사용자 승인 대기
+Resume file: None
