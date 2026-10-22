@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 5
 current_phase_name: 새 규칙 엔진 & 강사 설정
-status: executing
+status: verifying
 stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-10-22T17:55:19.580Z"
+last_updated: "2026-10-22T18:06:10.818Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 5 execution started
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 25
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 
 Phase: 5 (새 규칙 엔진 & 강사 설정) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-22 — Phase 5 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P02 | 4min | 3 tasks | 10 files |
 | Phase 05 P03 | 6min | 2 tasks | 5 files |
 | Phase 05 P04 | 4min | 2 tasks | 7 files |
+| Phase 05 P05 | 10min | 3 tasks | 31 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-03: rounds-complete keeps round = rules.rounds; finish clears card+undo, keeps lastMove
 - [Phase 05]: 05-04: labels.ts is the single source of Phase 5 UI copy; emoji/Korean animal names live only in the UI module
 - [Phase 05]: 05-04: AnimalPicker never disables the row's own current value even if it appears in taken
+- [Phase 05]: 05-05: Harness snapshots content + settings once in startGame; restart() re-snapshots and reshuffles the board
+- [Phase 05]: 05-05: Start-screen animal picks freeze the displayed assignment so one row's pick never reshuffles another; count decrease truncates picks
 
 ### Pending Todos
 
@@ -148,6 +151,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T17:55:15.989Z
+Last session: 2026-10-22T18:06:02.790Z
 Stopped at: Completed 05-02-PLAN.md
 Resume file: None
