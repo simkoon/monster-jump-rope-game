@@ -1,7 +1,7 @@
 // src/game/director/useDirector.test.tsx — synchronous engine-log subscription
 // (06-02 Task 3, D-01, D-24, D-25, HUD-03, ROUND-02).
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { advanceTurn, endGame, judge, rollDice, undoJudgement } from '../../engine/game';
 import { boardWith, dice, makeGame, questTile } from '../../engine/testkit';
 import type { GameState, Phase } from '../../engine/state';
@@ -24,6 +24,7 @@ beforeEach(() => {
   useGameStore.setState({ game: null, startBlockedReason: null });
 });
 afterEach(() => {
+  cleanup(); // unmount probes before the stores are reset (no updates outside act)
   unsub?.();
   unsub = null;
   P().reset(EMPTY_DISPLAYED, null);
