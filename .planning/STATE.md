@@ -153,4 +153,4 @@ Items acknowledged and carried forward from previous milestone close:
 
 Last session: 2026-10-22T19:29:41.836Z
 Stopped at: Phase 6 context gathered (auto)
-Resume file: .planning/phases/06-3d-board-screen/06-CONTEXT.md
+Resume file: .planning/phases/06-board-game-screen/06-CONTEXT.md

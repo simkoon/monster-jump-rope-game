@@ -140,5 +140,5 @@ Phase 5의 임시 DOM 플레이 화면(`PlayView` + `RingStrip`)을 **3D 사각 
 
 ---
 
-*Phase: 06-3d-board-screen*
+*Phase: 06-board-game-screen*
 *Context gathered: 2026-10-23 (auto mode)*
