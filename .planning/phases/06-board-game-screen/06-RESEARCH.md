@@ -531,19 +531,18 @@ export function nextUp(g: GameState): { pid: string; member: string; sameAgain: 
 | A5 | 1라운드 게임 시작 시에도 "마지막 라운드!" 배너를 띄우는 것이 맞다 | Pattern 1 | 낮음 — UI-SPEC에서 정책 확정 |
 | A6 | 세로에서 피치를 60°, 가로에서 50°로 두는 것이 읽기에 낫다 | Code 2 | 낮음 — 상수 2개, UAT에서 조정 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **SUS 판정(`too-new`)인 three/fiber/drei 버전을 그대로 쓸지**
+1. **SUS 판정(`too-new`)인 three/fiber/drei 버전을 그대로 쓸지** — **RESOLVED**
    - 알고 있는 것: 공식 패키지이고 다운로드가 많으며 postinstall이 없다. 로컬 설치·테스트·빌드가 모두 정상이었다.
-   - 확인 필요: 사용자가 D-05 버전을 유지할지, v1 검증 조합으로 내릴지.
-   - 권장: D-05를 유지하고, 설치 태스크 앞에 `checkpoint:human-verify`를 둔다.
-2. **"마지막 라운드!" 비트를 버튼을 숨기는 비트로 할지**
-   - 권장: 숨기는 비트(1.2~1.5초)로 한다. 배너 밑에서 주사위를 굴리지 않게 하기 위해서이고, D-25 "안내 비트" 해석과 맞다.
-3. **R(라운드 수)이 클 때 ●○ 점 표시**
+   - 결정: D-05 버전(three 0.186.1 · @types/three 0.186.0 · fiber 9.8.2 · drei 10.7.9 · test-renderer 9.1.1)을 유지하고, 기존 lockfile 위에 exact pin으로 설치한다(사용자가 이미 3D 스택을 승인함). 패키지 정당성 게이트상 [SUS] 판정은 자동 승인할 수 없으므로, 설치 직전 06-01 Task 1에서 레지스트리 근거(`npm view` 결과)를 한 번 보여 주고 사용자가 "approved"로 확인한다. 별도의 버전 재협상은 없다.
+2. **"마지막 라운드!" 비트를 버튼을 숨기는 비트로 할지** — **RESOLVED**
+   - 결정: 버튼을 숨기는 1.5초(1500ms) `finalRound` 비트로 한다(UI-SPEC S6(b), 06-02 `BEAT_MS.finalRound`). 배너 밑에서 주사위를 굴리지 않게 하기 위해서이고, D-25 "안내 비트" 해석과 맞다. 1라운드 게임은 게임 시작 직후 한 번 나온다(A5 채택).
+3. **R(라운드 수)이 클 때 ●○ 점 표시** — **RESOLVED**
    - 알고 있는 것: `ROUNDS_MAX = 20`이다. [VERIFIED: settings.ts]
-   - 권장: R ≤ 10이면 점, 더 크면 숫자 `r/R`만 쓴다. UI-SPEC에서 확정한다.
-4. **판정 성공 비트(`stars`, 600ms)를 Phase 6에 둘지**
-   - 권장: 둔다. 점수판 숫자가 오르는 것이 비트로 보이고, Phase 8은 같은 자리에서 celebrate로 교체만 하면 된다.
+   - 결정: R ≤ 10이면 점 R개 + `r/R`, 10을 넘으면 숫자 `r/R`만 쓴다(UI-SPEC S3, 06-04 `ROUND_DOTS_MAX = 10`).
+4. **판정 성공 비트(`stars`, 600ms)를 Phase 6에 둘지** — **RESOLVED**
+   - 결정: 둔다. 성공 판정 뒤 600ms `stars` 비트(배너 `🎉 성공!` / `⭐+N`)가 끝나는 순간 점수판 별이 오른다(06-02, 06-04). Phase 8은 같은 자리를 celebrate 연출로 교체만 하면 된다.
 
 ## Environment Availability
 
