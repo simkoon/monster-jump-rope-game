@@ -44,6 +44,35 @@ describe('SetupView — removed v1 controls + start button (D-25)', () => {
   });
 });
 
+// WR-02: a <label> wrapping buttons forwards a caption tap to its first button (− / 개인전).
+describe('SetupView — field captions are inert (WR-02)', () => {
+  beforeEach(resetAll);
+
+  it('tapping the 인원 수 / 팀 수 caption does not change the count', () => {
+    render(<SetupView />);
+    fireEvent.click(screen.getByText('인원 수'));
+    expect(screen.getByLabelText('인원 수')).toHaveValue(2);
+    expect(screen.getByLabelText('플레이어 2 이름')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '팀전' }));
+    fireEvent.click(screen.getByText('팀 수'));
+    expect(screen.getByLabelText('팀 수')).toHaveValue(2);
+  });
+
+  it('tapping the 모드 caption does not switch the mode', () => {
+    render(<SetupView />);
+    fireEvent.click(screen.getByRole('button', { name: '팀전' }));
+    fireEvent.click(screen.getByText('모드'));
+    expect(screen.getByRole('button', { name: '팀전' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('팀 1 이름')).toBeInTheDocument();
+  });
+
+  it('the captions are not <label> elements', () => {
+    const { container } = render(<SetupView />);
+    expect(container.querySelector('label.game-setup-field')).toBeNull();
+    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(3); // 모드, 인원 수, 라운드
+  });
+});
+
 describe('SetupView — animals (D-24, SETUP-07)', () => {
   beforeEach(resetAll);
 

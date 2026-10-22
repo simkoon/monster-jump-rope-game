@@ -99,7 +99,9 @@ export default function SetupView() {
       <PowerJumpingLogo as="h1" variant="hero" subtitle="신나는 줄넘기 미션" className="game-setup-logo" />
       <p className="game-setup-sub">게임을 설정하고 시작하세요.</p>
 
-      <label className="game-setup-field">
+      {/* Plain containers, not label elements: a label wrapping buttons forwards a caption tap to its
+          first button (− / 개인전) and would silently change the setting (WR-02). */}
+      <div className="game-setup-field">
         <span>모드</span>
         <SegmentedControl<Mode>
           ariaLabel="게임 모드"
@@ -110,9 +112,9 @@ export default function SetupView() {
             { value: 'team', label: '팀전' },
           ]}
         />
-      </label>
+      </div>
 
-      <label className="game-setup-field">
+      <div className="game-setup-field">
         <span>{isTeam ? '팀 수' : '인원 수'}</span>
         <span className="game-count-ctl">
           <button type="button" aria-label="줄이기" onClick={() => changeCount(Math.max(1, clampedCount - 1))}>
@@ -134,7 +136,7 @@ export default function SetupView() {
             +
           </button>
         </span>
-      </label>
+      </div>
 
       <ul className="game-setup-rows">
         {rows.map((i) => (
