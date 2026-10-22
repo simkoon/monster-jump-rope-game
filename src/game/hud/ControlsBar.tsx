@@ -1,51 +1,66 @@
-// src/game/hud/ControlsBar.tsx — the phase-driven PRIMARY buttons (UI-SPEC FSM table).
-// 🎴 카드 뽑기 (awaitingDraw), 🎲 주사위 굴리기 (awaitingRoll), 다음 ➡️ (turnResolved, neutral).
-// The 성공/실패 pair lives in MissionOverlay (awaitingJudgement). While an animation is
-// running (`busy`), the whole bar is HIDDEN so no double-tap can skip a phase (D-07/ART-04).
-import type { Phase } from '../../engine/types';
+// src/game/hud/ControlsBar.tsx — phase-driven action buttons (UI-SPEC S3 단계별 행동 영역 계약).
+//   awaitingRoll      → 🎲 주사위 굴리기
+//   awaitingJudgement → no primary (the quest card owns ✅/❌)
+//   turnResolved      → 다음 ➡️ / 🔁 한 번 더 하기 / 🏆 결과 보기 (same advanceTurn, label only)
+//   gameOver          → nothing (the result screen takes over)
+// `↩️ 판정 되돌리기` is shown only while an undo exists — hidden, never disabled (D-16).
+// Only the buttons of the current phase are rendered, so double taps cannot skip a phase (T-05-19).
+import type { Phase } from '../../engine/state';
+
+export type NextKind = 'next' | 'extra' | 'result';
+
+const NEXT_LABEL: Record<NextKind, string> = {
+  next: '다음 ➡️',
+  extra: '🔁 한 번 더 하기',
+  result: '🏆 결과 보기',
+};
 
 interface ControlsBarProps {
   phase: Phase;
-  busy: boolean;
-  onDraw: () => void;
+  busy?: boolean;
+  canUndo: boolean;
+  nextKind: NextKind;
   onRoll: () => void;
   onNext: () => void;
+  onUndo: () => void;
 }
 
-export default function ControlsBar({ phase, busy, onDraw, onRoll, onNext }: ControlsBarProps) {
-  // ANIM_DONE gating: mount the next-phase control ONLY when not animating (D-07).
-  if (busy) return null;
+export default function ControlsBar({
+  phase,
+  busy = false,
+  canUndo,
+  nextKind,
+  onRoll,
+  onNext,
+  onUndo,
+}: ControlsBarProps) {
+  if (busy || phase === 'gameOver') return null;
 
-  if (phase === 'awaitingDraw') {
-    return (
-      <div className="game-controls">
-        <button type="button" className="game-btn" onClick={onDraw}>
-          🎴 카드 뽑기
-        </button>
-      </div>
-    );
-  }
-
+  let primary = null;
   if (phase === 'awaitingRoll') {
-    return (
-      <div className="game-controls">
-        <button type="button" className="game-btn" onClick={onRoll}>
-          🎲 주사위 굴리기
-        </button>
-      </div>
+    primary = (
+      <button type="button" className="game-btn" onClick={onRoll}>
+        🎲 주사위 굴리기
+      </button>
+    );
+  } else if (phase === 'turnResolved') {
+    primary = (
+      <button type="button" className="game-btn game-btn--neutral" onClick={onNext}>
+        {NEXT_LABEL[nextKind]}
+      </button>
     );
   }
 
-  if (phase === 'turnResolved') {
-    return (
-      <div className="game-controls">
-        <button type="button" className="game-btn game-btn--neutral" onClick={onNext}>
-          다음 ➡️
-        </button>
-      </div>
-    );
-  }
+  if (!primary && !canUndo) return null;
 
-  // awaitingJudgement → MissionOverlay owns the controls; gameOver → ResultView.
-  return null;
+  return (
+    <div className="game-controls">
+      {primary}
+      {canUndo && (
+        <button type="button" className="game-btn--sm" onClick={onUndo}>
+          ↩️ 판정 되돌리기
+        </button>
+      )}
+    </div>
+  );
 }

@@ -240,7 +240,7 @@ describe('TurnHud (TURN-01, D-21, D-22)', () => {
   });
 });
 
-const ev = (eff: Event['eff'], steps: number, name: string, label = ''): Event => ({
+const ev = (eff: Event['eff'], steps: number, name: string, label: Event['label'] = ''): Event => ({
   id: `e-${name}`,
   name,
   eff,
