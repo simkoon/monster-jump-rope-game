@@ -1,46 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-current_phase: 4.1
-current_phase_name: iPhone-first modern polish
-status: complete
-stopped_at: 04.1-01 complete — iPhone fullscreen play shell and modern polish implemented, build/test/CDP smoke verified
-last_updated: "2026-08-05T11:00:24+09:00"
-last_activity: 2026-08-05
-last_activity_desc: "04.1-01 iPhone 깨짐 수정 + Apple/Toss-like shell + Nintendo-like game stage polish"
+milestone: v2.0
+milestone_name: 3D 블루마블 재구축
+status: planning
+last_updated: "2026-10-22T09:27:36.647Z"
+last_activity: 2026-10-22
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 13
-  completed_plans: 13
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-25)
+See: .planning/PROJECT.md (updated 2026-10-22)
 
-**Core value:** 카드로 뽑은 줄넘기 미션을 실제로 성공 → 주사위 → 전진 → 먼저 도착하면 승리 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 4.1 — iPhone-first modern polish
+**Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
+**Current focus:** Milestone v2.0 3D 블루마블 재구축 — 요구사항 정의 중
 
 ## Current Position
 
-Phase: 4.1 (iPhone-first modern polish) — COMPLETE
-Plan: 1 of 1 implemented for Phase 4.1
-Status: 04.1-01 구현 및 build/test/CDP iPhone smoke 검증 완료; Phase 4.1 완료
-Last activity: 2026-08-05 — 04.1-01 iPhone 깨짐 수정 + 모던 shell polish
-
-**전환 배경:** 3D 캐릭터·표정 아트를 조달할 수단이 없는 반면 2D는 CC0 무료 에셋으로 즉시 조달 가능(Kenney 표정 12종×색상 6종 확보 검증됨). Phase 3의 R3F 씬은 Phase 3.1에서 DOM+SVG+CSS로 교체된다.
-
-**전환으로 무효화되는 선행 작업:**
-- Phase 3 검증(VERIFICATION.md 미작성) — 3D 씬 대상이라 2D 전환 후 재정의 필요
-- quick `260726-lbq` 브라우저 human-check 5건 — 전부 R3F/`<Bounds>` 카메라 등 3D 전용 항목이라 무효
-- `.planning/ASSET-REQUEST.md` 미확정 7건 — 3D(2×2 텍스처 아틀라스, Outfit tint) 전제라 2D 기준 재작성 필요
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-22 — Milestone v2.0 started
 
 ## Performance Metrics
 
