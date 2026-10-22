@@ -103,8 +103,8 @@ describe('설정 저장·복구 (DATA-07)', () => {
     expect(pickSettings()).toEqual({ failRule: 'retrySame', defaultRounds: 5, startBonus: 2, boardSize: 24 });
   });
 
-  it('state가 객체가 아니면 전부 기본값', async () => {
-    useSettings.setState({ failRule: 'noStar', defaultRounds: 9, startBonus: 0, boardSize: 16 });
+  it('state가 객체가 아니면 전부 기본값 (merge가 throw 없이 부팅 기본값을 유지)', async () => {
+    // 부팅 시점 in-memory 상태 = DEFAULT_SETTINGS (resetSettings가 재현). merge는 실패 시 current를 돌려준다.
     localStorage.setItem(SETTINGS_KEY, '{"state":null,"version":1}');
     await useSettings.persist.rehydrate();
     expect(pickSettings()).toEqual(DEFAULT_SETTINGS);
