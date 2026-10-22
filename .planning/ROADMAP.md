@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. 주사위를 누르면 1~6이 나오고 말이 그만큼 순환판을 돌아(출발 칸을 지나 계속) 칸에 멈춘다. 퀘스트 칸이면 그 칸 난이도의 미션이 뽑혀 이름·설명·받을 별 개수가 크게 보이고, 강사가 성공으로 판정하면 별(쉬움 ⭐1 / 보통 ⭐2 / 어려움 ⭐3)을 받는다. 실패하면 설정된 실패 규칙대로 진행되고(재도전 1회까지) 별은 절대 줄지 않으며, 강사는 직전 판정을 되돌릴 수 있다. 게임 시작 때 정해진 칸 배치는 게임 내내 바뀌지 않는다
   5. 이벤트 칸(앞으로 N칸 / 뒤로 N칸 / 한 번 더)과 출발 칸 보너스가 규칙대로 적용된다 — 이벤트로 퀘스트 칸에 닿으면 그 퀘스트를 수행하고, 뒤로 지날 때·같은 바퀴 두 번째는 보너스가 없으며, "한 번 더"는 라운드에 세지 않고 연속 1회까지다. 모든 플레이어/팀이 정규 턴을 한 번씩 마치면 1라운드가 지나고(팀전은 팀원이 돌아가며 수행), 정한 라운드가 끝나거나 강사가 확인을 거쳐 "지금 끝내기"를 누르면 별이 가장 많은 플레이어/팀이 우승(동점은 공동 우승)으로 표시된다
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -51,7 +51,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 05-03-PLAN.md — 새 순수 FSM(state.ts + game.ts): 주사위·이벤트·퀘스트·실패 규칙·되돌리기·한 번 더·라운드·지금 끝내기 + 퍼즈 (wave 2)
-- [ ] 05-04-PLAN.md — 임시 화면 표시 부품(AnimalPicker·Scoreboard·RingStrip)·문구 헬퍼(labels) + Phase 5 임시 화면 CSS (wave 2)
+- [x] 05-04-PLAN.md — 임시 화면 표시 부품(AnimalPicker·Scoreboard·RingStrip)·문구 헬퍼(labels) + Phase 5 임시 화면 CSS (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -113,7 +113,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. 새 규칙 엔진 & 강사 설정 | 3/5 | In Progress|  |
+| 5. 새 규칙 엔진 & 강사 설정 | 4/5 | In Progress|  |
 | 6. 3D 순환판 & 게임 화면 | 0/TBD | Not started | - |
 | 7. 치비 동물 캐릭터 & 표정 | 0/TBD | Not started | - |
 | 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |
