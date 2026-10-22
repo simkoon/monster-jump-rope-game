@@ -1,26 +1,34 @@
-// src/game/hud/SetupView.tsx — the child-facing setup screen (D-09, ART-04). This is the
-// re-skin of the throwaway src/harness/SetupScreen: ALL Phase 2 setup LOGIC is reused
-// verbatim (mode, count, names, characters, team members, board preset, time limit,
-// buildParticipants/boardLengthFor, the canStart empty-library guard → MISSION-07). Only
-// the presentation changes: big --tap/--tap-sm controls + the reused SegmentedControl.
+// src/game/hud/SetupView.tsx — the start screen (UI-SPEC S2, D-24/D-25, SETUP-07/08/09).
+// Kept from v1: logo, mode segment, participant count stepper, names, team member list parsing.
+// New: a participant card per row with an animal avatar + 8-animal picker (always distinct),
+// the per-game round stepper (initial value = settings defaultRounds, read once, never written
+// back — D-19), the play-time estimate (D-20), the read-only rules summary, the 💡 missing-content
+// notices (informational only — D-13) and the empty-library guard (the only start blocker).
 import { useState } from 'react';
 import { useStore } from '../../store';
+import { useSettings, ROUNDS_MIN, ROUNDS_MAX } from '../../settings';
 import { useGameStore } from '../../harness/useGameStore';
 import SegmentedControl from '../../components/SegmentedControl';
 import PowerJumpingLogo from '../../components/PowerJumpingLogo';
+import AnimalPicker from './AnimalPicker';
 import {
+  analyzeContent,
   buildParticipants,
-  boardLengthFor,
-  canStart,
-  DEFAULT_TIME_LIMIT_MS,
+  estimateMinutes,
   DEFAULT_PARTICIPANT_COUNT,
   MAX_PARTICIPANTS,
-  type BoardPreset,
 } from '../../engine/setup';
-import type { GameConfig } from '../../engine/types';
+import { assignAnimals, type AnimalId } from '../../engine/animals';
+import {
+  ANIMAL_EMOJI,
+  RULES_HINT,
+  estimateBasis,
+  estimateLine,
+  missingNotices,
+  rulesSummary,
+} from '../labels';
 
 type Mode = 'solo' | 'team';
-type Character = 'boy' | 'girl';
 
 function setAt<T>(arr: T[], i: number, v: T): T[] {
   const out = arr.slice();
@@ -28,24 +36,49 @@ function setAt<T>(arr: T[], i: number, v: T): T[] {
   return out;
 }
 
+function clampCount(n: number): number {
+  return Math.min(MAX_PARTICIPANTS, Math.max(1, Number.isFinite(n) ? n : 1));
+}
+
 export default function SetupView() {
-  // Live empty-list check (MISSION-07 / D-08): drives the 시작 gate + guidance text.
+  // Live content + settings: drive the notices, the guard and the rules summary.
   const missions = useStore((s) => s.missions);
-  const gate = canStart(missions);
+  const events = useStore((s) => s.events);
+  const boardSize = useSettings((s) => s.boardSize);
+  const startBonus = useSettings((s) => s.startBonus);
+  const failRule = useSettings((s) => s.failRule);
+  const analysis = analyzeContent(missions, events);
+  const notices = missingNotices(analysis);
 
   const [mode, setMode] = useState<Mode>('solo');
   const [count, setCount] = useState<number>(DEFAULT_PARTICIPANT_COUNT);
   const [names, setNames] = useState<string[]>([]);
-  const [characters, setCharacters] = useState<Character[]>([]);
   const [members, setMembers] = useState<string[]>([]);
-  const [preset, setPreset] = useState<BoardPreset>('short');
-  const [timeLimitOn, setTimeLimitOn] = useState(true);
+  const [picks, setPicks] = useState<(AnimalId | undefined)[]>([]);
+  // D-19: read the instructor default once on mount; this game's value is never saved back.
+  const [rounds, setRounds] = useState<number>(() => useSettings.getState().defaultRounds);
 
-  const clampedCount = Math.min(MAX_PARTICIPANTS, Math.max(1, Number.isFinite(count) ? count : 1));
+  const clampedCount = clampCount(count);
   const rows = Array.from({ length: clampedCount }, (_, i) => i);
+  // D-24: always distinct; rows without a pick get the first unused animal.
+  const animals = assignAnimals(clampedCount, picks);
 
   const isTeam = mode === 'team';
   const rowLabel = isTeam ? '팀' : '플레이어';
+
+  // Decreasing the count drops the removed rows' picks so they are not resurrected later.
+  function changeCount(next: number) {
+    setCount(next);
+    if (Number.isFinite(next)) {
+      const c = clampCount(next);
+      setPicks((ps) => ps.slice(0, c));
+    }
+  }
+
+  // Freeze the currently shown animals so picking in one row never reshuffles another row.
+  function pickAnimal(i: number, a: AnimalId) {
+    setPicks(setAt<AnimalId | undefined>(animals, i, a));
+  }
 
   function handleStart() {
     const memberNamesPerParticipant = isTeam
@@ -56,31 +89,14 @@ export default function SetupView() {
             .filter(Boolean),
         )
       : undefined;
-
-    const participants = buildParticipants(
-      mode,
-      clampedCount,
-      names,
-      characters,
-      memberNamesPerParticipant,
-    );
-    const config: GameConfig = {
-      mode,
-      participants,
-      boardLength: boardLengthFor(preset),
-      timeLimitMs: timeLimitOn ? DEFAULT_TIME_LIMIT_MS : null,
-    };
-    useGameStore.getState().startGame(config);
+    const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
+    const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
+    useGameStore.getState().startGame({ mode, participants, rounds });
   }
 
   return (
     <div className="game-setup">
-      <PowerJumpingLogo
-        as="h1"
-        variant="hero"
-        subtitle="신나는 줄넘기 미션"
-        className="game-setup-logo"
-      />
+      <PowerJumpingLogo as="h1" variant="hero" subtitle="신나는 줄넘기 미션" className="game-setup-logo" />
       <p className="game-setup-sub">게임을 설정하고 시작하세요.</p>
 
       <label className="game-setup-field">
@@ -99,11 +115,7 @@ export default function SetupView() {
       <label className="game-setup-field">
         <span>{isTeam ? '팀 수' : '인원 수'}</span>
         <span className="game-count-ctl">
-          <button
-            type="button"
-            aria-label="줄이기"
-            onClick={() => setCount(Math.max(1, clampedCount - 1))}
-          >
+          <button type="button" aria-label="줄이기" onClick={() => changeCount(Math.max(1, clampedCount - 1))}>
             −
           </button>
           <input
@@ -112,12 +124,12 @@ export default function SetupView() {
             max={MAX_PARTICIPANTS}
             value={clampedCount}
             aria-label={isTeam ? '팀 수' : '인원 수'}
-            onChange={(e) => setCount(parseInt(e.target.value, 10))}
+            onChange={(e) => changeCount(parseInt(e.target.value, 10))}
           />
           <button
             type="button"
             aria-label="늘리기"
-            onClick={() => setCount(Math.min(MAX_PARTICIPANTS, clampedCount + 1))}
+            onClick={() => changeCount(Math.min(MAX_PARTICIPANTS, clampedCount + 1))}
           >
             +
           </button>
@@ -126,68 +138,86 @@ export default function SetupView() {
 
       <ul className="game-setup-rows">
         {rows.map((i) => (
-          <li key={i} className="game-setup-row">
-            <input
-              type="text"
-              aria-label={`${rowLabel} ${i + 1} 이름`}
-              placeholder={`${rowLabel} ${i + 1}`}
-              value={names[i] ?? ''}
-              onChange={(e) => setNames((ns) => setAt(ns, i, e.target.value))}
-            />
-            <SegmentedControl<Character>
-              ariaLabel={`${rowLabel} ${i + 1} 캐릭터`}
-              value={characters[i] ?? 'boy'}
-              onChange={(v) => setCharacters((cs) => setAt(cs, i, v))}
-              options={[
-                { value: 'boy', label: '남' },
-                { value: 'girl', label: '여' },
-              ]}
-            />
-            {isTeam && (
+          <li key={i} className="setup-participant">
+            <div className="setup-participant-head game-setup-row">
+              <span className="animal-avatar" aria-hidden="true">
+                {ANIMAL_EMOJI[animals[i]]}
+              </span>
               <input
                 type="text"
-                aria-label={`${rowLabel} ${i + 1} 멤버 이름`}
-                placeholder="멤버 이름 (쉼표로 구분, 적은 순서대로 번갈아요)"
-                value={members[i] ?? ''}
-                onChange={(e) => setMembers((ms) => setAt(ms, i, e.target.value))}
+                aria-label={`${rowLabel} ${i + 1} 이름`}
+                placeholder={`${rowLabel} ${i + 1}`}
+                value={names[i] ?? ''}
+                onChange={(e) => setNames((ns) => setAt(ns, i, e.target.value))}
               />
+            </div>
+            <AnimalPicker
+              groupLabel={`${rowLabel} ${i + 1} 동물`}
+              value={animals[i]}
+              taken={animals.filter((_, j) => j !== i)}
+              onChange={(a) => pickAnimal(i, a)}
+            />
+            {isTeam && (
+              <div className="game-setup-row">
+                <input
+                  type="text"
+                  aria-label={`${rowLabel} ${i + 1} 멤버 이름`}
+                  placeholder="멤버 이름 (쉼표로 구분, 적은 순서대로 번갈아요)"
+                  value={members[i] ?? ''}
+                  onChange={(e) => setMembers((ms) => setAt(ms, i, e.target.value))}
+                />
+              </div>
             )}
           </li>
         ))}
       </ul>
 
-      <label className="game-setup-field">
-        <span>보드 길이</span>
-        <SegmentedControl<BoardPreset>
-          ariaLabel="보드 길이"
-          value={preset}
-          onChange={setPreset}
-          options={[
-            { value: 'short', label: '짧게' },
-            { value: 'normal', label: '보통' },
-          ]}
-        />
-      </label>
+      <div className="game-setup-field">
+        <span>라운드</span>
+        <span className="game-count-ctl">
+          <button
+            type="button"
+            aria-label="라운드 줄이기"
+            disabled={rounds <= ROUNDS_MIN}
+            onClick={() => setRounds((r) => Math.max(ROUNDS_MIN, r - 1))}
+          >
+            −
+          </button>
+          <output aria-label="라운드 수" aria-live="polite">
+            {rounds}
+          </output>
+          <button
+            type="button"
+            aria-label="라운드 늘리기"
+            disabled={rounds >= ROUNDS_MAX}
+            onClick={() => setRounds((r) => Math.min(ROUNDS_MAX, r + 1))}
+          >
+            +
+          </button>
+        </span>
+      </div>
 
-      <label className="game-setup-toggle">
-        <input
-          type="checkbox"
-          checked={timeLimitOn}
-          onChange={(e) => setTimeLimitOn(e.target.checked)}
-        />
-        <span>시간 제한 20분</span>
-      </label>
+      <p className="setup-estimate" aria-live="polite">
+        {estimateLine(estimateMinutes(clampedCount, rounds))}
+      </p>
+      <p className="setup-estimate-basis">{estimateBasis(mode, clampedCount, rounds)}</p>
 
-      {/* MISSION-07 / D-08: block start with guidance when the library is empty. */}
-      {!gate.ok && <p className="game-setup-guard">{gate.reason}</p>}
+      <p className="setup-rules">{rulesSummary({ boardSize, startBonus, failRule })}</p>
+      <p className="setup-rules">{RULES_HINT}</p>
 
-      <button
-        type="button"
-        className="game-btn game-setup-start"
-        disabled={!gate.ok}
-        onClick={handleStart}
-      >
-        시작
+      {notices.length > 0 && (
+        <div className="setup-notice">
+          {notices.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      )}
+
+      {/* The only start blocker: an empty mission library (D-13). */}
+      {!analysis.ok && <p className="game-setup-guard">{analysis.reason}</p>}
+
+      <button type="button" className="game-btn game-setup-start" disabled={!analysis.ok} onClick={handleStart}>
+        게임 시작
       </button>
     </div>
   );

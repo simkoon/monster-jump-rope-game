@@ -9,7 +9,7 @@ import Toast from './components/Toast';
 import GameApp from './game/GameApp';
 import { useGameStore } from './harness/useGameStore';
 
-// Top-level view: the content 편집기 (Phase 1 mission/event tabs) or the 게임 (3D board).
+// Top-level view: the content 편집기 (mission/event/settings tabs) or the 게임.
 type View = 'editor' | 'game';
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
     <div className={`app app--${view}${isPlaying ? ' app--playing' : ''}`}>
       <Header
         context={view === 'game' ? '게임' : '콘텐츠 편집기'}
-        subtitle={view === 'game' ? '카드 미션을 성공하고 결승까지 점프해요' : '줄넘기 미션과 이벤트 칸을 자유롭게 만들어요'}
+        subtitle={view === 'game' ? '주사위를 굴리고 줄넘기 미션으로 별을 모아요' : '줄넘기 미션과 이벤트 칸을 자유롭게 만들어요'}
       />
       {/* Additive top-level switch — the 미션/이벤트 editor stays exactly as-is. */}
       <nav className="view-switch" aria-label="화면 전환">
