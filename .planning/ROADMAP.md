@@ -43,11 +43,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 05-01-PLAN.md — v1 데이터 보존 픽스처·tripwire 테스트(선행) + 강사 설정 별도 persist 스토어 + 편집기 ⚙️ 설정 탭 (wave 1)
 - [ ] 05-02-PLAN.md — 순수 빌딩 블록: 순환 이동·출발 보너스(ring), 별·순위(scoring), 보드 생성(board), 동물 배정(animals), 예상 시간·누락 분석(setup) (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-03-PLAN.md — 새 순수 FSM(state.ts + game.ts): 주사위·이벤트·퀘스트·실패 규칙·되돌리기·한 번 더·라운드·지금 끝내기 + 퍼즈 (wave 2)
 - [ ] 05-04-PLAN.md — 임시 화면 표시 부품(AnimalPicker·Scoreboard·RingStrip)·문구 헬퍼(labels) + Phase 5 임시 화면 CSS (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-05-PLAN.md — 엔진 전환: v2 하네스 스냅샷 seam + 시작·임시 플레이·결과 화면 + v1 잔재 삭제 + 한 판 통합 테스트 + 브라우저 확인 (wave 3)
+
 **UI hint**: yes
 
 ### Phase 6: 3D 순환판 & 게임 화면
