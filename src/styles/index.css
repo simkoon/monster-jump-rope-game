@@ -475,7 +475,7 @@ header.top {
 .game-setup-row input[type='text'],
 .game-count-ctl input,
 .game-count-ctl button,
-.game-result-pick-option {
+.game-count-ctl output {
   border-width:1px;
   border-color:var(--modern-line);
   background:rgba(248,250,252,.92);

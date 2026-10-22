@@ -1,25 +1,34 @@
-// src/harness/useGameStore.ts — the SINGLE seam between the pure engine and the
-// throwaway harness UI (D-09). This is the only module that couples src/engine +
-// src/store: it reads Phase-1 content, injects the runtime RNG (systemRng), and
-// wraps each engine transition as an immutable store action. The engine stays
-// unaware of both React and the content store.
+// src/harness/useGameStore.ts — the SINGLE seam between the pure v2 engine (src/engine/game.ts)
+// and the app. This is the only module that couples src/engine with the content store
+// (src/store.ts) and the instructor settings store (src/settings.ts).
 //
-// NO wall-clock logic lives here beyond the `remainingMs` holder — the countdown
-// effect belongs to 02-03's PlayHarness (Pitfall 1). The engine is clock-free.
+// Snapshot rule (BOARD-04, DATA-07): startGame reads missions, events and the settings
+// (failRule / startBonus / boardSize) exactly ONCE and hands them to createGame. After that
+// every action works only on the GameState — live content or settings are never re-read, so
+// editing the library or the settings mid-game cannot change the running board, decks or rules.
+//
+// No wall clock lives here (D-01): the game ends only by rounds or by the manual "지금 끝내기".
 import { create } from 'zustand';
 import { useStore } from '../store';
+import { useSettings, ROUNDS_MIN, ROUNDS_MAX, DEFAULT_ROUNDS } from '../settings';
 import type { Mission, Event } from '../schema';
-import type { GameConfig, GameState } from '../engine/types';
+import type { GameState, Participant } from '../engine/state';
 import {
   createGame,
-  drawCard,
-  judge as engineJudge,
   rollDice,
+  judge as engineJudge,
+  undoJudgement,
   advanceTurn,
   endGame,
-} from '../engine/engine';
-import { canStart } from '../engine/setup';
+} from '../engine/game';
+import { analyzeContent } from '../engine/setup';
 import { systemRng } from '../engine/rng';
+
+export interface GameSetup {
+  mode: 'solo' | 'team';
+  participants: Participant[];
+  rounds: number;
+}
 
 interface ContentOverride {
   missions: Mission[];
@@ -28,86 +37,95 @@ interface ContentOverride {
 
 interface GameStoreState {
   game: GameState | null;
-  remainingMs: number | null;
-  // Guidance surfaced when a start is blocked (empty mission library — MISSION-07/D-08).
+  // Guidance surfaced when a start is blocked (empty mission library — D-13).
   startBlockedReason: string | null;
 
-  startGame: (config: GameConfig, contentOverride?: ContentOverride) => void;
-  draw: () => void;
-  judge: (success: boolean) => void;
+  startGame: (setup: GameSetup, contentOverride?: ContentOverride) => void;
   roll: () => void;
+  judge: (success: boolean) => void;
+  undo: () => void;
   next: () => void;
-  end: (reason: 'timeout' | 'manual') => void;
+  endNow: () => void;
+  restart: () => void;
   reset: () => void;
-  setRemainingMs: (ms: number | null) => void;
 }
 
-// Resolve the live Phase-1 content, or the test/caller override.
-function content(override?: ContentOverride): ContentOverride {
-  if (override) return override;
-  const s = useStore.getState();
-  return { missions: s.missions, events: s.events };
+// T-05-17: integer rounds within [ROUNDS_MIN, ROUNDS_MAX]; non-finite → DEFAULT_ROUNDS.
+function clampRounds(n: number): number {
+  if (!Number.isFinite(n)) return DEFAULT_ROUNDS;
+  return Math.min(ROUNDS_MAX, Math.max(ROUNDS_MIN, Math.round(n)));
+}
+
+// Copy the content once so later edits to the store arrays cannot leak into the game.
+function snapshotContent(override?: ContentOverride): ContentOverride {
+  const src = override ?? useStore.getState();
+  return { missions: [...src.missions], events: [...src.events] };
 }
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
   game: null,
-  remainingMs: null,
   startBlockedReason: null,
 
-  // SETUP-06 + MISSION-07: gate on canStart, then hand the config + content to the
-  // engine's createGame with a fresh runtime RNG. When blocked, leave game null and
-  // surface the guidance string for the setup screen to render.
-  startGame: (config, contentOverride) => {
-    const { missions, events } = content(contentOverride);
-    const gate = canStart(missions);
-    if (!gate.ok) {
-      set({ game: null, startBlockedReason: gate.reason ?? '지금은 시작할 수 없어요.' });
+  startGame: (setup, contentOverride) => {
+    const content = snapshotContent(contentOverride);
+    const analysis = analyzeContent(content.missions, content.events);
+    if (!analysis.ok) {
+      set({ game: null, startBlockedReason: analysis.reason ?? '지금은 시작할 수 없어요.' });
       return;
     }
-    const game = createGame(config, missions, events, systemRng());
-    set({ game, startBlockedReason: null, remainingMs: config.timeLimitMs });
+    const { failRule, startBonus, boardSize } = useSettings.getState();
+    const rules = { rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
+    const game = createGame({ mode: setup.mode, participants: setup.participants, rules }, content, systemRng());
+    set({ game, startBlockedReason: null });
   },
 
-  // LOOP-01: draw one mission card (equal probability, engine-owned RNG).
-  draw: () => {
-    const g = get().game;
-    if (!g) return;
-    const { missions } = content();
-    set({ game: drawCard(g, missions, systemRng()) });
-  },
-
-  // LOOP-04/05: instructor verdict — success advances to the roll, failure ends the turn.
-  judge: (success) => {
-    const g = get().game;
-    if (!g) return;
-    set({ game: engineJudge(g, success) });
-  },
-
-  // LOOP-05/07/09: roll, move, apply the landed event, judge a win.
+  // TURN-01/05/06/07: roll, move around the ring, resolve the landed tile.
   roll: () => {
     const g = get().game;
     if (!g) return;
-    const { events } = content();
-    set({ game: rollDice(g, events, systemRng()) });
+    set({ game: rollDice(g, systemRng()) });
   },
 
-  // LOOP-08: advance to the next turn (or repeat on an extra-turn event).
+  // TURN-03/04: instructor verdict on the quest card (fail rules handled by the engine).
+  judge: (success) => {
+    const g = get().game;
+    if (!g) return;
+    set({ game: engineJudge(g, success, systemRng()) });
+  },
+
+  // TURN-08, D-16/D-17: undo the last judgement.
+  undo: () => {
+    const g = get().game;
+    if (!g) return;
+    set({ game: undoJudgement(g) });
+  },
+
+  // TURN-07, ROUND-01: next turn (or the extra turn / game end).
   next: () => {
     const g = get().game;
     if (!g) return;
     set({ game: advanceTurn(g) });
   },
 
-  // D-04/D-05: session end (timer hit 0 or "지금 마치기"). Furthest-along wins.
-  end: (reason) => {
+  // ROUND-04, D-22: end now (a pending quest is voided by the engine).
+  endNow: () => {
     const g = get().game;
     if (!g) return;
-    set({ game: endGame(g, reason) });
+    set({ game: endGame(g, 'manual') });
   },
 
-  // Return to the setup screen (LOOP-10 foundation). Config is re-collected by SetupScreen.
-  reset: () => set({ game: null, startBlockedReason: null, remainingMs: null }),
+  // D-27 "🔁 다시 하기": same participants, animals, mode and rounds; content and settings
+  // are re-snapshotted and a new board is built.
+  restart: () => {
+    const g = get().game;
+    if (!g) return;
+    get().startGame({
+      mode: g.config.mode,
+      participants: g.config.participants,
+      rounds: g.config.rules.rounds,
+    });
+  },
 
-  // DOM-owned countdown value holder (02-03 drives the interval that calls this).
-  setRemainingMs: (ms) => set({ remainingMs: ms }),
+  // Back to the start screen.
+  reset: () => set({ game: null, startBlockedReason: null }),
 }));
