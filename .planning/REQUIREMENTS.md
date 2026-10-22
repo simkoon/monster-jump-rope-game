@@ -9,16 +9,16 @@
 
 ### 데이터 보존 (DATA)
 
-- [ ] **DATA-05**: 기존(v1) 기기에 저장된 미션·이벤트가 v2 업데이트 후에도 하나도 사라지지 않고 그대로 유지된다
-- [ ] **DATA-06**: 예전에 내보낸 v1 백업 파일(JSON)을 v2에서도 그대로 가져올 수 있다
-- [ ] **DATA-07**: 강사 설정은 미션·이벤트와 별도로 기기에 자동 저장되어 새로고침 후에도 유지되며, 백업 파일(JSON)에는 포함되지 않는다
+- [x] **DATA-05**: 기존(v1) 기기에 저장된 미션·이벤트가 v2 업데이트 후에도 하나도 사라지지 않고 그대로 유지된다
+- [x] **DATA-06**: 예전에 내보낸 v1 백업 파일(JSON)을 v2에서도 그대로 가져올 수 있다
+- [x] **DATA-07**: 강사 설정은 미션·이벤트와 별도로 기기에 자동 저장되어 새로고침 후에도 유지되며, 백업 파일(JSON)에는 포함되지 않는다
 
 ### 강사 설정 (CFG)
 
-- [ ] **CFG-01**: 강사는 설정 화면에서 실패 규칙을 고를 수 있다 — 같은 미션 한 번 더(기본) / 다른 미션으로 한 번 더 / 별 없이 다음 차례
-- [ ] **CFG-02**: 강사는 설정 화면에서 기본 라운드 수를 정할 수 있다
-- [ ] **CFG-03**: 강사는 설정 화면에서 출발 칸 보너스 별을 끔 / +1(기본) / +2 중에서 정할 수 있다
-- [ ] **CFG-04**: 강사는 설정 화면에서 보드 크기를 16 / 20(기본) / 24칸 중에서 정할 수 있다
+- [x] **CFG-01**: 강사는 설정 화면에서 실패 규칙을 고를 수 있다 — 같은 미션 한 번 더(기본) / 다른 미션으로 한 번 더 / 별 없이 다음 차례
+- [x] **CFG-02**: 강사는 설정 화면에서 기본 라운드 수를 정할 수 있다
+- [x] **CFG-03**: 강사는 설정 화면에서 출발 칸 보너스 별을 끔 / +1(기본) / +2 중에서 정할 수 있다
+- [x] **CFG-04**: 강사는 설정 화면에서 보드 크기를 16 / 20(기본) / 24칸 중에서 정할 수 있다
 
 ### 시작 화면 (SETUP)
 
@@ -130,13 +130,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-05 | Phase 5 | Pending |
-| DATA-06 | Phase 5 | Pending |
-| DATA-07 | Phase 5 | Pending |
-| CFG-01 | Phase 5 | Pending |
-| CFG-02 | Phase 5 | Pending |
-| CFG-03 | Phase 5 | Pending |
-| CFG-04 | Phase 5 | Pending |
+| DATA-05 | Phase 5 | Complete |
+| DATA-06 | Phase 5 | Complete |
+| DATA-07 | Phase 5 | Complete |
+| CFG-01 | Phase 5 | Complete |
+| CFG-02 | Phase 5 | Complete |
+| CFG-03 | Phase 5 | Complete |
+| CFG-04 | Phase 5 | Complete |
 | SETUP-07 | Phase 5 | Pending |
 | SETUP-08 | Phase 5 | Pending |
 | SETUP-09 | Phase 5 | Pending |

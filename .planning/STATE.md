@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 5
-current_phase_name: v2.0 4개 단계 중 1번째
+current_phase_name: 새 규칙 엔진 & 강사 설정
 status: executing
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-10-22T17:31:13.479Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-10-22T17:37:23.533Z"
 last_activity: 2026-10-22
-last_activity_desc: v2.0 로드맵 작성 (Phases 5–8, 49/49 요구사항 매핑)
+last_activity_desc: Phase 5 execution started
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-22)
 
 **Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Milestone v2.0 3D 블루마블 재구축 — Phase 5 새 규칙 엔진 & 강사 설정
+**Current focus:** Phase 5 — 새 규칙 엔진 & 강사 설정
 
 ## Current Position
 
-Phase: 5 of 8 (v2.0 4개 단계 중 1번째) — 새 규칙 엔진 & 강사 설정
-Plan: Not started
+Phase: 5 (새 규칙 엔진 & 강사 설정) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-10-22 — v2.0 로드맵 작성 (Phases 5–8, 49/49 요구사항 매핑)
+Last activity: 2026-10-22 — Phase 5 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P03 | 7 | 2 tasks | 5 files |
 | Phase 03 P01 | 32 | 2 tasks | 19 files |
 | Phase 03 P02 | 6min | 2 tasks | 25 files |
+| Phase 05 P01 | 4min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [quick-lbq]: 목적지 하이라이트는 <Bounds> 밖에 마운트한다 — 안에 넣으면 롤마다 카메라가 리프레임된다
 - [quick-lbq]: planHighlight가 모든 반환 인덱스를 [0, boardLength]로 클램프한다 — 엔진은 오버슛 승리를 클램프하지 않으므로(D-03) 없으면 마커가 보드 밖에 생성된다
 - [quick-lbq]: 애니메이션 시간을 늘리는 변경은 반드시 PlayView의 startWatchdog 예산에 더한다 — 누락 시 watchdog이 홉 도중 busy를 조기 해제한다
+- [Phase 05]: 05-01: Teacher settings live in separate persist key powerjumping_settings_v1 with per-field Zod .catch recovery; never in content backup (D-04, DATA-07)
+- [Phase 05]: 05-01: Content-format tripwire (persist name/version, partialize keys, schema key sets) in src/dataPreservation.test.ts guards every later full vitest gate
 
 ### Pending Todos
 
@@ -134,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T11:09:01.475Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-rules-engine-settings/05-UI-SPEC.md
+Last session: 2026-10-22T17:37:23.528Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
