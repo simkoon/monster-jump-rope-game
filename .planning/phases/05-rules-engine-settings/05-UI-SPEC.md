@@ -1,7 +1,8 @@
 ---
 phase: 5
 slug: rules-engine-settings
-status: draft
+status: approved
+reviewed_at: 2026-10-22
 shadcn_initialized: false
 preset: none
 created: 2026-10-22
@@ -69,7 +70,7 @@ v1 base-4 스케일을 그대로 상속한다(CSS 변수 `--xs/--sm/--md/--base/
 | 칸 타일 | 최소 너비 56px, 최소 높이 64px | 칸 종류 글리프 + 말 이모지 두 줄 |
 | 임시 플레이 화면 최대 너비 | 720px, 가운데 정렬 | 태블릿 가로에서도 한 열로 읽힘 |
 
-**Exceptions:** (1) 상속된 반지름(`--radius 22px`, `--radius-sm 16px`, 카드 18px, 알약 999px)은 간격이 아니라 반지름이라 예외. (2) `game.css`의 폰(≤560px) 축소값(`--tap 58px`, `--tap-sm 46px`, `--hud-h 60px`)과 `.app--playing` iPhone 블록의 비-4 값은 Phase 4.1에서 이미 승인된 **기존 예외**로 그대로 둔다. **Phase 5가 새로 쓰는 CSS 규칙은 위 표의 값만 사용**하고 새 비-4 값을 추가하지 않는다. 2D 보드용 `.board-2d`·`.board-*`·`.game-clock`·`.game-positions` 규칙은 삭제 대상(RESEARCH D-28 표)이다.
+**Exceptions:** (0) `md 12px`·`lg 20px`는 기본 4/8/16/24/32 세트 밖이지만 v1 편집기·게임 화면에서 이어받은 토큰이라 그대로 쓴다(새로 만든 값 아님). (1) 상속된 반지름(`--radius 22px`, `--radius-sm 16px`, 카드 18px, 알약 999px)은 간격이 아니라 반지름이라 예외. (2) `game.css`의 폰(≤560px) 축소값(`--tap 58px`, `--tap-sm 46px`, `--hud-h 60px`)과 `.app--playing` iPhone 블록의 비-4 값은 Phase 4.1에서 이미 승인된 **기존 예외**로 그대로 둔다. **Phase 5가 새로 쓰는 CSS 규칙은 위 표의 값만 사용**하고 새 비-4 값을 추가하지 않는다. 2D 보드용 `.board-2d`·`.board-*`·`.game-clock`·`.game-positions` 규칙은 삭제 대상(RESEARCH D-28 표)이다.
 
 ---
 
@@ -272,7 +273,7 @@ v1 base-4 스케일을 그대로 상속한다(CSS 변수 `--xs/--sm/--md/--base/
 | Empty state heading | 해당 없음 — 설정 탭은 항상 값이 있고(손상 시 기본값 복구), 빈 목록 화면이 이번 단계에 없다. 콘텐츠가 비어 있는 경우는 아래 "시작 차단"이 대신한다 |
 | Empty state body (시작 차단, 미션 0개) | `미션이 없어요. 편집기에서 미션을 먼저 추가해 주세요.` (v1 `canStart` 문구 유지) + 게임 시작 버튼 disabled |
 | Error state | 이번 단계 새 오류 화면 없음. 손상된 설정 값은 **조용히 기본값으로 복구**(UI 문구 없음, DATA-07). 가져오기 오류 문구는 v1 그대로. |
-| Destructive confirmation | **지금 끝내기**: 제목 `지금 게임을 끝낼까요? 지금까지 모은 별로 우승을 정해요.` / 확인 `끝내기` / 취소 `계속하기` |
+| Destructive confirmation | **지금 끝내기**: 제목 `지금 게임을 끝낼까요? 지금까지 모은 별로 우승을 정해요.` / 확인 `게임 끝내기` / 취소 `계속하기` |
 
 ### S1 설정 탭 문구
 
