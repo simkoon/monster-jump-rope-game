@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 3D 블루마블 재구축
-current_phase: 5
-current_phase_name: 새 규칙 엔진 & 강사 설정
+current_phase: 6
+current_phase_name: 3D 순환판 & 게임 화면
 status: executing
 stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-10-22T20:40:02.441Z"
+last_updated: "2026-10-22T20:46:56.053Z"
 last_activity: 2026-10-22
-last_activity_desc: Phase 5 execution started
+last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 11
+  completed_plans: 6
   percent: 25
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-22)
 
 **Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 5 — 새 규칙 엔진 & 강사 설정
+**Current focus:** Phase 6 — 3D 순환판 & 게임 화면
 
 ## Current Position
 
-Phase: 5 (새 규칙 엔진 & 강사 설정) — EXECUTING
-Plan: 5 of 5
+Phase: 6 (3D 순환판 & 게임 화면) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-10-22 — Phase 5 execution started
+Last activity: 2026-10-22 — Phase 6 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P03 | 6min | 2 tasks | 5 files |
 | Phase 05 P04 | 4min | 2 tasks | 7 files |
 | Phase 05 P05 | 10min | 3 tasks | 31 files |
+| Phase 06 P02 | 5min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-04: AnimalPicker never disables the row's own current value even if it appears in taken
 - [Phase 05]: 05-05: Harness snapshots content + settings once in startGame; restart() re-snapshots and reshuffles the board
 - [Phase 05]: 05-05: Start-screen animal picks freeze the displayed assignment so one row's pick never reshuffles another; count decrease truncates picks
+- [Phase 06]: 06-02: beat lengths are data (BEAT_MS); one watchdog (ms+500) per beat — no summed budget
+- [Phase 06]: 06-02: director subscribes synchronously to useGameStore; controls visible only when !busy && consumedLog === game.log; drains resync from the engine
 
 ### Pending Todos
 
@@ -151,6 +154,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T19:56:48.425Z
+Last session: 2026-10-22T20:46:47.365Z
 Stopped at: Phase 6 UI-SPEC approved
 Resume file: .planning/phases/06-board-game-screen/06-UI-SPEC.md

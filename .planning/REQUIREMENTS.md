@@ -48,7 +48,7 @@
 ### 라운드 & 승리 (ROUND)
 
 - [x] **ROUND-01**: 모든 플레이어/팀이 정규 턴을 한 번씩 마치면 1라운드이며, 팀전에서는 팀 단위로 턴을 세고 팀원이 돌아가며 수행한다
-- [ ] **ROUND-02**: 화면에 현재 라운드 / 전체 라운드가 표시되고, 마지막 라운드가 시작되면 "마지막 라운드!" 알림이 나온다
+- [x] **ROUND-02**: 화면에 현재 라운드 / 전체 라운드가 표시되고, 마지막 라운드가 시작되면 "마지막 라운드!" 알림이 나온다
 - [x] **ROUND-03**: 정한 라운드가 모두 끝나면 게임이 종료되고 별이 가장 많은 플레이어/팀이 승리하며, 동점이면 공동 우승이다
 - [x] **ROUND-04**: 강사는 언제든 확인을 거쳐 "지금 끝내기"로 게임을 끝내고 시상식으로 갈 수 있다
 
@@ -56,7 +56,7 @@
 
 - [ ] **HUD-01**: 별 점수판에 모든 플레이어/팀의 별 개수가 별 순으로 정렬되어 표시되고(동점은 같은 등수), 보드의 말과 같은 캐릭터 아이콘으로 대응된다
 - [ ] **HUD-02**: 지금 차례(팀전이면 팀 이름과 지금 뛸 팀원 이름)와 다음 차례가 표시된다
-- [ ] **HUD-03**: 주사위·이동·연출이 진행되는 동안 진행 버튼이 숨겨지고, 연출이 끝나야 다음 단계로 넘어간다
+- [x] **HUD-03**: 주사위·이동·연출이 진행되는 동안 진행 버튼이 숨겨지고, 연출이 끝나야 다음 단계로 넘어간다
 - [ ] **HUD-04**: 버튼은 크고 단순하며 글자를 최소화해 아동이 쉽게 조작할 수 있다
 
 ### 캐릭터 (CHAR)
@@ -154,12 +154,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TURN-07 | Phase 5 | Complete |
 | TURN-08 | Phase 5 | Complete |
 | ROUND-01 | Phase 5 | Complete |
-| ROUND-02 | Phase 6 | Pending |
+| ROUND-02 | Phase 6 | Complete |
 | ROUND-03 | Phase 5 | Complete |
 | ROUND-04 | Phase 5 | Complete |
 | HUD-01 | Phase 6 | Pending |
 | HUD-02 | Phase 6 | Pending |
-| HUD-03 | Phase 6 | Pending |
+| HUD-03 | Phase 6 | Complete |
 | HUD-04 | Phase 6 | Pending |
 | CHAR-01 | Phase 7 | Pending |
 | CHAR-02 | Phase 7 | Pending |
