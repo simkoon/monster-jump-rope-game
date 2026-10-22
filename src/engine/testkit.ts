@@ -1,5 +1,5 @@
 // src/engine/testkit.ts — deterministic test helpers for the v2 FSM (game.ts).
-// PHASE 5 CONTRACT: pure, no vitest import, no wall clock, no Math.random.
+// PHASE 5 CONTRACT: pure, no vitest import, no wall clock, no global randomness (Rng only).
 // Reused by later plans' tests (05-05).
 import type { Difficulty, Effect, Event, Mission } from '../schema';
 import type { AnimalId } from './animals';
