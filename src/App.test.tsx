@@ -5,6 +5,7 @@ import { INPUT_LOCK_MS } from './game/useInputLock';
 import { useStore } from './store';
 import { useGameStore } from './harness/useGameStore';
 import { useSettings, DEFAULT_SETTINGS } from './settings';
+import { useSetupDraft } from './game/useSetupDraft';
 import { seedContent } from './seed';
 import type { Mission } from './schema';
 
@@ -12,6 +13,7 @@ function resetToSeed() {
   localStorage.clear();
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS }); // settings changed by one test never leak into another
+  useSetupDraft.getState().reset(); // the start-screen draft lives outside the component (WR-03)
   const s = seedContent();
   useStore.setState({ version: s.version, categories: s.categories, missions: s.missions, events: s.events });
 }
@@ -99,6 +101,83 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(document.querySelector('.app--editor')).not.toBeNull();
     expect(document.querySelector('.panel--editor-shell')).not.toBeNull();
     expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
+  });
+});
+
+// WR-03: the start screen tells the instructor to change rules in the 편집기 (RULES_HINT). Switching
+// views unmounts the start screen, so the typed setup must live outside it to survive the trip.
+describe('App shell — the start-screen draft survives the 편집기 (WR-03)', () => {
+  beforeEach(resetToSeed);
+
+  function enterGame() {
+    fireEvent.click(modeSwitch().getByRole('button', { name: '🎮 게임' }));
+  }
+
+  it('keeps mode, count, names, members, animal picks and rounds across 편집기 → 게임', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: '팀전' }));
+    fireEvent.click(screen.getByRole('button', { name: '늘리기' }));
+    fireEvent.change(screen.getByLabelText('팀 1 이름'), { target: { value: '하늘' } });
+    fireEvent.change(screen.getByLabelText('팀 1 멤버 이름'), { target: { value: '민수, 지아' } });
+    fireEvent.change(screen.getByLabelText('팀 3 이름'), { target: { value: '숲' } });
+    fireEvent.click(within(screen.getByRole('group', { name: '팀 2 동물' })).getByRole('button', { name: '판다' }));
+    fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
+
+    enterEditor();
+    expect(screen.queryByRole('button', { name: '게임 시작' })).toBeNull();
+    enterGame();
+
+    expect(screen.getByRole('button', { name: '팀전' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('팀 수')).toHaveValue(3);
+    expect(screen.getByLabelText('팀 1 이름')).toHaveValue('하늘');
+    expect(screen.getByLabelText('팀 1 멤버 이름')).toHaveValue('민수, 지아');
+    expect(screen.getByLabelText('팀 3 이름')).toHaveValue('숲');
+    expect(within(screen.getByRole('group', { name: '팀 2 동물' })).getByRole('button', { name: '판다' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByLabelText('라운드 수').textContent).toBe('6');
+
+    fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
+    const g = useGameStore.getState().game!;
+    expect(g.config.mode).toBe('team');
+    expect(g.config.rules.rounds).toBe(6);
+    expect(g.config.participants.map((p) => [p.name, p.animal])).toEqual([
+      ['하늘', 'bear'],
+      ['팀 2', 'panda'],
+      ['숲', 'cat'],
+    ]);
+    expect(g.config.participants[0].memberNames).toEqual(['민수', '지아']);
+  });
+
+  it('an untouched round count follows the default changed in ⚙️ 설정 (the hint flow); a touched one is kept', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('플레이어 1 이름'), { target: { value: '하늘' } });
+    expect(screen.getByLabelText('라운드 수').textContent).toBe('5');
+
+    enterEditor();
+    fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
+    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
+    enterGame();
+    expect(screen.getByLabelText('라운드 수').textContent).toBe('8');
+    expect(screen.getByLabelText('플레이어 1 이름')).toHaveValue('하늘');
+
+    fireEvent.click(screen.getByRole('button', { name: '라운드 줄이기' })); // this game: 7
+    enterEditor();
+    fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
+    fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' })); // default: 9
+    enterGame();
+    expect(screen.getByLabelText('라운드 수').textContent).toBe('7');
+  });
+
+  it('starting a game consumes the draft: 처음으로 opens a fresh start screen', () => {
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('플레이어 1 이름'), { target: { value: '하늘' } });
+    fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
+    act(() => {
+      useGameStore.getState().reset(); // 처음으로
+    });
+    expect(screen.getByLabelText('플레이어 1 이름')).toHaveValue('');
   });
 });
 

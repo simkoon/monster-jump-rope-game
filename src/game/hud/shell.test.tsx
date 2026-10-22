@@ -10,6 +10,7 @@ import GameApp from '../GameApp';
 import { useStore } from '../../store';
 import { useSettings, DEFAULT_SETTINGS } from '../../settings';
 import { useGameStore } from '../../harness/useGameStore';
+import { useSetupDraft } from '../useSetupDraft';
 import { endGame, advanceTurn } from '../../engine/game';
 import { makeGame, mission, event, player, patchParticipant } from '../../engine/testkit';
 import type { Event, Mission } from '../../schema';
@@ -26,6 +27,7 @@ function resetAll() {
   localStorage.clear();
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS });
+  useSetupDraft.getState().reset(); // the start-screen draft lives outside the component (WR-03)
   setContent(ALL_DIFFS);
 }
 
@@ -148,6 +150,7 @@ describe('SetupView — rounds + estimate (D-19, D-20, SETUP-08)', () => {
     fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
     expect(screen.getByLabelText('라운드 수').textContent).toBe('2');
     unmount();
+    useSetupDraft.getState().reset(); // a fresh start screen (the touched 2 would otherwise be kept — WR-03)
     useSettings.setState({ defaultRounds: 20 });
     render(<SetupView />);
     expect(screen.getByRole('button', { name: '라운드 늘리기' })).toBeDisabled();

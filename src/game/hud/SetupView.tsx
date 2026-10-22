@@ -4,6 +4,8 @@
 // the per-game round stepper (initial value = settings defaultRounds, read once, never written
 // back — D-19), the play-time estimate (D-20), the read-only rules summary, the 💡 missing-content
 // notices (informational only — D-13) and the empty-library guard (the only start blocker).
+// The form state lives in the useSetupDraft store, not in component state, so following the
+// RULES_HINT to the 편집기 and back keeps everything typed in (WR-03).
 import { useState } from 'react';
 import { useStore } from '../../store';
 import { useSettings, ROUNDS_MIN, ROUNDS_MAX } from '../../settings';
@@ -11,13 +13,8 @@ import { useGameStore } from '../../harness/useGameStore';
 import SegmentedControl from '../../components/SegmentedControl';
 import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import AnimalPicker from './AnimalPicker';
-import {
-  analyzeContent,
-  buildParticipants,
-  estimateMinutes,
-  DEFAULT_PARTICIPANT_COUNT,
-  MAX_PARTICIPANTS,
-} from '../../engine/setup';
+import { useSetupDraft, type SetupMode } from '../useSetupDraft';
+import { analyzeContent, buildParticipants, estimateMinutes, MAX_PARTICIPANTS } from '../../engine/setup';
 import { assignAnimals, type AnimalId } from '../../engine/animals';
 import {
   ANIMAL_EMOJI,
@@ -28,7 +25,7 @@ import {
   rulesSummary,
 } from '../labels';
 
-type Mode = 'solo' | 'team';
+type Mode = SetupMode;
 
 function setAt<T>(arr: T[], i: number, v: T): T[] {
   const out = arr.slice();
@@ -50,13 +47,21 @@ export default function SetupView() {
   const analysis = analyzeContent(missions, events);
   const notices = missingNotices(analysis);
 
-  const [mode, setMode] = useState<Mode>('solo');
-  const [count, setCount] = useState<number>(DEFAULT_PARTICIPANT_COUNT);
-  const [names, setNames] = useState<string[]>([]);
-  const [members, setMembers] = useState<string[]>([]);
-  const [picks, setPicks] = useState<(AnimalId | undefined)[]>([]);
+  const mode = useSetupDraft((s) => s.mode);
+  const count = useSetupDraft((s) => s.count);
+  const names = useSetupDraft((s) => s.names);
+  const members = useSetupDraft((s) => s.members);
+  const picks = useSetupDraft((s) => s.picks);
+  const draftRounds = useSetupDraft((s) => s.rounds);
+  const patch = useSetupDraft((s) => s.patch);
   // D-19: read the instructor default once on mount; this game's value is never saved back.
-  const [rounds, setRounds] = useState<number>(() => useSettings.getState().defaultRounds);
+  // Until the stepper is touched the draft keeps no value, so a default changed in ⚙️ 설정 shows
+  // up after coming back (WR-03); a change made while this screen is open does not move it.
+  const [defaultRounds] = useState<number>(() => useSettings.getState().defaultRounds);
+  const rounds = draftRounds ?? defaultRounds;
+  const stepRounds = (delta: number) =>
+    patch((d) => ({ rounds: Math.min(ROUNDS_MAX, Math.max(ROUNDS_MIN, (d.rounds ?? defaultRounds) + delta)) }));
+  const setMode = (m: Mode) => patch({ mode: m });
 
   const clampedCount = clampCount(count);
   const rows = Array.from({ length: clampedCount }, (_, i) => i);
@@ -68,16 +73,12 @@ export default function SetupView() {
 
   // Decreasing the count drops the removed rows' picks so they are not resurrected later.
   function changeCount(next: number) {
-    setCount(next);
-    if (Number.isFinite(next)) {
-      const c = clampCount(next);
-      setPicks((ps) => ps.slice(0, c));
-    }
+    patch((d) => (Number.isFinite(next) ? { count: next, picks: d.picks.slice(0, clampCount(next)) } : { count: next }));
   }
 
   // Freeze the currently shown animals so picking in one row never reshuffles another row.
   function pickAnimal(i: number, a: AnimalId) {
-    setPicks(setAt<AnimalId | undefined>(animals, i, a));
+    patch({ picks: setAt<AnimalId | undefined>(animals, i, a) });
   }
 
   function handleStart() {
@@ -92,6 +93,8 @@ export default function SetupView() {
     const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
     const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
     useGameStore.getState().startGame({ mode, participants, rounds });
+    // The draft is consumed once a game is running; 처음으로 then opens a fresh start screen.
+    if (useGameStore.getState().game) useSetupDraft.getState().reset();
   }
 
   return (
@@ -150,7 +153,7 @@ export default function SetupView() {
                 aria-label={`${rowLabel} ${i + 1} 이름`}
                 placeholder={`${rowLabel} ${i + 1}`}
                 value={names[i] ?? ''}
-                onChange={(e) => setNames((ns) => setAt(ns, i, e.target.value))}
+                onChange={(e) => patch((d) => ({ names: setAt(d.names, i, e.target.value) }))}
               />
             </div>
             <AnimalPicker
@@ -166,7 +169,7 @@ export default function SetupView() {
                   aria-label={`${rowLabel} ${i + 1} 멤버 이름`}
                   placeholder="멤버 이름 (쉼표로 구분, 적은 순서대로 번갈아요)"
                   value={members[i] ?? ''}
-                  onChange={(e) => setMembers((ms) => setAt(ms, i, e.target.value))}
+                  onChange={(e) => patch((d) => ({ members: setAt(d.members, i, e.target.value) }))}
                 />
               </div>
             )}
@@ -181,7 +184,7 @@ export default function SetupView() {
             type="button"
             aria-label="라운드 줄이기"
             disabled={rounds <= ROUNDS_MIN}
-            onClick={() => setRounds((r) => Math.max(ROUNDS_MIN, r - 1))}
+            onClick={() => stepRounds(-1)}
           >
             −
           </button>
@@ -192,7 +195,7 @@ export default function SetupView() {
             type="button"
             aria-label="라운드 늘리기"
             disabled={rounds >= ROUNDS_MAX}
-            onClick={() => setRounds((r) => Math.min(ROUNDS_MAX, r + 1))}
+            onClick={() => stepRounds(1)}
           >
             +
           </button>
