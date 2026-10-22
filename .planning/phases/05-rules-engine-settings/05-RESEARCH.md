@@ -576,7 +576,7 @@ export function analyzeContent(missions: Mission[], events: Event[]): {
 | `src/engine/setup.ts` | `BoardPreset`/`boardLengthFor`/`DEFAULT_TIME_LIMIT_MS` 삭제, `character`→`animal` | D-01, D-24 |
 | `src/harness/useGameStore.ts` | `remainingMs`/`setRemainingMs`/`draw`/`end('timeout')` 삭제 | D-01, D-28 |
 | `src/game/styles/game.css` | `.game-clock`, `.game-positions`, 2D 보드/토큰/스프라이트 규칙 정리(HUD 토큰 `--tap` 등은 유지) | 사용 안 하는 CSS |
-| `src/App.tsx` 부제 | "카드 미션을 성공하고 결승까지 점프해요" → 새 문구 (App.test.tsx:44가 이 문자열을 `getByLabelText`로 단언하므로 같이 수정) | Claude 재량 |
+| `src/App.tsx` 부제 | "카드 미션을 성공하고 결승까지 점프해요" → 새 문구 (App.test.tsx:45가 이 문자열을 `getByLabelText`로 단언하므로 같이 수정) | Claude 재량 |
 | `public/assets/cc0/kenney/toon-characters/*` | **유지**(Phase 7에서 삭제, D-28) | — |
 | `src/game/usePresentation.ts` + test | **유지** | Phase 6 Director가 확장. GameApp의 busy 게이트도 무해하므로 유지 |
 
