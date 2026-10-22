@@ -101,3 +101,18 @@ describe('콘텐츠 저장 계약 tripwire (D-04)', () => {
     expect(parsed.data).toEqual(V1_CONTENT);
   });
 });
+
+describe('설정 스토어 부팅 격리 (DATA-07)', () => {
+  it('v1 콘텐츠 원문 옆에서 설정 스토어를 부팅·변경해도 콘텐츠 원문은 바이트 그대로다', async () => {
+    localStorage.clear();
+    localStorage.setItem(CONTENT_KEY, V1_LOCALSTORAGE_RAW);
+    vi.resetModules();
+    const { useSettings, SETTINGS_KEY } = await import('./settings');
+    await import('./store');
+
+    useSettings.getState().setBoardSize(24);
+
+    expect(localStorage.getItem(CONTENT_KEY)).toBe(V1_LOCALSTORAGE_RAW);
+    expect(JSON.parse(localStorage.getItem(SETTINGS_KEY)!).state.boardSize).toBe(24);
+  });
+});
