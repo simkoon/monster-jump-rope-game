@@ -89,6 +89,10 @@ describe('PlayView — layout (D-26)', () => {
 });
 
 describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers(); // pause() steps past the double-tap lock between taps
+  });
+
   it('awaitingJudgement: move panel + quest card with name, desc, badge and stars; no dice button', () => {
     setGame(atJudgement());
     renderPlay();
@@ -131,6 +135,7 @@ describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
     setGame(atJudgement());
     renderPlay();
     fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    pause();
     fireEvent.click(screen.getByRole('button', { name: '↩️ 판정 되돌리기' }));
     const card = screen.getByRole('group', { name: '미션 판정' });
     expect(within(card).getByRole('heading', { name: '양발 모아뛰기' })).toBeInTheDocument();
@@ -140,10 +145,10 @@ describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
   });
 
   it('undo stays available on the next awaitingRoll and disappears after rolling (D-16)', () => {
-    vi.useFakeTimers();
     setGame(atJudgement());
     renderPlay();
     fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    pause();
     fireEvent.click(screen.getByRole('button', { name: '다음 ➡️' }));
     expect(useGameStore.getState().game!.currentIndex).toBe(1);
     expect(screen.getByRole('button', { name: '🎲 주사위 굴리기' })).toBeInTheDocument();
@@ -160,6 +165,7 @@ describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
     const card = screen.getByRole('group', { name: '미션 판정' });
     expect(within(card).getByText('🔁 한 번 더 도전!')).toBeInTheDocument();
     expect(within(card).getByRole('heading', { name: '양발 모아뛰기' })).toBeInTheDocument();
+    pause();
     fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
     expect(screen.getByText('아쉬워요! 이번엔 별 없이 다음 차례')).toHaveClass('game-judge-result', 'miss');
     expect(screen.queryByRole('group', { name: '미션 판정' })).toBeNull();
@@ -232,6 +238,27 @@ describe('PlayView — double-tap lock (CR-01, WR-01)', () => {
     expect(g.phase).toBe('turnResolved');
     expect(g.turn.isExtra).toBe(false);
   });
+
+  it.each(['retrySame', 'retryNew'] as const)(
+    'a double tap on ❌ 실패 keeps the retry (%s, D-03)',
+    (failRule) => {
+      setGame(atJudgement({ rules: { failRule } }));
+      renderPlay();
+      const fail = screen.getByRole('button', { name: '❌ 실패' });
+      const before = seq();
+      fireEvent.click(fail);
+      fireEvent.click(fail); // the retry card's ❌ is the same node
+      const g = useGameStore.getState().game!;
+      expect(g.log.seq).toBe(before + 1);
+      expect(g.phase).toBe('awaitingJudgement');
+      expect(g.card!.attempt).toBe(2);
+      expect(screen.getByText('🔁 한 번 더 도전!')).toBeInTheDocument();
+      pause();
+      fireEvent.click(fail); // a deliberate tap on attempt 2 still judges it
+      expect(useGameStore.getState().game!.phase).toBe('turnResolved');
+      expect(screen.getByText('아쉬워요! 이번엔 별 없이 다음 차례')).toBeInTheDocument();
+    },
+  );
 
   it('only the double tap is swallowed: after the lock window the same button works again', () => {
     setGame(atJudgement());

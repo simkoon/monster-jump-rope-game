@@ -4,8 +4,9 @@
 // It draws the engine state as-is: turn bar → star scoreboard → ring strip → last-move panel +
 // judgement line → in-flow quest card → phase-driven buttons. No animation, no timers, no effects:
 // every tap calls one harness action and the screen simply re-renders from the new state.
-// The roll / next / undo buttons go through one short input lock so the second tap of a double tap
-// cannot fire the next phase's button drawn in the same place (CR-01, see useInputLock).
+// The roll / judge / next / undo buttons go through one short input lock so the second tap of a
+// double tap cannot fire the button drawn in the same place for the next phase or the retry card
+// (CR-01, WR-01 — see useInputLock).
 // All names (participants, missions, events) render as JSX text only (T-05-15).
 import { useGameStore } from '../harness/useGameStore';
 import { activeMember, canUndo, currentParticipant, willEndOnAdvance } from '../engine/game';
@@ -68,7 +69,7 @@ export default function PlayView() {
           diff={card.diff}
           stars={card.stars}
           attempt={card.attempt}
-          onJudge={(success) => useGameStore.getState().judge(success)}
+          onJudge={(success) => guard(() => useGameStore.getState().judge(success))}
         />
       )}
 
