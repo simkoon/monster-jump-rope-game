@@ -3,6 +3,7 @@ import { exportContent, importContent } from './io';
 import { useStore } from '../store';
 import { seedContent } from '../seed';
 import type { Content } from '../schema';
+import { V1_CONTENT, V1_BACKUP_FILE_TEXT, V1_BACKUP_MINIMAL_TEXT } from '../test/fixtures/v1';
 
 // A distinct baseline so any accidental overwrite is obvious.
 const BASE: Content = {
@@ -132,5 +133,28 @@ describe('exportContent → importContent round-trip (DATA-02)', () => {
     expect(s.categories).toEqual(content.categories);
     expect(s.missions).toEqual(content.missions);
     expect(s.events).toEqual(content.events);
+  });
+});
+
+describe('v1 백업 파일 가져오기 (DATA-06)', () => {
+  beforeEach(resetStore);
+
+  it.each([
+    ['정식 내보내기', V1_BACKUP_FILE_TEXT],
+    ['필드 누락 구형', V1_BACKUP_MINIMAL_TEXT],
+  ])('v1 백업(%s)은 확인 단계까지 가고, 확인 후 그대로 들어간다', async (name, text) => {
+    const res = await runImport(jsonFile(text), true);
+    expect(res.askedToConfirm).toBe(true);
+
+    const s = useStore.getState();
+    if (name === '정식 내보내기') {
+      expect(s.categories).toEqual(V1_CONTENT.categories);
+      expect(s.missions).toEqual(V1_CONTENT.missions);
+      expect(s.events).toEqual(V1_CONTENT.events);
+    } else {
+      expect(s.categories).toEqual([]);
+      expect(s.missions).toEqual([{ id: 'a', name: '줄넘기', desc: '', diff: 'easy', cats: [] }]);
+      expect(s.events).toEqual([{ id: 'e', name: '점프', eff: 'forward', steps: 2, weight: 1, label: '' }]);
+    }
   });
 });
