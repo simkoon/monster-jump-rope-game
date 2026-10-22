@@ -123,3 +123,16 @@ describe('XSS safety — user text renders escaped', () => {
     expect(container.querySelector('img')).toBeNull();
   });
 });
+
+describe('편집기 ⚙️ 설정 탭 (D-23)', () => {
+  beforeEach(resetToSeed);
+
+  it('⚙️ 설정 탭을 누르면 게임 설정 화면이 보이고 미션 목록은 사라진다', () => {
+    render(<App />);
+    enterEditor();
+    expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
+    expect(screen.getByRole('heading', { name: '⚙️ 게임 설정' })).toBeVisible();
+    expect(screen.queryByText('양발 모아뛰기')).toBeNull();
+  });
+});
