@@ -28,8 +28,10 @@ describe('hopMs — per-tile hop length, one move capped near 2 s', () => {
     expect(hopMs(len)).toBe(ms);
   });
 
-  it('a hop beat never exceeds the 2000 ms move cap', () => {
-    for (let len = 1; len <= 40; len++) {
+  // Reachable paths are ≤ 20 tiles (dice ≤ 6, event steps ≤ 20 by schema); beyond that the
+  // 100 ms floor wins by design (hopMs(40) = 100).
+  it('a hop beat never exceeds the 2000 ms move cap for any reachable path (≤ 20 tiles)', () => {
+    for (let len = 1; len <= 20; len++) {
       expect(Math.round(hopMs(len) * len)).toBeLessThanOrEqual(BEAT_MS.moveCap);
     }
   });
