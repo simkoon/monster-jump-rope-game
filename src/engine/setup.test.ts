@@ -2,13 +2,16 @@
 // bounds clamping, and the empty-mission guard (MISSION-07 / D-08).
 import { describe, it, expect } from 'vitest';
 import {
+  analyzeContent,
   boardLengthFor,
   buildParticipants,
   canStart,
   DEFAULT_TIME_LIMIT_MS,
+  estimateMinutes,
   MAX_PARTICIPANTS,
+  SECONDS_PER_TURN,
 } from './setup';
-import type { Mission } from '../schema';
+import type { Difficulty as Diff5, Event as Event5, Mission } from '../schema';
 
 const mission = (id: string): Mission => ({ id, name: id, desc: '', diff: 'easy', cats: [] });
 
@@ -92,5 +95,62 @@ describe('canStart (MISSION-07 / D-08)', () => {
   });
   it('allows a non-empty mission library', () => {
     expect(canStart([mission('m1')])).toEqual({ ok: true });
+  });
+});
+
+// ---- Phase 5 additions (SETUP-08/09, D-13, D-20) ----
+
+const m5 = (id: string, diff: Diff5): Mission => ({ id, name: id, desc: '', diff, cats: [] });
+const ev5 = (id: string, weight: number): Event5 => ({
+  id,
+  name: id,
+  eff: 'forward',
+  steps: 2,
+  weight,
+  label: '',
+});
+
+describe('estimateMinutes (D-20)', () => {
+  it('SECONDS_PER_TURN is 45', () => {
+    expect(SECONDS_PER_TURN).toBe(45);
+  });
+  it('ceil(n × rounds × 45 / 60)', () => {
+    expect(estimateMinutes(2, 5)).toBe(8);
+    expect(estimateMinutes(3, 5)).toBe(12);
+    expect(estimateMinutes(4, 5)).toBe(15);
+    expect(estimateMinutes(8, 5)).toBe(30);
+    expect(estimateMinutes(1, 1)).toBe(1);
+  });
+  it('returns 0 for n<1, rounds<1 or non-finite input', () => {
+    expect(estimateMinutes(0, 5)).toBe(0);
+    expect(estimateMinutes(3, 0)).toBe(0);
+    expect(estimateMinutes(Number.NaN, 5)).toBe(0);
+    expect(estimateMinutes(3, Number.POSITIVE_INFINITY)).toBe(0);
+  });
+});
+
+describe('analyzeContent (D-13)', () => {
+  it('blocks only when there are no missions', () => {
+    expect(analyzeContent([], [ev5('a', 1)])).toEqual({
+      ok: false,
+      reason: '미션이 없어요. 편집기에서 미션을 먼저 추가해 주세요.',
+      missingDiffs: ['easy', 'normal', 'hard'],
+      hasEventTiles: true,
+    });
+  });
+  it('easy-only missions + a weighted event → ok, missing normal/hard, event tiles', () => {
+    const r = analyzeContent([m5('e', 'easy')], [ev5('a', 0), ev5('b', 3)]);
+    expect(r.ok).toBe(true);
+    expect(r.reason).toBeUndefined();
+    expect(r.missingDiffs).toEqual(['normal', 'hard']);
+    expect(r.hasEventTiles).toBe(true);
+  });
+  it('all difficulties, events all weight 0 or empty → no event tiles', () => {
+    const all = [m5('e', 'easy'), m5('n', 'normal'), m5('h', 'hard')];
+    const zero = analyzeContent(all, [ev5('a', 0), ev5('b', 0)]);
+    expect(zero.ok).toBe(true);
+    expect(zero.missingDiffs).toEqual([]);
+    expect(zero.hasEventTiles).toBe(false);
+    expect(analyzeContent(all, []).hasEventTiles).toBe(false);
   });
 });
