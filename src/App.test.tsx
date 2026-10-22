@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, within, fireEvent, waitFor, act } from '@testing-library/react';
 import App from './App';
+import { INPUT_LOCK_MS } from './game/useInputLock';
 import { useStore } from './store';
 import { useGameStore } from './harness/useGameStore';
 import { useSettings, DEFAULT_SETTINGS } from './settings';
@@ -68,11 +69,19 @@ describe('App shell — default 게임 entry (D-10)', () => {
 
     const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
     let clicks = 0;
-    while (!screen.queryByText('게임 끝!') && clicks < 40) {
-      const btn = labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
-      expect(btn).toBeTruthy();
-      fireEvent.click(btn!);
-      clicks++;
+    vi.useFakeTimers(); // real taps are further apart than the double-tap input lock (CR-01)
+    try {
+      while (!screen.queryByText('게임 끝!') && clicks < 40) {
+        const btn = labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
+        expect(btn).toBeTruthy();
+        fireEvent.click(btn!);
+        act(() => {
+          vi.advanceTimersByTime(INPUT_LOCK_MS);
+        });
+        clicks++;
+      }
+    } finally {
+      vi.useRealTimers();
     }
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
     expect(screen.getByText('1라운드를 모두 마쳤어요!')).toBeInTheDocument();

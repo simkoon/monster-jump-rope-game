@@ -1,9 +1,11 @@
 // src/game/hud/hud.test.tsx — Phase 5 temporary play screen (D-26, TURN-01~08, D-16/D-17, D-22).
 // Deterministic engine states come from the testkit (makeGame + boardWith + engine transitions with
-// scripted dice) and are injected with useGameStore.setState. No timers, no 3D, no mocks.
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+// scripted dice) and are injected with useGameStore.setState. No 3D, no mocks; multi-tap tests run on fake
+// timers to step past the double-tap input lock (CR-01).
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import PlayView from '../PlayView';
+import { INPUT_LOCK_MS } from '../useInputLock';
 import { useGameStore } from '../../harness/useGameStore';
 import Toast, { useToastStore } from '../../components/Toast';
 import TurnHud from './TurnHud';
@@ -32,6 +34,14 @@ function setGame(g: GameState) {
   useGameStore.setState({ game: g, startBlockedReason: null });
 }
 
+// Real taps on the play screen are separated by more than the double-tap lock (CR-01). Tests that
+// tap several play buttons in a row run on fake timers and step the clock past the lock between taps.
+function pause() {
+  act(() => {
+    vi.advanceTimersByTime(INPUT_LOCK_MS);
+  });
+}
+
 function renderPlay() {
   return render(
     <>
@@ -44,6 +54,10 @@ function renderPlay() {
 beforeEach(() => {
   useGameStore.setState({ game: null, startBlockedReason: null });
   useToastStore.setState({ msg: '', kind: 'neutral', seq: 0 });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('PlayView — layout (D-26)', () => {
@@ -126,6 +140,7 @@ describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
   });
 
   it('undo stays available on the next awaitingRoll and disappears after rolling (D-16)', () => {
+    vi.useFakeTimers();
     setGame(atJudgement());
     renderPlay();
     fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
@@ -133,6 +148,7 @@ describe('PlayView — quest card + judgement (TURN-02/03/04)', () => {
     expect(useGameStore.getState().game!.currentIndex).toBe(1);
     expect(screen.getByRole('button', { name: '🎲 주사위 굴리기' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '↩️ 판정 되돌리기' })).toBeInTheDocument();
+    pause();
     fireEvent.click(screen.getByRole('button', { name: '🎲 주사위 굴리기' }));
     expect(screen.queryByRole('button', { name: '↩️ 판정 되돌리기' })).toBeNull();
   });
@@ -170,6 +186,67 @@ describe('PlayView — next button kinds (TURN-07, D-08, D-18)', () => {
     setGame(g);
     renderPlay();
     expect(screen.getByRole('button', { name: '🏆 결과 보기' })).toHaveClass('game-btn', 'game-btn--neutral');
+  });
+});
+
+// CR-01 / WR-01: the next phase's button is drawn in the same place as the one just tapped and React
+// reuses the DOM node, so clicking the SAME node twice is exactly what a real double tap does.
+describe('PlayView — double-tap lock (CR-01, WR-01)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  const seq = () => useGameStore.getState().game!.log.seq;
+
+  it('a double tap on 다음 ➡️ advances one turn only: the next player has not rolled and undo stays open (D-16)', () => {
+    setGame(atJudgement());
+    renderPlay();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    pause();
+    const next = screen.getByRole('button', { name: '다음 ➡️' });
+    const before = seq();
+    fireEvent.click(next);
+    // The hazard: the very same node is now the next player's dice button.
+    expect(next).toHaveTextContent('🎲 주사위 굴리기');
+    fireEvent.click(next);
+    const g = useGameStore.getState().game!;
+    expect(g.log.seq).toBe(before + 1);
+    expect(g.currentIndex).toBe(1);
+    expect(g.phase).toBe('awaitingRoll');
+    expect(g.config.participants[1].travel).toBe(0);
+    expect(screen.getByRole('button', { name: '↩️ 판정 되돌리기' })).toBeInTheDocument();
+  });
+
+  it('a double tap on 🎲 that lands on an event tile does not skip the event result', () => {
+    const extra = eventTile('extra', 0, { name: '보너스 점프' });
+    const board = boardWith(20, { 1: extra, 2: extra, 3: extra, 4: extra, 5: extra, 6: extra });
+    setGame(makeGame({ missions: [EASY], board }));
+    renderPlay();
+    const roll = screen.getByRole('button', { name: '🎲 주사위 굴리기' });
+    const before = seq();
+    fireEvent.click(roll);
+    expect(roll).toHaveTextContent('🔁 한 번 더 하기');
+    fireEvent.click(roll);
+    const g = useGameStore.getState().game!;
+    expect(g.log.seq).toBe(before + 1);
+    expect(g.phase).toBe('turnResolved');
+    expect(g.turn.isExtra).toBe(false);
+  });
+
+  it('only the double tap is swallowed: after the lock window the same button works again', () => {
+    setGame(atJudgement());
+    renderPlay();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    pause();
+    const next = screen.getByRole('button', { name: '다음 ➡️' });
+    fireEvent.click(next);
+    pause();
+    fireEvent.click(next); // a deliberate second tap: P2 rolls, which closes the undo window (D-16)
+    const g = useGameStore.getState().game!;
+    expect(g.currentIndex).toBe(1);
+    expect(g.phase).not.toBe('awaitingRoll');
+    expect(g.config.participants[1].travel).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: '↩️ 판정 되돌리기' })).toBeNull();
   });
 });
 
