@@ -13,8 +13,9 @@ import type { Difficulty, Mission } from '../schema';
 import { buildBoard, DIFF_ORDER, shuffle } from './board';
 import { moveBy, type RingPos } from './ring';
 import { rollDie, type Rng } from './rng';
-import { starsFor } from './scoring';
+import { starsFor, winnersByStars } from './scoring';
 import type {
+  EndReason,
   GameConfig,
   GameContent,
   GameEvent,
@@ -22,6 +23,7 @@ import type {
   Participant,
   QuestCard,
   TurnInfo,
+  UndoSnapshot,
 } from './state';
 
 type Decks = Record<Difficulty, Mission[]>;
@@ -241,4 +243,156 @@ export function rollDice(state: GameState, rng: Rng): GameState {
     },
     log: { seq: state.log.seq + 1, events },
   };
+}
+
+// Everything except the undo slot and the log (the log is never rewound — Pattern 6).
+function snapshotOf(state: GameState): UndoSnapshot {
+  const { undo: _undo, log: _log, ...core } = state;
+  return core;
+}
+
+// TURN-03/04, D-02/D-03/D-14/D-15: the instructor's verdict on the drawn quest.
+// Stars are only ever added. A retry never changes currentIndex or memberTurnIndex (D-21).
+// The turn is never exited here — advanceTurn is the single turn-exit path.
+export function judge(state: GameState, success: boolean, rng: Rng): GameState {
+  if (state.phase !== 'awaitingJudgement' || !state.card) return state;
+  const undo = snapshotOf(state); // D-16/D-17: captured BEFORE applying the verdict
+  const card = state.card;
+  const idx = state.currentIndex;
+  const p = currentParticipant(state);
+  const pid = p.id;
+  const seq = state.log.seq + 1;
+
+  if (success) {
+    const s = withParticipant(state, idx, { stars: p.stars + card.stars }); // D-14: full stars on retry
+    return {
+      ...s,
+      phase: 'turnResolved',
+      card: null,
+      undo,
+      lastJudgement: { success: true, starsAwarded: card.stars, retry: false },
+      log: { seq, events: [{ t: 'judged', pid, success: true, stars: card.stars }] },
+    };
+  }
+
+  const failRule = state.config.rules.failRule;
+  if (card.attempt === 1 && failRule !== 'noStar') {
+    let decks = state.decks;
+    let next: Mission = card.mission;
+    if (failRule === 'retryNew') {
+      const drawn = drawFromDeck(state.pool, state.decks, card.diff, rng, card.mission.id);
+      if (drawn.mission) {
+        next = drawn.mission;
+        decks = drawn.decks;
+      }
+    }
+    const retryCard: QuestCard = { ...card, mission: next, attempt: 2 };
+    return {
+      ...state,
+      decks,
+      card: retryCard,
+      undo,
+      lastJudgement: { success: false, starsAwarded: 0, retry: true },
+      log: {
+        seq,
+        events: [
+          { t: 'judged', pid, success: false, stars: 0 },
+          { t: 'questDrawn', pid, missionId: next.id, diff: card.diff, stars: card.stars, attempt: 2 },
+        ],
+      },
+    };
+  }
+
+  return {
+    ...state,
+    phase: 'turnResolved',
+    card: null,
+    undo,
+    lastJudgement: { success: false, starsAwarded: 0, retry: false },
+    log: { seq, events: [{ t: 'judged', pid, success: false, stars: 0 }] },
+  };
+}
+
+// TURN-08, D-16/D-17: restore the state captured right before the last judgement.
+// Not available at gameOver (A4). The log is not part of the snapshot, so seq keeps growing.
+export function undoJudgement(state: GameState): GameState {
+  if (!state.undo || state.phase === 'gameOver') return state;
+  return {
+    ...state.undo,
+    undo: null,
+    log: { seq: state.log.seq + 1, events: [{ t: 'judgementUndone' }] },
+  };
+}
+
+function finish(state: GameState, reason: EndReason): GameState {
+  const winners = winnersByStars(state.config.participants);
+  return {
+    ...state,
+    phase: 'gameOver',
+    card: null,
+    undo: null,
+    winners,
+    endReason: reason,
+    log: { seq: state.log.seq + 1, events: [{ t: 'gameEnded', reason, winners }] },
+  };
+}
+
+// TURN-07, ROUND-01/03, D-08/D-18/D-21: the single turn-exit path.
+export function advanceTurn(state: GameState): GameState {
+  if (state.phase !== 'turnResolved') return state;
+  const cleared = { card: null, lastMove: null, lastJudgement: null };
+
+  // Extra branch FIRST: same participant and member, not counted as a round (D-08). The last
+  // participant of the last round is allowed too — the game ends after the extra turn (D-18).
+  if (state.turn.extraGranted) {
+    const s: GameState = {
+      ...state,
+      ...cleared,
+      phase: 'awaitingRoll',
+      turn: { isExtra: true, bonusPaid: false, extraGranted: false }, // A5: separate turn for the bonus cap
+    };
+    return { ...s, log: { seq: state.log.seq + 1, events: [turnStartedEvent(s)] } };
+  }
+
+  // Rotate ONLY the leaving team's member (D-21).
+  const n = state.config.participants.length;
+  const leaving = state.currentIndex;
+  const lp = state.config.participants[leaving];
+  const rotated = withParticipant(state, leaving, {
+    memberTurnIndex: (lp.memberTurnIndex + 1) % (lp.memberNames.length || 1),
+  });
+  const next = (leaving + 1) % n;
+  // The ONLY place the round increases (ROUND-01, Pitfall 3).
+  const round = next === 0 ? state.round + 1 : state.round;
+  const maxRounds = state.config.rules.rounds;
+  if (round > maxRounds) {
+    return finish({ ...rotated, round: Math.min(state.round, maxRounds) }, 'rounds-complete');
+  }
+  const s: GameState = {
+    ...rotated,
+    ...cleared,
+    currentIndex: next,
+    round,
+    phase: 'awaitingRoll',
+    turn: { ...FRESH_TURN }, // undo is kept: the D-16 window lasts until the next roll
+  };
+  return { ...s, log: { seq: state.log.seq + 1, events: [turnStartedEvent(s)] } };
+}
+
+// ROUND-04, D-22: end now from any phase. A pending quest is voided with no stars.
+export function endGame(state: GameState, reason: 'manual'): GameState {
+  if (state.phase === 'gameOver') return state;
+  return finish(state, reason);
+}
+
+export function canUndo(state: GameState): boolean {
+  return state.undo !== null && state.phase !== 'gameOver';
+}
+
+// True when the next advanceTurn will end the game (last regular turn of the last round,
+// with no pending extra turn).
+export function willEndOnAdvance(state: GameState): boolean {
+  if (state.phase !== 'turnResolved' || state.turn.extraGranted) return false;
+  const n = state.config.participants.length;
+  return (state.currentIndex + 1) % n === 0 && state.round >= state.config.rules.rounds;
 }

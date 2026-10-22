@@ -354,7 +354,7 @@ function onQuest(diff: Difficulty, failRule: FailRule = 'retrySame', extra: Para
 // Play one turn on an all-quest board: roll 1, judge success when a quest is drawn, then advance.
 function playTurn(s: GameState, success = true): GameState {
   let r = rollDice(s, dice(1));
-  if (r.phase === 'awaitingJudgement') r = judge(r, success, dice(1));
+  while (r.phase === 'awaitingJudgement') r = judge(r, success, dice(1)); // a fail may grant one retry
   return advanceTurn(r);
 }
 
