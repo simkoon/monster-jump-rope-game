@@ -6,14 +6,14 @@ current_phase: 5
 current_phase_name: 새 규칙 엔진 & 강사 설정
 status: executing
 stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-10-22T17:42:57.171Z"
+last_updated: "2026-10-22T17:50:45.952Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 5 execution started
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 5 (새 규칙 엔진 & 강사 설정) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-22 — Phase 5 execution started
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P02 | 6min | 2 tasks | 25 files |
 | Phase 05 P01 | 4min | 3 tasks | 12 files |
 | Phase 05 P02 | 4min | 3 tasks | 10 files |
+| Phase 05 P03 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,10 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-01: Content-format tripwire (persist name/version, partialize keys, schema key sets) in src/dataPreservation.test.ts guards every later full vitest gate
 - [Phase 05]: 05-02: Start bonus judged only in ring.moveBy; lapsCredited always raised to max(lap) even when the per-turn cap blocks payment (D-09, A1)
 - [Phase 05]: 05-02: buildBoard stores event copies, uses only weight>0 events, square 1 = easiest available difficulty (A2), throws on zero missions
+- [Phase 05]: 05-03: v2 FSM lives in new files state.ts/game.ts; v1 engine.ts/types.ts/placement.ts untouched until 05-05
+- [Phase 05]: 05-03: Deck draw from the end, empty deck refills from pool snapshot, retryNew refills at most once
+- [Phase 05]: 05-03: forward/backward event with steps 0 does not move and resolves on the event tile
+- [Phase 05]: 05-03: rounds-complete keeps round = rules.rounds; finish clears card+undo, keeps lastMove
 
 ### Pending Todos
 
@@ -140,6 +145,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T17:42:57.165Z
+Last session: 2026-10-22T17:50:32.695Z
 Stopped at: Completed 05-02-PLAN.md
 Resume file: None

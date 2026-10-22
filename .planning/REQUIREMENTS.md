@@ -37,20 +37,20 @@
 ### 턴 흐름 (TURN)
 
 - [x] **TURN-01**: 현재 차례에서 주사위 버튼을 누르면 주사위(1~6) 연출 후 그 수만큼 말이 칸마다 이동하며, 출발 칸을 지나 순환판을 계속 돈다
-- [ ] **TURN-02**: 퀘스트 칸에 멈추면 그 칸 난이도의 미션이 한 장 뽑혀 이름·설명·받을 별 개수가 크게 표시된다
+- [x] **TURN-02**: 퀘스트 칸에 멈추면 그 칸 난이도의 미션이 한 장 뽑혀 이름·설명·받을 별 개수가 크게 표시된다
 - [x] **TURN-03**: 강사가 성공/실패를 판정하고, 성공하면 난이도별로 별을 받는다 (쉬움 ⭐1 / 보통 ⭐2 / 어려움 ⭐3)
-- [ ] **TURN-04**: 실패하면 설정된 실패 규칙대로 진행되며(재도전은 1회까지), 어떤 경우에도 별은 줄지 않는다
-- [ ] **TURN-05**: 이벤트 칸에 멈추면 이벤트 효과(앞으로 N칸 / 뒤로 N칸 / 한 번 더)가 적용되고, 이벤트로 이동해 퀘스트 칸에 닿으면 그 퀘스트를 수행한다 (이벤트 연쇄 발동은 없음)
+- [x] **TURN-04**: 실패하면 설정된 실패 규칙대로 진행되며(재도전은 1회까지), 어떤 경우에도 별은 줄지 않는다
+- [x] **TURN-05**: 이벤트 칸에 멈추면 이벤트 효과(앞으로 N칸 / 뒤로 N칸 / 한 번 더)가 적용되고, 이벤트로 이동해 퀘스트 칸에 닿으면 그 퀘스트를 수행한다 (이벤트 연쇄 발동은 없음)
 - [x] **TURN-06**: 출발 칸을 앞으로 지나가거나 출발 칸에 멈추면 설정된 보너스 별을 받는다 — 뒤로 지날 때는 받지 않고, 같은 바퀴에 두 번 받지 않는다
-- [ ] **TURN-07**: "한 번 더"는 같은 플레이어가 추가 턴을 하며, 라운드 수에는 세지 않고 연속 1회까지만 허용된다
-- [ ] **TURN-08**: 강사는 직전 성공/실패 판정을 되돌릴 수 있다
+- [x] **TURN-07**: "한 번 더"는 같은 플레이어가 추가 턴을 하며, 라운드 수에는 세지 않고 연속 1회까지만 허용된다
+- [x] **TURN-08**: 강사는 직전 성공/실패 판정을 되돌릴 수 있다
 
 ### 라운드 & 승리 (ROUND)
 
-- [ ] **ROUND-01**: 모든 플레이어/팀이 정규 턴을 한 번씩 마치면 1라운드이며, 팀전에서는 팀 단위로 턴을 세고 팀원이 돌아가며 수행한다
+- [x] **ROUND-01**: 모든 플레이어/팀이 정규 턴을 한 번씩 마치면 1라운드이며, 팀전에서는 팀 단위로 턴을 세고 팀원이 돌아가며 수행한다
 - [ ] **ROUND-02**: 화면에 현재 라운드 / 전체 라운드가 표시되고, 마지막 라운드가 시작되면 "마지막 라운드!" 알림이 나온다
 - [x] **ROUND-03**: 정한 라운드가 모두 끝나면 게임이 종료되고 별이 가장 많은 플레이어/팀이 승리하며, 동점이면 공동 우승이다
-- [ ] **ROUND-04**: 강사는 언제든 확인을 거쳐 "지금 끝내기"로 게임을 끝내고 시상식으로 갈 수 있다
+- [x] **ROUND-04**: 강사는 언제든 확인을 거쳐 "지금 끝내기"로 게임을 끝내고 시상식으로 갈 수 있다
 
 ### 화면 정보 (HUD)
 
@@ -146,17 +146,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOARD-04 | Phase 5 | Complete |
 | BOARD-05 | Phase 7 | Pending |
 | TURN-01 | Phase 5 | Complete |
-| TURN-02 | Phase 5 | Pending |
+| TURN-02 | Phase 5 | Complete |
 | TURN-03 | Phase 5 | Complete |
-| TURN-04 | Phase 5 | Pending |
-| TURN-05 | Phase 5 | Pending |
+| TURN-04 | Phase 5 | Complete |
+| TURN-05 | Phase 5 | Complete |
 | TURN-06 | Phase 5 | Complete |
-| TURN-07 | Phase 5 | Pending |
-| TURN-08 | Phase 5 | Pending |
-| ROUND-01 | Phase 5 | Pending |
+| TURN-07 | Phase 5 | Complete |
+| TURN-08 | Phase 5 | Complete |
+| ROUND-01 | Phase 5 | Complete |
 | ROUND-02 | Phase 6 | Pending |
 | ROUND-03 | Phase 5 | Complete |
-| ROUND-04 | Phase 5 | Pending |
+| ROUND-04 | Phase 5 | Complete |
 | HUD-01 | Phase 6 | Pending |
 | HUD-02 | Phase 6 | Pending |
 | HUD-03 | Phase 6 | Pending |
