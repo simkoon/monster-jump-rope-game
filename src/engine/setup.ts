@@ -1,8 +1,9 @@
 // src/engine/setup.ts — board presets, participant builder, empty-mission guard.
 // PHASE 2/3 CONTRACT: no React/DOM imports. Ids come from a stable local counter
 // (not seed.uid) to keep the engine free of content dependencies.
-import type { Mission } from '../schema';
+import type { Difficulty, Event, Mission } from '../schema';
 import type { Participant } from './types';
+import { DIFF_ORDER } from './board';
 
 export type BoardPreset = 'short' | 'normal'; // "짧게" / "보통" (D-02)
 
@@ -62,4 +63,37 @@ export function canStart(missions: Mission[]): { ok: boolean; reason?: string } 
   if (missions.length === 0)
     return { ok: false, reason: '미션이 없어요. 편집기에서 미션을 먼저 추가해 주세요.' };
   return { ok: true };
+}
+
+// ---- Phase 5 additions (SETUP-08/09, D-13, D-20). The v1 exports above stay until 05-05. ----
+
+export const SECONDS_PER_TURN = 45; // D-20: rough time per turn used for the start-screen estimate
+
+// D-20: estimated minutes = ceil(participants × rounds × 45s / 60). 2×5=8, 3×5=12, 4×5=15, 8×5=30.
+export function estimateMinutes(n: number, rounds: number): number {
+  if (!Number.isFinite(n) || !Number.isFinite(rounds) || n < 1 || rounds < 1) return 0;
+  return Math.ceil((n * rounds * SECONDS_PER_TURN) / 60);
+}
+
+export interface ContentAnalysis {
+  ok: boolean;
+  reason?: string;
+  missingDiffs: Difficulty[]; // informational: those quest tiles are simply left out (D-13)
+  hasEventTiles: boolean; // false when no event has weight > 0 (board uses quests only)
+}
+
+// D-13: only an empty mission library blocks a game; missing difficulties and
+// unplaceable events are informational guidance on the start screen.
+export function analyzeContent(missions: readonly Mission[], events: readonly Event[]): ContentAnalysis {
+  const missingDiffs = DIFF_ORDER.filter((d) => !missions.some((m) => m.diff === d));
+  const hasEventTiles = events.some((e) => e.weight > 0);
+  if (missions.length === 0) {
+    return {
+      ok: false,
+      reason: '미션이 없어요. 편집기에서 미션을 먼저 추가해 주세요.',
+      missingDiffs,
+      hasEventTiles,
+    };
+  }
+  return { ok: true, missingDiffs, hasEventTiles };
 }
