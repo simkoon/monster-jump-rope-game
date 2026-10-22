@@ -1,4 +1,4 @@
-export type TabKey = 'mission' | 'event';
+export type TabKey = 'mission' | 'event' | 'settings';
 
 interface TabsProps {
   active: TabKey;
@@ -27,6 +27,15 @@ export default function Tabs({ active, missionCount, eventCount, onChange }: Tab
         onClick={() => onChange('event')}
       >
         🎲 이벤트 <span className="cnt">{eventCount}</span>
+      </button>
+      <button
+        className={'tab' + (active === 'settings' ? ' active' : '')}
+        role="tab"
+        type="button"
+        aria-selected={active === 'settings'}
+        onClick={() => onChange('settings')}
+      >
+        ⚙️ 설정
       </button>
     </nav>
   );

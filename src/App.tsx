@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Tabs, { type TabKey } from './components/Tabs';
 import MissionTab from './components/MissionTab';
 import EventTab from './components/EventTab';
+import SettingsTab from './components/SettingsTab';
 import Toast from './components/Toast';
 import GameApp from './game/GameApp';
 import { useGameStore } from './harness/useGameStore';
@@ -58,7 +59,7 @@ export default function App() {
           />
           <main className="editor-main">
             <section className="panel panel--editor-shell">
-              {tab === 'mission' ? <MissionTab /> : <EventTab />}
+              {tab === 'mission' ? <MissionTab /> : tab === 'event' ? <EventTab /> : <SettingsTab />}
             </section>
           </main>
           <footer className="note">
