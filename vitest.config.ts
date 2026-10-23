@@ -8,5 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
+    // Vitest blanks every CSS import by default — including `?raw`. Let only raw CSS text
+    // through so palette.test.ts can pin palette.ts to the index.css tokens (D-14).
+    // Regular `.css` imports stay blanked (no Tailwind processing in tests).
+    css: { include: [/\.css\?raw$/] },
   },
 });
