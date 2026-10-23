@@ -13,6 +13,10 @@
 // labels module (emoji / name / title copy).
 // D-16 the buttons are live from the first frame, also during the intro, and carry the skip-ignore
 // attribute, so a tap on them never runs the intro's skip path.
+// Both buttons go through the input lock (CR-01 / Pitfall 4 for the ceremony): a tap that skips the
+// win beat shows these buttons under the finger, and the lock's shared skip window drops the child's
+// second tap. 🔁 다시 하기 also takes the shared lock for INPUT_LOCK_MS, because the new game's 🎲
+// appears in the same render and a double tap must not roll it (rolling closes the undo window).
 // Names render as JSX text only (T-05-15 → T-08-23 lineage): React escapes them, no HTML strings.
 import type { CSSProperties } from 'react';
 import { useGameStore } from '../../harness/useGameStore';
@@ -28,6 +32,7 @@ import {
   winnerLine,
 } from '../labels';
 import { ANIMAL_COLOR } from '../palette';
+import { INPUT_LOCK_MS, lockInputFor, useInputLock } from '../useInputLock';
 
 export function CeremonyHead({ game }: { game: GameState }) {
   return (
@@ -48,6 +53,7 @@ export function CeremonyPanel({ game, introActive }: { game: GameState; introAct
   const winners = new Set(game.winners);
   const line = winnerLine(participants.filter((p) => winners.has(p.id)));
   const badges = awardBadges(game.stats, participants);
+  const guard = useInputLock();
 
   return (
     <>
@@ -101,7 +107,12 @@ export function CeremonyPanel({ game, introActive }: { game: GameState; introAct
           type="button"
           className="game-btn ceremony-restart"
           data-skip-ignore
-          onClick={() => useGameStore.getState().restart()}
+          onClick={() =>
+            guard(() => {
+              lockInputFor(INPUT_LOCK_MS);
+              useGameStore.getState().restart();
+            })
+          }
         >
           🔁 다시 하기
         </button>
@@ -109,7 +120,7 @@ export function CeremonyPanel({ game, introActive }: { game: GameState; introAct
           type="button"
           className="game-btn--sm ceremony-home"
           data-skip-ignore
-          onClick={() => useGameStore.getState().reset()}
+          onClick={() => guard(() => useGameStore.getState().reset())}
         >
           처음으로
         </button>

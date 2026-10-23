@@ -21,6 +21,7 @@ import { BADGE_COPY, ceremonyCardAria } from '../labels';
 import { CEREMONY_INTRO_MS } from '../layout/podiumLayout';
 import sfx, { __resetSfxForTests } from '../sfx/sfx';
 import { installFakeAudio } from '../../test/fakeAudio';
+import { INPUT_LOCK_MS, lockInputFor, resetSharedInputLock, SKIP_LOCK_MS, useInputLock } from '../useInputLock';
 import gameCss from '../styles/game.css?raw';
 
 const stats = (over: Partial<PlayerStats>): PlayerStats => ({ ...EMPTY_STATS, ...over });
@@ -67,6 +68,7 @@ function threeDone(stars: number[]): GameState {
 const cards = () => within(screen.getByRole('list', { name: '모두의 별' })).getAllByRole('listitem');
 
 beforeEach(() => {
+  resetSharedInputLock(); // module scope: 🔁 다시 하기 takes it (CR-01)
   localStorage.clear();
   useSettings.setState({ ...DEFAULT_SETTINGS });
   useStore.setState({
@@ -80,6 +82,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  resetSharedInputLock();
   useGameStore.setState({ game: null, startBlockedReason: null });
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -267,6 +270,55 @@ describe('CeremonyPanel — 🔁 다시 하기 / 처음으로 (END-03, D-16)', (
     expect(btn).toHaveAttribute('data-skip-ignore');
     fireEvent.click(btn);
     expect(useGameStore.getState().game).toBeNull();
+  });
+
+  it('a double tap on 🔁 다시 하기 restarts once and locks every other guarded action (CR-01)', () => {
+    vi.useFakeTimers();
+    const g = fourDone();
+    setGame(g);
+    const other = vi.fn();
+    let otherGuard: ReturnType<typeof useInputLock> | null = null;
+    function OtherGuard() {
+      otherGuard = useInputLock();
+      return null;
+    }
+    render(
+      <>
+        <CeremonyPanel game={g} introActive />
+        <OtherGuard />
+      </>,
+    );
+    const restart = vi.spyOn(useGameStore.getState(), 'restart');
+    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    expect(restart).toHaveBeenCalledTimes(1);
+    // The next screen's 🎲 has its own guard: the shared lock drops it until INPUT_LOCK_MS.
+    otherGuard!(other);
+    expect(other).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(INPUT_LOCK_MS);
+    });
+    otherGuard!(other);
+    expect(other).toHaveBeenCalledTimes(1);
+  });
+
+  it('inside the shared skip lock (the win-beat skip tap) neither button runs (CR-01)', () => {
+    vi.useFakeTimers();
+    const g = fourDone();
+    setGame(g);
+    render(<CeremonyPanel game={g} introActive />);
+    const restart = vi.spyOn(useGameStore.getState(), 'restart');
+    const reset = vi.spyOn(useGameStore.getState(), 'reset');
+    lockInputFor(SKIP_LOCK_MS);
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    expect(reset).not.toHaveBeenCalled();
+    expect(restart).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(SKIP_LOCK_MS);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    expect(reset).toHaveBeenCalledTimes(1);
   });
 });
 

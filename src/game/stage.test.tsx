@@ -97,6 +97,7 @@ const questCard = () => screen.queryByRole('group', { name: '미션 판정' });
 let unsub: (() => void) | null = null;
 
 beforeEach(() => {
+  resetSharedInputLock(); // the shared lock is module scope (restart / skip taps take it)
   useGameStore.setState({ game: null, startBlockedReason: null });
   P().reset(EMPTY_DISPLAYED, null);
   useToastStore.setState({ msg: '', kind: 'neutral', seq: 0 });
@@ -110,6 +111,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
   delete (document as unknown as { visibilityState?: string }).visibilityState; // back to the jsdom getter
+  resetSharedInputLock();
   P().reset(EMPTY_DISPLAYED, null);
   useGameStore.setState({ game: null, startBlockedReason: null });
   fakeCanvas.reset();
@@ -508,6 +510,27 @@ describe('GameStage — tap to skip (FX-03, D-07, Pitfall 3 / 4)', () => {
     expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: false });
   });
 
+  it('a second tap right after the win-beat skip cannot hit 처음으로 / 🔁 다시 하기 (CR-01, Pitfall 4)', async () => {
+    await mountApp(atLastTurn(true));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
+    act(() => {
+      vi.advanceTimersByTime(INPUT_LOCK_MS + 100); // past the 결과 보기 tap's own window
+    });
+    expect(P().current?.kind).toBe('win');
+    fireEvent.click(document.body); // the skip tap: the ceremony buttons appear under the finger
+    const ended = engine();
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    expect(engine()).toBe(ended); // neither reset() nor restart() ran inside the skip lock
+    act(() => {
+      vi.advanceTimersByTime(SKIP_LOCK_MS);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    expect(useGameStore.getState().game).toBeNull();
+  });
+
   it('2.5 s budget end to end: STARS_MS[3] after ✅ the 다음 ➡️ button is visible and works', async () => {
     await mountApp(atJudgement());
     vi.useFakeTimers();
@@ -577,6 +600,7 @@ describe('GameStage — ceremony mode on the same canvas (D-11, END-01, END-03)'
 
   it('play → ceremony → 🔁 다시 하기 three times keeps one canvas (T-08-24)', async () => {
     await mountApp(baseGame());
+    vi.useFakeTimers(); // real taps are further apart than the restart's input lock (CR-01)
     for (let k = 1; k <= 3; k++) {
       settle();
       endViaButton();
@@ -584,8 +608,28 @@ describe('GameStage — ceremony mode on the same canvas (D-11, END-01, END-03)'
       expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: k, introActive: true });
       fireEvent.click(restartBtn());
       expect(screen.queryByText('게임 끝!')).toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(INPUT_LOCK_MS);
+      });
     }
     expect(fakeCanvas.mounts).toBe(1);
+  });
+
+  it('a double tap on 🔁 다시 하기 does not roll the new game\'s first 🎲 (CR-01)', async () => {
+    await mountApp(baseGame());
+    vi.useFakeTimers();
+    endViaButton();
+    fireEvent.click(restartBtn());
+    settle(); // the fresh game's own opening beat, so 🎲 is on screen under the finger
+    const fresh = engine();
+    expect(fresh.phase).toBe('awaitingRoll');
+    fireEvent.click(rollBtn()!); // the second tap of the double tap
+    expect(engine()).toBe(fresh);
+    act(() => {
+      vi.advanceTimersByTime(INPUT_LOCK_MS);
+    });
+    fireEvent.click(rollBtn()!);
+    expect(engine().log.seq).toBe(fresh.log.seq + 1);
   });
 
   it('처음으로 goes back to the start screen', async () => {
