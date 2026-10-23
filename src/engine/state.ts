@@ -88,6 +88,17 @@ export type GameEvent =
   | { t: 'judgementUndone' }
   | { t: 'gameEnded'; reason: EndReason; winners: string[] };
 
+// D-15: per-participant game stats (Phase 8 praise badges). Lives only in the in-memory game
+// state — never persisted, never part of the backup format.
+export interface PlayerStats {
+  attempts: number;
+  successes: number;
+  failures: number;
+  retrySuccesses: number;
+  hardSuccesses: number;
+  luckyCount: number;
+}
+
 export interface GameLog {
   seq: number;
   events: GameEvent[];
@@ -109,6 +120,7 @@ export interface GameStateCore {
   lastJudgement: JudgementResult | null;
   winners: string[];
   endReason: EndReason | null;
+  stats: Readonly<Record<string, PlayerStats>>; // D-15: in the core, so undo snapshots carry it
 }
 
 export type UndoSnapshot = GameStateCore;

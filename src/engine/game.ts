@@ -14,6 +14,7 @@ import { buildBoard, DIFF_ORDER, shuffle } from './board';
 import { moveBy, type RingPos } from './ring';
 import { rollDie, type Rng } from './rng';
 import { starsFor, winnersByStars } from './scoring';
+import { bumpStats, initStats, isLuckyEvent } from './stats';
 import type {
   EndReason,
   GameConfig,
@@ -132,6 +133,7 @@ export function createGame(config: GameConfig, content: GameContent, rng: Rng): 
     lastJudgement: null,
     winners: [],
     endReason: null,
+    stats: initStats(participants.map((p) => p.id)), // D-15: restart = createGame → all zero
     undo: null,
     log: { seq: 0, events: [] },
   };
@@ -151,13 +153,17 @@ export function rollDice(state: GameState, rng: Rng): GameState {
   const turn: TurnInfo = { ...state.turn };
   let stars = p.stars;
   let paid = 0;
+  let stats = state.stats;
 
   const payBonusIf = (earned: boolean) => {
     if (!earned) return;
     turn.bonusPaid = true;
     stars += bonusStars;
     paid += bonusStars;
-    if (bonusStars > 0) events.push({ t: 'startBonus', pid, stars: bonusStars });
+    if (bonusStars > 0) {
+      events.push({ t: 'startBonus', pid, stars: bonusStars });
+      stats = bumpStats(stats, pid, { luckyCount: 1 }); // D-15: a bonus actually paid is lucky
+    }
   };
 
   // (1) dice move
@@ -194,6 +200,7 @@ export function rollDice(state: GameState, rng: Rng): GameState {
         events.push({ t: 'landed', pid, tile: to, kind: state.board[to].kind });
       }
     }
+    if (isLuckyEvent(ev, extraSuppressed)) stats = bumpStats(stats, pid, { luckyCount: 1 }); // D-15, A2
   }
 
   // (3) final tile: a quest draws a card (also after an event move), anything else resolves
@@ -228,6 +235,7 @@ export function rollDice(state: GameState, rng: Rng): GameState {
     decks,
     turn,
     card,
+    stats,
     undo: null, // D-16: rolling closes the undo window
     lastJudgement: null,
     lastMove: {
@@ -262,6 +270,15 @@ export function judge(state: GameState, success: boolean, rng: Rng): GameState {
   const p = currentParticipant(state);
   const pid = p.id;
   const seq = state.log.seq + 1;
+  // D-15: every verdict is one attempt; a voided quest (endGame) never reaches here.
+  const stats = success
+    ? bumpStats(state.stats, pid, {
+        attempts: 1,
+        successes: 1,
+        retrySuccesses: card.attempt === 2 ? 1 : 0,
+        hardSuccesses: card.stars === 3 ? 1 : 0,
+      })
+    : bumpStats(state.stats, pid, { attempts: 1, failures: 1 });
 
   if (success) {
     const s = withParticipant(state, idx, { stars: p.stars + card.stars }); // D-14: full stars on retry
@@ -269,6 +286,7 @@ export function judge(state: GameState, success: boolean, rng: Rng): GameState {
       ...s,
       phase: 'turnResolved',
       card: null,
+      stats,
       undo,
       lastJudgement: { success: true, starsAwarded: card.stars, retry: false },
       log: { seq, events: [{ t: 'judged', pid, success: true, stars: card.stars }] },
@@ -291,6 +309,7 @@ export function judge(state: GameState, success: boolean, rng: Rng): GameState {
       ...state,
       decks,
       card: retryCard,
+      stats,
       undo,
       lastJudgement: { success: false, starsAwarded: 0, retry: true },
       log: {
@@ -307,6 +326,7 @@ export function judge(state: GameState, success: boolean, rng: Rng): GameState {
     ...state,
     phase: 'turnResolved',
     card: null,
+    stats,
     undo,
     lastJudgement: { success: false, starsAwarded: 0, retry: false },
     log: { seq, events: [{ t: 'judged', pid, success: false, stars: 0 }] },
