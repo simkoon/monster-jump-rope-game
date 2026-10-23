@@ -148,7 +148,32 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans**: TBD
+**Plans:** 8 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 08-01-PLAN.md — 엔진 참가자 통계(도전·성공·실패·재도전 성공·⭐3·행운) + undo·퍼즈 불변식 + 순수 칭찬 배지 배정 awardBadges (wave 1)
+- [ ] 08-02-PLAN.md — 등급별 stars 비트(1600/1900/2200, reduced 1200)·단일 시간표 successPlan·2.5초 예산 테스트 + "퀘스트 성공! ⭐+N"·다정한 실패 배너 + 탭 건너뛰기·250ms 공유 잠금 (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 08-03-PLAN.md — 3D 성공 효과: 항상 마운트된 컨페티·별 버스트·충격파 링·퍼프 풀 + 등급별 점프 + ⭐3 카메라 흔들림 + 출발 보너스·이벤트 소량 효과, 드로우콜 ≤ 100 / 연출 중 ≤ 104 (wave 2)
+- [ ] 08-05-PLAN.md — 효과음: soundOn 설정·설정 탭 그룹 + Web Audio 합성 엔진(마스터·리미터·iOS 잠금 해제) + 비트 구독 useSfx + 🔊/🔇 토글 부품 + CC0 고지 (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 08-04-PLAN.md — DOM 별 비행: three 없는 순수 투영·머리 위 앵커 + body portal 별 + 점수판 data-pid·도착 반짝임 + reduced·3D 없음 대체 (wave 3)
+- [ ] 08-06-PLAN.md — 같은 캔버스 3D 시상식 모드: 금색 단 하나 + 우승자 전원 단 위·나머지 바닥 환호 + 보드·그림자 숨김(리마운트 금지) + 등장 컨페티 (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 08-07-PLAN.md — 시상식 화면: GameStage 시상식 모드(같은 캔버스) + 모두의 별 카드·칭찬 배지·다시 하기/처음으로 + DOM 대체 시상대 + 소리 토글 배치 + ResultView 삭제·테스트 이전 (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 08-08-PLAN.md — 5판 연속 점검: jsdom 5판 누수 테스트 + dev 전용 soak 페이지·헤드리스 Chrome 실측 + 단계 끝 UAT 08-UAT.md(Phase 7 이월 8건 포함, STAB-03 실기기) (wave 5)
+
 **UI hint**: yes
 
 ## Progress
@@ -161,4 +186,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/8 | Planned | - |
