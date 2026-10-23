@@ -18,6 +18,12 @@
 //   event      → isLuckyEvent ? EVENT_SPARKLE sparkles : EVENT_PUFF soft puffs.
 // Any other beat, no beat, a beat that changed (skip / watchdog / skipAll, D-07) or reduced motion
 // (D-08) → every count is 0 in that same frame. Beats are never completed here and never change length.
+// Ceremony intro (08-09, D-16, UI-SPEC §F7 "등장 연출"): with the `ceremony` prop set and introActive,
+// a new introId starts the intro clock; from INTRO_JUMP_AT_MS 140 confetti in the gold mix
+// (confettiGold) burst from the tier top center and one gold ring (ringGold) grows to the tier width —
+// both done well inside CEREMONY_INTRO_MS. introActive false (tap skip) or the ceremony ending sets the
+// counts to 0 in that same frame. Same pools, same scratch objects; no beat effect runs while the
+// ceremony is shown.
 // Per frame: one module-scope Object3D and scratch objects, no allocation; delta clamped to 0.25 s.
 // MeshBasicMaterial only (palette hexes as is on the flat canvas); no shadows, no post-processing.
 import { useLayoutEffect, useMemo, useRef } from 'react';
@@ -37,6 +43,7 @@ import {
 import { isLuckyEvent } from '../../engine/stats';
 import { successPlan } from '../director/successPlan';
 import { HEAD_TOP } from '../layout/chibiDims';
+import { GROUND_HEIGHT, INTRO_JUMP_AT_MS } from '../layout/podiumLayout';
 import {
   BONUS_SPARKLE,
   BURST_CAP,
@@ -89,6 +96,7 @@ const PAL = {
   sparkle: colors(FX_COLOR.sparkle),
   ringWhite: colors([FX_COLOR.ring]),
   ringGold2: colors([FX_COLOR.ring, FX_COLOR.ringGold, FX_COLOR.ring]), // ⭐3: the second ring is gold
+  ringGold: colors([FX_COLOR.ringGold]), // ceremony intro: one gold ring
   puff: colors([FX_COLOR.puff, FX_COLOR.puffAlt, FX_COLOR.puff, FX_COLOR.puffAlt, FX_COLOR.puff]), // 60 / 40
 } as const;
 type PalKey = keyof typeof PAL;
@@ -107,6 +115,11 @@ const BURST_LIFT = 0.4; // star burst height above the tile top (UI-SPEC F2)
 const BONUS_LIFT = 0.3; // start-bonus sparkles around the feet
 const EVENT_LIFT = 0.5; // lucky-event sparkles above the event tile
 const PUFF_LIFT = 0.1;
+// Ceremony intro (D-16): 140 gold confetti from the winners' head height over the tier top center,
+// one gold ring on the tier top; ⭐3 confetti motion (life 1150 ms), so it all ends by ≈ 1350 ms.
+const INTRO_CONFETTI = 140;
+const INTRO_TIER = 3;
+const INTRO_RING_LIFT = 0.02;
 
 function writeColors(mesh: InstancedMesh, list: readonly Color[], cap: number): void {
   for (let i = 0; i < cap; i++) mesh.setColorAt(i, list[i % list.length]);
@@ -156,12 +169,20 @@ function publish(mesh: InstancedMesh, n: number): void {
   if (n > 0 || mesh.count !== 0) commit(mesh, n);
 }
 
+export interface CeremonyFx {
+  introId: number;
+  introActive: boolean;
+  origin: readonly [number, number, number]; // tier top center
+  ringRadius: number; // = tier width
+}
+
 export interface FxPoolsProps {
   points: readonly StandPoint[];
   slots: Readonly<Record<string, PawnSlot>>;
+  ceremony?: CeremonyFx | null;
 }
 
-export default function FxPools({ points, slots }: FxPoolsProps) {
+export default function FxPools({ points, slots, ceremony = null }: FxPoolsProps) {
   const confetti = useRef<InstancedMesh>(null);
   const burst = useRef<InstancedMesh>(null);
   const ring = useRef<InstancedMesh>(null);
@@ -169,6 +190,10 @@ export default function FxPools({ points, slots }: FxPoolsProps) {
   const camera = useThree((s) => s.camera);
   const reduced = useMemo(() => prefersReducedMotion(), []);
   const clock = useRef({ id: -1, ms: 0 });
+  const intro = useRef({ id: -1, ms: 0 }); // ceremony intro clock
+  // Latest ceremony prop for the frame loop (frames can run before React re-renders).
+  const cer = useRef(ceremony);
+  cer.current = ceremony;
   // Current color fill per pool, so a refill happens only when the tier / effect kind changes.
   const fill = useRef<Fill>({
     confetti: 'confetti',
@@ -211,7 +236,48 @@ export default function FxPools({ points, slots }: FxPoolsProps) {
     let nR = 0;
     let nP = 0;
 
-    if (!reduced && cur && (cur.kind === 'stars' || cur.kind === 'startBonus' || cur.kind === 'event')) {
+    const cm = cer.current;
+    if (cm) {
+      // Ceremony: only the intro may emit (no beats run then).
+      if (!reduced && cm.introActive) {
+        if (cm.introId !== intro.current.id) {
+          intro.current.id = cm.introId;
+          intro.current.ms = 0;
+        }
+        intro.current.ms += d * 1000;
+        const t = intro.current.ms - INTRO_JUMP_AT_MS;
+        if (t >= 0) {
+          const [ox, oy, oz] = cm.origin;
+          const f = fill.current;
+          const seed = cm.introId;
+          if (t < CONFETTI_LIFE_MS[INTRO_TIER]) {
+            refill(f, c, 'confetti', 'confettiGold', CONFETTI_CAP);
+            nC = Math.min(INTRO_CONFETTI, CONFETTI_CAP);
+            const headY = oy + HEAD_TOP;
+            const floor = GROUND_HEIGHT + RING_LIFT;
+            for (let i = 0; i < nC; i++) {
+              confettiPiece(i, t, seed, INTRO_TIER, PIECE);
+              D.position.set(ox + PIECE.x, Math.max(floor, headY + PIECE.y), oz + PIECE.z);
+              D.rotation.set(PIECE.rx, PIECE.ry, 0);
+              D.scale.setScalar(PIECE.scale);
+              D.updateMatrix();
+              c.setMatrixAt(i, D.matrix);
+            }
+          }
+          if (t < RING_LIFE_MS) {
+            refill(f, r, 'ring', 'ringGold', RING_CAP);
+            ringState(t, cm.ringRadius, 0, RING);
+            FX_MAT.ring.opacity = RING.opacity;
+            nR = 1;
+            D.position.set(ox, oy + INTRO_RING_LIFT, oz);
+            D.rotation.set(-Math.PI / 2, 0, 0);
+            D.scale.setScalar(RING.alive ? RING.radius : 0);
+            D.updateMatrix();
+            r.setMatrixAt(0, D.matrix);
+          }
+        }
+      }
+    } else if (!reduced && cur && (cur.kind === 'stars' || cur.kind === 'startBonus' || cur.kind === 'event')) {
       const at = points[store.displayed.positions[cur.pid] ?? 0] ?? points[0];
       const slot = slots[cur.pid] ?? CENTER;
       if (at) {

@@ -307,7 +307,7 @@ describe('ceremony intro FX: gold confetti + one gold ring, tap ends it at once 
 
   it('confetti 0 before INTRO_JUMP_AT_MS, 140 gold pieces from the tier top just after, one ring up to the tier width', async () => {
     const r = await mount(scene(cer(['a', 'b'], 1, true)));
-    const before = past(INTRO_JUMP_AT_MS) - 1;
+    const before = Math.ceil(INTRO_JUMP_AT_MS / (DT * 1000)) - 1; // frames with elapsed < 200 ms
     for (let k = 0; k < before; k++) {
       await frames(r, 1);
       expect(counts(r), `frame ${k}`).toEqual([0, 0, 0, 0]);

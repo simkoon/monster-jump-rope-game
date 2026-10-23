@@ -120,7 +120,20 @@ export function SceneContents({ tiles, participants, currentId, restFace, ceremo
           introActive={ceremony?.introActive ?? false}
         />
       ))}
-      <FxPools points={points} slots={slots} />
+      <FxPools
+        points={points}
+        slots={slots}
+        ceremony={
+          ceremony && podium
+            ? {
+                introId: ceremony.introId,
+                introActive: ceremony.introActive,
+                origin: podium.topCenter,
+                ringRadius: podium.podium.width,
+              }
+            : null
+        }
+      />
     </>
   );
 }
