@@ -5,15 +5,15 @@ milestone_name: 3D 블루마블 재구축
 current_phase: 7
 current_phase_name: 치비 동물 캐릭터 & 표정
 status: executing
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-10-23T05:02:31.337Z"
+stopped_at: Completed 07-04-PLAN.md
+last_updated: "2026-10-23T05:17:48.704Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 7 execution started
 
@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P01 | 7min | 2 tasks | 14 files |
 | Phase 07 P02 | 7min | 3 tasks | 8 files |
 | Phase 07 P03 | 14min | 3 tasks | 7 files |
+| Phase 07 P04 | 12min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -137,6 +138,9 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-03: chibi parts sit on ellipsoid surfaces via onSurface (normal = local +Z); bear/dog/fox mouths on the muzzle front
 - [Phase 07]: 07-03: panda eyes lifted 0.022 and scaled 0.8 over the ink patches; torus tails/arcs get end caps and fattened inverted-torus outlines
 - [Phase 07]: 07-03: CHAR-01/CHAR-02 stay Pending - parts built here, 07-04 renders the characters, 07-05 closes after the gallery
+- [Phase 07]: 07-04: Character pose blend-out is additive (new curve + (old pose - REST) * exp(-12t)) so new curves play at full height
+- [Phase 07]: 07-04: success spin yaw follows the curve; hop yaw eases to the segment direction (rate 20); other acts ease back to 0 (rate 8)
+- [Phase 07]: 07-04: CHAR-01..03 / BOARD-05 stay Pending until the 07-05 gallery + UAT
 
 ### Pending Todos
 
@@ -179,6 +183,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T05:02:31.332Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-10-23T05:17:48.698Z
+Stopped at: Completed 07-04-PLAN.md
 Resume file: None

@@ -107,7 +107,7 @@ Plans:
   3. 캐릭터가 기다리는 동안 살짝 움직이고(대기), 칸을 지날 때마다 점프하며, 성공하면 점프·회전, 실패하면 아쉬워하고, 우승하면 환호한다
   4. 한 칸에 말이 최대 8개 모여도 모든 캐릭터가 서로 가리지 않고 하나하나 구분된다
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -121,7 +121,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 07-04-PLAN.md — 임시 말 → Character 교체: reactionFor·깜빡임, hop 소비 + 표정·동작·방향, win 왕관/링, 임시 말 부품 정리, 드로우콜 ≤ 100 (wave 3)
+- [x] 07-04-PLAN.md — 임시 말 → Character 교체: reactionFor·깜빡임, hop 소비 + 표정·동작·방향, win 왕관/링, 임시 말 부품 정리, 드로우콜 ≤ 100 (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -154,5 +154,5 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
-| 7. 치비 동물 캐릭터 & 표정 | 3/5 | In Progress|  |
+| 7. 치비 동물 캐릭터 & 표정 | 4/5 | In Progress|  |
 | 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |
