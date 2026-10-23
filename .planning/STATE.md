@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 3D 블루마블 재구축
-current_phase: 6
-current_phase_name: 3D 순환판 & 게임 화면
+current_phase: 7
+current_phase_name: 치비 동물 캐릭터 & 표정
 status: executing
 stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-10-23T04:25:34.650Z"
-last_activity: 2026-10-22
-last_activity_desc: Phase 6 execution started
+last_updated: "2026-10-23T04:33:02.131Z"
+last_activity: 2026-10-23
+last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 16
+  completed_plans: 12
   percent: 50
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-22)
 
 **Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 6 — 3D 순환판 & 게임 화면
+**Current focus:** Phase 7 — 치비 동물 캐릭터 & 표정
 
 ## Current Position
 
-Phase: 6 (3D 순환판 & 게임 화면) — EXECUTING
-Plan: 6 of 6
+Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-10-22 — Phase 6 execution started
+Last activity: 2026-10-23 — Phase 7 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P04 | 8min | 3 tasks | 14 files |
 | Phase 06 P05 | 11min | 2 tasks | 11 files |
 | Phase 06 P06 | 2 sessions | 3 tasks | 16 files |
+| Phase 07 P01 | 7min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-05: beat consumers read usePresentation.getState() inside useFrame (not a render-time beat) so a beat started/ended between renders is never missed; completion guarded by startedId/doneId refs
 - [Phase 06]: 06-05: GameCanvas reached only via loadGameCanvas() dynamic import; source guard enforces no forbidden drei, no URLs in src/game, no scene text, no 3D value imports outside src/game/scene
 - [Phase 06]: 06-06: portrait bottom area reserves one primary-button row so the fitted board does not resize when controls hide during beats — otherwise the canvas cell grows by a button height every beat and the camera re-fits
+- [Phase 07]: 07-01: miss/win reaction beats are completed by the DOM Banner timer (isTimedBeat); 3D consumers only read them, watchdog is the fallback
+- [Phase 07]: 07-01: director skips beats only for a manual gameEnded; rounds-complete plays the 1500 ms win beat before the result screen
 
 ### Pending Todos
 
@@ -169,6 +172,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T03:54:34.930Z
+Last session: 2026-10-23T04:32:51.451Z
 Stopped at: Phase 7 UI-SPEC approved
 Resume file: .planning/phases/07-chibi-characters/07-UI-SPEC.md
