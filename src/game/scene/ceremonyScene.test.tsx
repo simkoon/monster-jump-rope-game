@@ -8,7 +8,7 @@ import type { ReactElement } from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { useThree } from '@react-three/fiber';
-import { InstancedMesh, Mesh, Vector3, type Object3D, type PerspectiveCamera } from 'three';
+import { Color, InstancedMesh, Matrix4, Mesh, Vector3, type Object3D, type PerspectiveCamera } from 'three';
 import { SceneContents, type CeremonyProps } from './SceneContents';
 import gameCanvasSource from './GameCanvas.tsx?raw';
 import { usePresentation } from '../usePresentation';
@@ -18,7 +18,9 @@ import { boardWith } from '../../engine/testkit';
 import { pawnSlots, standPoints } from '../layout/pawnSlots';
 import { boardExtents, ringLayout } from '../layout/ringLayout';
 import { fitCamera } from '../layout/fitCamera';
-import { podiumLayout } from '../layout/podiumLayout';
+import { CEREMONY_INTRO_MS, INTRO_CHEER_AT_MS, INTRO_JUMP_AT_MS, podiumLayout } from '../layout/podiumLayout';
+import { FX_COLOR } from '../palette';
+import { STARS_MS } from '../director/timeline';
 import { FACE_KEYS, type FaceKey } from '../layout/chibiDims';
 import type { AnimalId } from '../../engine/animals';
 import { faceGeo } from './chibiFaces';
@@ -286,5 +288,150 @@ describe('GameCanvas keeps its ContactShadows mounted (Pattern 6)', () => {
     expect(src.indexOf('</group>', at)).toBeGreaterThan(at);
     // No conditional rendering around it.
     expect(src).not.toMatch(/(ceremony|show\w*)\s*(&&|\?)\s*\(?\s*<ContactShadows/);
+  });
+});
+
+describe('ceremony intro FX: gold confetti + one gold ring, tap ends it at once (D-16)', () => {
+  const pool = (r: Renderer, name: (typeof POOLS)[number]) => one(r, name) as InstancedMesh;
+  const counts = (r: Renderer) => POOLS.map((n) => pool(r, n).count);
+  const past = (ms: number) => Math.floor(ms / (DT * 1000)) + 1;
+  const m4 = new Matrix4();
+  const at = (mesh: InstancedMesh, i: number) => {
+    mesh.getMatrixAt(i, m4);
+    return {
+      p: new Vector3().setFromMatrixPosition(m4),
+      s: new Vector3().setFromMatrixScale(m4),
+    };
+  };
+  const layout = podiumLayout(['a', 'b'], ['c', 'd']);
+
+  it('confetti 0 before INTRO_JUMP_AT_MS, 140 gold pieces from the tier top just after, one ring up to the tier width', async () => {
+    const r = await mount(scene(cer(['a', 'b'], 1, true)));
+    const before = past(INTRO_JUMP_AT_MS) - 1;
+    for (let k = 0; k < before; k++) {
+      await frames(r, 1);
+      expect(counts(r), `frame ${k}`).toEqual([0, 0, 0, 0]);
+    }
+    await frames(r, 1);
+    const c = pool(r, 'fx-confetti');
+    expect(c.count).toBe(140);
+    expect(pool(r, 'fx-ring').count).toBe(1);
+    expect(pool(r, 'fx-burst').count).toBe(0);
+    expect(pool(r, 'fx-puff').count).toBe(0);
+    // Gold mix: the instance colors follow FX_COLOR.confettiGold, the ring is ringGold.
+    const col = new Color();
+    for (let i = 0; i < 10; i++) {
+      c.getColorAt(i, col);
+      expect(col.getHexString()).toBe(new Color(FX_COLOR.confettiGold[i % FX_COLOR.confettiGold.length]).getHexString());
+    }
+    pool(r, 'fx-ring').getColorAt(0, col);
+    expect(col.getHexString()).toBe(new Color(FX_COLOR.ringGold).getHexString());
+    // Emitted from the tier top center (early: pieces are still near it).
+    const [ox, oy, oz] = layout.topCenter;
+    let sx = 0;
+    let sz = 0;
+    for (let i = 0; i < 140; i++) {
+      const { p } = at(c, i);
+      expect(p.y).toBeGreaterThanOrEqual(oy);
+      sx += p.x;
+      sz += p.z;
+    }
+    expect(Math.abs(sx / 140 - ox)).toBeLessThan(0.3);
+    expect(Math.abs(sz / 140 - oz)).toBeLessThan(0.3);
+    const ring0 = at(pool(r, 'fx-ring'), 0).p;
+    expect(ring0.x).toBeCloseTo(ox, 6);
+    expect(ring0.z).toBeCloseTo(oz, 6);
+    // The ring grows to the tier width; everything ends inside CEREMONY_INTRO_MS.
+    let maxR = 0;
+    let lastC = 0;
+    let lastR = 0;
+    for (let ms = (before + 1) * 50; ms < CEREMONY_INTRO_MS; ms += 10) {
+      await frames(r, 1, 0.01);
+      if (pool(r, 'fx-ring').count > 0) {
+        maxR = Math.max(maxR, at(pool(r, 'fx-ring'), 0).s.x);
+        lastR = ms;
+      }
+      if (pool(r, 'fx-confetti').count > 0) lastC = ms;
+    }
+    expect(maxR).toBeCloseTo(layout.podium.width, 1);
+    expect(maxR).toBeLessThanOrEqual(layout.podium.width + 1e-6);
+    expect(lastC).toBeGreaterThan(INTRO_JUMP_AT_MS);
+    expect(lastC).toBeLessThan(CEREMONY_INTRO_MS);
+    expect(lastR).toBeLessThan(CEREMONY_INTRO_MS);
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+  });
+
+  it('introActive → false mid-intro (tap) clears confetti and ring in the next frame', async () => {
+    const r = await mount(scene(cer(['a', 'b'], 1, true)));
+    await frames(r, past(INTRO_JUMP_AT_MS) + 2);
+    expect(pool(r, 'fx-confetti').count).toBe(140);
+    expect(pool(r, 'fx-ring').count).toBe(1);
+    await update(r, scene(cer(['a', 'b'], 1, false)));
+    await frames(r, 1);
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+    await frames(r, 10);
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+  });
+
+  it('a second ceremony (introId 2 after a restart) replays the intro with the same pool objects', async () => {
+    const r = await mount(scene(cer(['a', 'b'], 1, true)));
+    const pools = POOLS.map((n) => pool(r, n));
+    await frames(r, past(CEREMONY_INTRO_MS));
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+    await update(r, scene(null));
+    await frames(r, 5);
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+    await update(r, scene(cer(['c'], 2, true)));
+    await frames(r, past(INTRO_JUMP_AT_MS) + 1);
+    expect(pool(r, 'fx-confetti').count).toBe(140);
+    expect(pool(r, 'fx-ring').count).toBe(1);
+    POOLS.forEach((n, i) => expect(pool(r, n)).toBe(pools[i]));
+    // Same id again while it stays active does not restart it.
+    await frames(r, past(CEREMONY_INTRO_MS));
+    expect(counts(r)).toEqual([0, 0, 0, 0]);
+  });
+
+  it('no ceremony never emits the intro; reduced motion never emits it', async () => {
+    const r = await mount(scene(null));
+    for (let k = 0; k < 40; k++) {
+      await frames(r, 1);
+      expect(counts(r)).toEqual([0, 0, 0, 0]);
+    }
+    await r.unmount();
+    open = [];
+    rm.reduced = true;
+    const r2 = await mount(scene(cer(['a', 'b'], 1, true)));
+    for (let k = 0; k < 40; k++) {
+      await frames(r2, 1);
+      expect(counts(r2)).toEqual([0, 0, 0, 0]);
+    }
+  });
+
+  it('in the ceremony a stray stars beat emits nothing (the intro owns the pools)', async () => {
+    const r = await mount(scene(cer(['a', 'b'], 1, false)));
+    await ReactThreeTestRenderer.act(async () => {
+      usePresentation.getState().play([{ kind: 'stars', pid: 'a', stars: 3, ms: STARS_MS[3] }]);
+    });
+    for (let k = 0; k < 40; k++) {
+      await frames(r, 1);
+      expect(counts(r)).toEqual([0, 0, 0, 0]);
+    }
+  });
+
+  it('winners jump ≈ 0.45 × scale between 200 and 800 ms; the others wait until 400 ms', async () => {
+    const r = await mount(scene(cer(['a', 'b'], 1, true)));
+    const body = (id: string) => worldOf(partOf(r, id, 'pawn-body')!).y - worldOf(one(r, `pawn-${id}`)).y;
+    let peakA = 0;
+    for (let ms = 10; ms <= 800; ms += 10) {
+      await frames(r, 1, 0.01);
+      if (ms < INTRO_JUMP_AT_MS) expect(body('a'), `${ms}`).toBeCloseTo(0, 6);
+      if (ms < INTRO_CHEER_AT_MS) {
+        expect(body('c'), `${ms}`).toBeCloseTo(0, 6);
+        expect(body('d'), `${ms}`).toBeCloseTo(0, 6);
+      }
+      peakA = Math.max(peakA, body('a'));
+    }
+    expect(peakA).toBeCloseTo(0.45 * layout.stands.a.scale, 1);
+    expect(peakA).toBeGreaterThan(0.35 * layout.stands.a.scale);
   });
 });
