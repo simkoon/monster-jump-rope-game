@@ -33,7 +33,7 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
   const stars = usePresentation((s) => s.displayed.stars);
 
   const order = useMemo(() => participants.map((p) => p.id), [participants]);
-  const slots = useMemo(() => pawnSlots(order, positions), [order, positions]);
+  const slots = useMemo(() => pawnSlots(order, positions, currentId), [order, positions, currentId]);
   const crowned = useMemo(() => new Set(leaders(stars)), [stars]);
 
   return (
