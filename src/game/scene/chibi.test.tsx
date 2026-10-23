@@ -2,13 +2,40 @@
 // src/game/scene/chibi.test.tsx — the code-built chibi animals (D-01..D-03, D-07, D-09, D-18, D-20, CHAR-01/02).
 // Runs in node (no WebGL): the geometry helpers, the 8 species nodes, the 9 faces per species, the
 // shared materials and the view-only ChibiModel mounted with @react-three/test-renderer.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BufferGeometry, Color, Float32BufferAttribute, SphereGeometry, Vector3 } from 'three';
+import { ANIMALS } from '../../engine/animals';
+import { FACE_KEYS, HEAD_B } from '../layout/chibiDims';
+import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, SCENE_COLOR } from '../palette';
 import { bake, hull, M, part, surfaceZ } from './chibiParts';
+import { CHAR_MAT, GROUND_MAT, chibiNodes } from './chibiSpecies';
+import { faceGeo } from './chibiFaces';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const keys = (g: BufferGeometry) => Object.keys(g.attributes).sort();
+
+// Indices of the vertices whose linear color is `hex` (and alpha, when given), within 1e-4.
+function withColor(g: BufferGeometry, hex: string, alpha?: number): number[] {
+  const c = new Color(hex);
+  const col = g.attributes.color;
+  const out: number[] = [];
+  for (let i = 0; i < col.count; i++) {
+    const ok =
+      Math.abs(col.getX(i) - c.r) < 1e-4 &&
+      Math.abs(col.getY(i) - c.g) < 1e-4 &&
+      Math.abs(col.getZ(i) - c.b) < 1e-4 &&
+      (alpha === undefined || Math.abs(col.getW(i) - alpha) < 1e-4);
+    if (ok) out.push(i);
+  }
+  return out;
+}
+const hasColor = (g: BufferGeometry, hex: string, alpha?: number) => withColor(g, hex, alpha).length > 0;
+
+const box = (g: BufferGeometry) => {
+  g.computeBoundingBox();
+  return g.boundingBox!;
+};
 
 describe('chibiParts', () => {
   it('part: non-indexed, no uv, linear vertex color with itemSize 3', () => {
@@ -98,5 +125,146 @@ describe('chibiParts', () => {
     } finally {
       console.error = silenced;
     }
+  });
+});
+
+describe('chibiSpecies (D-01, D-02, D-18, D-20, CHAR-01)', () => {
+  it('builds 6 mergeable nodes for every animal without a merge error', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      for (const a of ANIMALS) {
+        const n = chibiNodes(a);
+        for (const [name, g] of Object.entries(n)) {
+          expect(g, `${a}:${name}`).not.toBeNull();
+          expect(g.index, `${a}:${name}`).toBeNull();
+          expect(keys(g), `${a}:${name}`).toEqual(['color', 'normal', 'position']);
+          expect(g.attributes.color.itemSize, `${a}:${name}`).toBe(name === 'ground' ? 4 : 3);
+        }
+        expect(chibiNodes(a)).toBe(n); // cached, built once
+      }
+      expect(err).not.toHaveBeenCalled();
+    } finally {
+      err.mockRestore();
+    }
+  });
+
+  it('D-01: body color = ANIMAL_COLOR, only the panda head is white; ground = participant disc + shadow', () => {
+    for (const a of ANIMALS) {
+      const n = chibiNodes(a);
+      expect(hasColor(n.torso, ANIMAL_COLOR[a]), `${a} torso`).toBe(true);
+      if (a === 'panda') {
+        expect(hasColor(n.head, CHAR_COLOR.white)).toBe(true);
+        expect(hasColor(n.head, CHAR_COLOR.ink)).toBe(true);
+      } else {
+        expect(hasColor(n.head, ANIMAL_COLOR[a]), `${a} head`).toBe(true);
+      }
+      expect(hasColor(n.ground, ANIMAL_COLOR[a], 1), `${a} disc`).toBe(true);
+      expect(hasColor(n.ground, CHAR_COLOR.ink, 1), `${a} rim`).toBe(true);
+      expect(hasColor(n.ground, SCENE_COLOR.shadow, 0.22), `${a} blob`).toBe(true);
+    }
+  });
+
+  it('D-02: animals differ by silhouette — ears, muzzle, nose, beak, tail', () => {
+    const N = Object.fromEntries(ANIMALS.map((a) => [a, chibiNodes(a)])) as Record<(typeof ANIMALS)[number], ReturnType<typeof chibiNodes>>;
+    expect(box(N.rabbit.ears).max.y).toBeGreaterThanOrEqual(box(N.bear.ears).max.y + 0.15);
+    expect(box(N.dog.ears).min.y).toBeLessThan(0); // floppy ears hang below the head center
+    expect(hasColor(N.dog.ears, CHAR_COLOR.dogEar)).toBe(true);
+    expect(hasColor(N.cat.ears, CHAR_COLOR.cheek)).toBe(true); // inner ear
+    expect(hasColor(N.rabbit.ears, CHAR_COLOR.cheek)).toBe(true);
+    expect(hasColor(N.fox.ears, CHAR_COLOR.cream)).toBe(true);
+    expect(hasColor(N.panda.ears, CHAR_COLOR.ink)).toBe(true);
+    expect(hasColor(N.chick.ears, CHAR_COLOR.feather)).toBe(true); // head feathers, no ears
+    expect(box(N.chick.ears).max.y).toBeGreaterThan(HEAD_B);
+    expect(hasColor(N.chick.head, CHAR_COLOR.beak)).toBe(true);
+    expect(hasColor(N.pig.head, CHAR_COLOR.pigNose)).toBe(true);
+    expect(withColor(N.pig.head, CHAR_COLOR.ink).length).toBeGreaterThan(withColor(N.cat.head, CHAR_COLOR.ink).length); // nostrils
+    expect(hasColor(N.bear.head, CHAR_COLOR.bearMuzzle)).toBe(true);
+    expect(hasColor(N.dog.head, CHAR_COLOR.dogMuzzle)).toBe(true);
+    expect(hasColor(N.fox.head, CHAR_COLOR.white)).toBe(true); // white muzzle
+    expect(hasColor(N.fox.torso, CHAR_COLOR.white)).toBe(true); // white tail tip
+    expect(box(N.fox.torso).min.z).toBeLessThanOrEqual(box(N.bear.torso).min.z - 0.1); // thick tail
+    expect(hasColor(N.rabbit.torso, CHAR_COLOR.white)).toBe(true);
+    expect(hasColor(N.chick.armL, CHAR_COLOR.feather)).toBe(true); // wings
+  });
+});
+
+describe('chibiFaces (D-03, D-07, D-09, CHAR-02)', () => {
+  it('builds every animal × face key with the shared layout, cached', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      for (const a of ANIMALS) {
+        for (const k of FACE_KEYS) {
+          const g = faceGeo(a, k);
+          expect(g, `${a}:${k}`).not.toBeNull();
+          expect(g.index).toBeNull();
+          expect(keys(g), `${a}:${k}`).toEqual(['color', 'normal', 'position']);
+          expect(g.attributes.color.itemSize).toBe(3);
+          expect(faceGeo(a, k)).toBe(g);
+        }
+      }
+      expect(err).not.toHaveBeenCalled();
+    } finally {
+      err.mockRestore();
+    }
+  });
+
+  it('D-03: highlights, cheeks on every key, mouths, sweat and sparkles where the table puts them', () => {
+    for (const a of ANIMALS) {
+      const cheek = a === 'pig' ? CHAR_COLOR.cheekPig : CHAR_COLOR.cheek;
+      for (const k of FACE_KEYS) {
+        const g = faceGeo(a, k);
+        expect(hasColor(g, cheek), `${a}:${k} cheek`).toBe(true);
+        expect(hasColor(g, CHAR_COLOR.sparkle), `${a}:${k} sparkle`).toBe(k === 'winner');
+      }
+      for (const k of ['idle', 'excited', 'surprised'] as const) {
+        expect(hasColor(faceGeo(a, k), CHAR_COLOR.white), `${a}:${k} highlight`).toBe(true);
+      }
+      // The chick keeps its beak closed while excited (UI-SPEC C3 chick mouth rule).
+      for (const k of a === 'chick' ? (['joy', 'winner'] as const) : (['excited', 'joy', 'winner'] as const)) {
+        expect(hasColor(faceGeo(a, k), CHAR_COLOR.mouth), `${a}:${k} mouth`).toBe(true);
+      }
+      for (const k of ['joy', 'winner'] as const) {
+        if (a !== 'chick') expect(hasColor(faceGeo(a, k), CHAR_COLOR.tongue), `${a}:${k} tongue`).toBe(true);
+      }
+      for (const k of ['sad', 'sadBlink'] as const) {
+        expect(hasColor(faceGeo(a, k), CHAR_COLOR.sweat), `${a}:${k} sweat`).toBe(true);
+      }
+      expect(faceGeo(a, 'idle').attributes.position.count).not.toBe(faceGeo(a, 'idleBlink').attributes.position.count);
+    }
+  });
+
+  it('D-03-2: eyes sit in the lower half of the face; dog and panda get sclera eyes', () => {
+    for (const a of ANIMALS) {
+      const g = faceGeo(a, 'idle');
+      if (ANIMAL_EYE[a] === CHAR_COLOR.white) {
+        expect(hasColor(g, CHAR_COLOR.white), `${a} sclera`).toBe(true);
+        expect(hasColor(g, CHAR_COLOR.ink), `${a} pupil`).toBe(true);
+        continue;
+      }
+      const pos = g.attributes.position;
+      const eye = withColor(g, CHAR_COLOR.ink).filter((i) => Math.abs(pos.getX(i)) > 0.06);
+      expect(eye.length, a).toBeGreaterThan(0);
+      const meanY = eye.reduce((s, i) => s + pos.getY(i), 0) / eye.length;
+      expect(meanY, a).toBeLessThan(0);
+    }
+  });
+
+  it('line eyes use ANIMAL_EYE (white on the dog and the panda)', () => {
+    for (const a of ANIMALS) {
+      expect(hasColor(faceGeo(a, 'idleBlink'), ANIMAL_EYE[a]), a).toBe(true);
+      expect(hasColor(faceGeo(a, 'joy'), ANIMAL_EYE[a]), a).toBe(true);
+    }
+  });
+});
+
+describe('chibi materials (D-03-5)', () => {
+  it('CHAR_MAT is the glossy shared vertex-color material; GROUND_MAT is transparent without depth write', () => {
+    expect(CHAR_MAT.vertexColors).toBe(true);
+    expect(CHAR_MAT.roughness).toBe(0.32);
+    expect(CHAR_MAT.metalness).toBe(0.05);
+    expect(CHAR_MAT.color.getHex()).toBe(0xffffff);
+    expect(GROUND_MAT.vertexColors).toBe(true);
+    expect(GROUND_MAT.transparent).toBe(true);
+    expect(GROUND_MAT.depthWrite).toBe(false);
   });
 });

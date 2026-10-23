@@ -89,6 +89,31 @@ export function hull(p: BufferGeometry, scale: number, inkHex: string): BufferGe
 export const surfaceZ = (x: number, y: number, a: number, b: number, c: number, lift: number): number =>
   c * Math.sqrt(Math.max(0, 1 - (x / a) ** 2 - (y / b) ** 2)) + lift;
 
+// An ellipsoid surface parts can sit on: center (x, y, z) and semi-axes (a, b, c) in the node frame.
+export interface Ellipsoid {
+  x: number;
+  y: number;
+  z: number;
+  a: number;
+  b: number;
+  c: number;
+}
+
+const Z_AXIS = new Vector3(0, 0, 1);
+
+// A part placed on the front surface of `e` at node-frame (x, y): moved `lift` along the surface
+// normal and turned so its local +Z is that normal (flat parts — eyes, cheeks, patches — then lie
+// on the curved face instead of poking out of it), then turned by `rz` and scaled.
+export function onSurface(e: Ellipsoid, x: number, y: number, lift: number, sx = 1, sy = 1, sz = 1, rz = 0): Matrix4 {
+  const dx = x - e.x;
+  const dy = y - e.y;
+  const dz = surfaceZ(dx, dy, e.a, e.b, e.c, 0);
+  const n = new Vector3(dx / (e.a * e.a), dy / (e.b * e.b), dz / (e.c * e.c)).normalize();
+  const q = new Quaternion().setFromUnitVectors(Z_AXIS, n).multiply(new Quaternion().setFromEuler(new Euler(0, 0, rz)));
+  const p = new Vector3(x, y, e.z + dz).addScaledVector(n, lift);
+  return new Matrix4().compose(p, q, new Vector3(sx, sy, sz));
+}
+
 // One node from its parts. Never returns null: a layout mismatch is a bug, surfaced by name.
 export function bake(name: string, parts: BufferGeometry[]): BufferGeometry {
   const g = mergeGeometries(parts);
