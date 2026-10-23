@@ -17,7 +17,7 @@ export const BEAT_MS = {
   moveCap: 2000,
   startBonus: 800,
   event: 1000,
-  stars: 600,
+  stars: 900, // D-12: 600 → 900 so the success jump and spin fit (D-15 cap ≤ 900)
   finalRound: 1500,
   // Phase 7 reaction beats (D-13, D-14): the 3D characters show their sad / winner faces here.
   miss: 700,
@@ -58,10 +58,12 @@ export type Beat = BeatSpec & { id: number };
 export interface TimelineCtx {
   totalRounds: number;
   firstPid: string;
-  // Reduced motion: dice/preview/hop collapse to 0 ms; banner beats keep their length.
+  // Reduced motion: dice/preview/hop collapse to 0 ms; banner and reaction beats keep their length.
   reducedMotion: boolean;
   // The event tile resolved by this roll (GameState.lastMove.event) — supplies name/label.
   lastEvent: Pick<Event, 'name' | 'label'> | null;
+  // Participant id → animal, so the win beat carries the winners' animals (D-14).
+  animalOf: Readonly<Record<string, AnimalId>>;
 }
 
 export function buildTimeline(events: readonly GameEvent[], ctx: TimelineCtx): BeatSpec[] {
@@ -93,8 +95,19 @@ export function buildTimeline(events: readonly GameEvent[], ctx: TimelineCtx): B
         });
         break;
       case 'judged':
+        // D-13: every ❌ (also the first one that leads to a retry) is one miss beat. Miss and win
+        // keep their length under reduced motion — they show expressions (D-16, Pitfall 9).
         if (e.success) out.push({ kind: 'stars', pid: e.pid, stars: e.stars, ms: BEAT_MS.stars });
+        else out.push({ kind: 'miss', pid: e.pid, ms: BEAT_MS.miss });
         break;
+      case 'gameEnded': {
+        // D-14: only the natural end plays the win beat. A manual end (지금 끝내기) yields nothing
+        // here and the director skips every beat, so the result screen shows at once.
+        if (e.reason !== 'rounds-complete') break;
+        const animals = e.winners.flatMap((pid) => (ctx.animalOf[pid] ? [ctx.animalOf[pid]] : []));
+        out.push({ kind: 'win', winners: [...e.winners], animals, ms: BEAT_MS.win });
+        break;
+      }
       case 'turnStarted':
         // ROUND-02 / D-24: only the first regular turn of the last round.
         if (e.round === ctx.totalRounds && !e.isExtra && e.pid === ctx.firstPid) {
@@ -102,7 +115,7 @@ export function buildTimeline(events: readonly GameEvent[], ctx: TimelineCtx): B
         }
         break;
       default:
-        // landed, questDrawn, gameStarted, judgementUndone, gameEnded → no beat
+        // landed, questDrawn, gameStarted, judgementUndone → no beat
         break;
     }
   }

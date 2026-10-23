@@ -87,6 +87,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
         let btn = findBtn();
         if (!btn) {
           settle(); // beats still running: the controls are hidden until they end (HUD-03)
+          if (screen.queryByText('게임 끝!')) break; // the win beat hid every button (07-01, D-14)
           btn = findBtn();
         }
         expect(btn).toBeTruthy();

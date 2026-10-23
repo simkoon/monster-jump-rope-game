@@ -2,7 +2,7 @@
 // D-22, D-25). Deterministic engine states come from the testkit (makeGame + boardWith + engine
 // transitions with scripted dice) and are injected with useGameStore.setState before GameApp mounts
 // (the director resyncs on mount and plays no beats). The lazy 3D canvas is the fake test double;
-// it never completes beats, so settle() ends them after every action that produces some (🎲, ✅).
+// it never completes beats, so settle() ends them after every action that produces some (🎲, ✅, ❌).
 // Mounting runs on real timers (the lazy chunk resolves asynchronously); multi-tap tests switch to
 // fake timers after mounting to step past the double-tap input lock (CR-01).
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -177,11 +177,13 @@ describe('GameStage — quest card + judgement (TURN-02/03/04)', () => {
     await renderPlay();
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
+    settle(); // every ❌ plays a miss beat that hides the retry card (07-01, D-13)
     const card = screen.getByRole('group', { name: '미션 판정' });
     expect(within(card).getByText('🔁 한 번 더 도전!')).toBeInTheDocument();
     expect(within(card).getByRole('heading', { name: '양발 모아뛰기' })).toBeInTheDocument();
     pause();
     fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
+    settle();
     expect(screen.getByText('아쉬워요! 이번엔 별 없이 다음 차례')).toHaveClass('game-judge-result', 'miss');
     expect(screen.queryByRole('group', { name: '미션 판정' })).toBeNull();
   });
@@ -267,15 +269,19 @@ describe('GameStage — double-tap lock (CR-01, WR-01, D-25)', () => {
       const fail = screen.getByRole('button', { name: '❌ 실패' });
       const before = seq();
       fireEvent.click(fail);
-      fireEvent.click(fail); // the retry card's ❌ is the same node
+      // The miss beat (07-01, D-13) unmounts the card, so the second tap hits a detached node.
+      fireEvent.click(fail);
       const g = useGameStore.getState().game!;
       expect(g.log.seq).toBe(before + 1);
       expect(g.phase).toBe('awaitingJudgement');
       expect(g.card!.attempt).toBe(2);
+      settle();
       expect(screen.getByText('🔁 한 번 더 도전!')).toBeInTheDocument();
       pause();
-      fireEvent.click(fail); // a deliberate tap on attempt 2 still judges it
+      // A deliberate tap on attempt 2 (the retry card's own ❌) still judges it.
+      fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
       expect(useGameStore.getState().game!.phase).toBe('turnResolved');
+      settle();
       expect(screen.getByText('아쉬워요! 이번엔 별 없이 다음 차례')).toBeInTheDocument();
     },
   );

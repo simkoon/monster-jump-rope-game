@@ -32,9 +32,15 @@ afterEach(() => {
 });
 
 describe('timelineCtx', () => {
-  it('reads rounds, the first participant, reduced motion and the last event', () => {
+  it('reads rounds, the first participant, reduced motion, the last event and the animals', () => {
     const g = fresh(4);
-    expect(timelineCtx(g)).toEqual({ totalRounds: 4, firstPid: 'p1', reducedMotion: false, lastEvent: null });
+    expect(timelineCtx(g)).toEqual({
+      totalRounds: 4,
+      firstPid: 'p1',
+      reducedMotion: false,
+      lastEvent: null,
+      animalOf: { p1: 'bear', p2: 'rabbit' },
+    });
   });
 });
 
@@ -75,6 +81,8 @@ describe('directGame via the store subscription', () => {
     setGame(rollDice(engine(), dice(3)));
     P().skipAll();
     setGame(judge(engine(), false, dice(1)));
+    expect(P().current?.kind).toBe('miss'); // ❌ plays a miss beat (07-01, D-13)
+    P().skipAll();
     expect(P().busy).toBe(false);
     const advanced = advanceTurn(engine());
     expect(advanced.round).toBe(1);
@@ -123,7 +131,28 @@ describe('directGame via the store subscription', () => {
     expect(P().consumedLog).toBe(jumped.log);
   });
 
-  it('a gameEnded batch while beats are playing → skipAll (busy false, displayed = engine)', () => {
+  it('a rounds-complete end plays one win beat; after it the queue drains on the gameEnded log (D-14)', () => {
+    setGame(fresh(1));
+    unsub = startDirector();
+    for (let i = 0; i < 2; i++) {
+      setGame(rollDice(engine(), dice(3)));
+      setGame(judge(engine(), i === 1, dice(1)));
+      P().skipAll();
+      if (i === 0) setGame(advanceTurn(engine()));
+    }
+    const ended = advanceTurn(engine());
+    expect(ended.phase).toBe('gameOver');
+    setGame(ended);
+    expect(P().busy).toBe(true);
+    expect(P().current).toMatchObject({ kind: 'win', winners: ['p2'], animals: ['rabbit'], ms: 1500 });
+    expect(P().queue).toEqual([]);
+    P().completeBeat(P().current!.id);
+    expect(P().busy).toBe(false);
+    expect(P().consumedLog).toBe(ended.log);
+    expect(P().displayed).toEqual(displayedFrom(ended));
+  });
+
+  it('a manual gameEnded batch while beats are playing → skipAll (busy false, displayed = engine)', () => {
     setGame(fresh());
     unsub = startDirector();
     setGame(rollDice(engine(), dice(3)));

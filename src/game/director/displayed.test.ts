@@ -132,6 +132,7 @@ describe('fuzz: beats reproduce the engine (D-01)', () => {
           firstPid: s.config.participants[0].id,
           reducedMotion: false,
           lastEvent: s.lastMove?.event ?? null,
+          animalOf: Object.fromEntries(s.config.participants.map((x) => [x.id, x.animal])),
         };
         const beats = buildTimeline(s.log.events, ctx);
         beats.forEach((b) => seen.add(b.kind));
@@ -143,7 +144,8 @@ describe('fuzz: beats reproduce the engine (D-01)', () => {
     expect(checked).toBeGreaterThan(SEEDS * 10);
     // The fuzz must actually exercise every beat kind, or it proves nothing.
     expect([...seen].sort()).toEqual(
-      (['dice', 'event', 'finalRound', 'hop', 'preview', 'startBonus', 'stars'] as BeatKind[]).sort(),
+      // gameOver transitions are skipped above, so 'win' never appears here (07-01).
+      (['dice', 'event', 'finalRound', 'hop', 'miss', 'preview', 'startBonus', 'stars'] as BeatKind[]).sort(),
     );
   });
 });

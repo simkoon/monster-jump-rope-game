@@ -144,6 +144,13 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
     onLost: handleLost,
   };
 
+  // UI-SPEC C7e: at gameOver (the win beat) the engine's endGame is a no-op, so 지금 끝내기 skips
+  // the beats instead and the result screen shows at once (T-07-03).
+  function endNow() {
+    if (useGameStore.getState().game?.phase === 'gameOver') usePresentation.getState().skipAll();
+    else useGameStore.getState().endNow();
+  }
+
   function handleUndo() {
     useGameStore.getState().undo();
     showToast('판정을 되돌렸어요. 다시 골라 주세요.');
@@ -160,11 +167,11 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
         round={game.round}
         totalRounds={config.rules.rounds}
         next={nextUpView(game)}
-        onEndNow={() => useGameStore.getState().endNow()}
+        onEndNow={endNow}
       />
 
       <div className="stage-canvas-cell">
-        <div className="stage-canvas" role="img" aria-label={boardAria(game.board.length, cur.name)}>
+        <div className="stage-canvas" role="img" aria-label={boardAria(game.board.length, cur.name, phase === 'gameOver')}>
           <CanvasErrorBoundary key={canvasKey} onError={handleError}>
             <Suspense fallback={null}>
               <LazyCanvas {...canvasProps} />

@@ -19,6 +19,7 @@ export function timelineCtx(game: GameState): TimelineCtx {
     firstPid: game.config.participants[0].id,
     reducedMotion: prefersReducedMotion(),
     lastEvent: game.lastMove?.event ?? null,
+    animalOf: Object.fromEntries(game.config.participants.map((p) => [p.id, p.animal])),
   };
 }
 
@@ -37,7 +38,9 @@ export function directGame(next: GameState | null, prev: GameState | null): void
     return;
   }
   // "지금 끝내기" mid-animation: never hold the result screen behind queued beats (Pitfall 11).
-  if (next.log.events.some((e) => e.t === 'gameEnded')) {
+  // Only the manual end skips; a rounds-complete end plays its win beat (Phase 7 D-14).
+  const ended = next.log.events.find((e) => e.t === 'gameEnded');
+  if (ended?.t === 'gameEnded' && ended.reason === 'manual') {
     p.skipAll();
     return;
   }

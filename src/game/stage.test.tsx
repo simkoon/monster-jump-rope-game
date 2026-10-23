@@ -1,5 +1,5 @@
 // src/game/stage.test.tsx — GameStage / GameApp integration (06-06 Task 1; D-01, D-22, D-23, D-25,
-// D-27, HUD-01/02/03, ROUND-02, STAB-02).
+// D-27, HUD-01/02/03, ROUND-02, STAB-02; Phase 7 07-01: miss / win beats, D-12~D-14, UI-SPEC C7).
 // The lazy 3D chunk is swapped for the fake canvas (jsdom has no WebGL — RESEARCH Pitfall 2/3).
 // The fake never completes 3D beats, so dice / preview / hop beats end only through the store
 // watchdog or settle(). Mounts run on real timers (the lazy import resolves asynchronously);
@@ -10,10 +10,11 @@ import GameApp from './GameApp';
 import GameStage, { READY_TIMEOUT_MS } from './GameStage';
 import { usePresentation, WATCHDOG_BUFFER_MS } from './usePresentation';
 import { displayedFrom, EMPTY_DISPLAYED } from './director/displayed';
+import { BEAT_MS } from './director/timeline';
 import { startDirector } from './director/useDirector';
 import { useGameStore } from '../harness/useGameStore';
 import Toast, { useToastStore } from '../components/Toast';
-import { rollDice } from '../engine/game';
+import { advanceTurn, judge, rollDice } from '../engine/game';
 import { boardWith, dice, eventTile, makeGame, mission, questTile } from '../engine/testkit';
 import type { GameState } from '../engine/state';
 import { fakeCanvas, settle, waitForCanvas } from '../test/fakeGameCanvas';
@@ -32,6 +33,19 @@ function baseGame(over: Parameters<typeof makeGame>[0] = {}): GameState {
 }
 
 const atJudgement = () => rollDice(baseGame(), dice(3));
+
+// A 1-round game at the last turn's turnResolved: the next tap is 🏆 결과 보기 (rounds-complete).
+// p1 always fails; p2's judgement decides one winner (🐰) or two zero-star co-winners (🐻 🐰).
+// The Toast is a role="status" too, so these tests find the beat banner by its class.
+function atLastTurn(p2Success: boolean): GameState {
+  let g = makeGame({
+    missions: [EASY, HARD],
+    board: boardWith(20, { 3: questTile('easy') }),
+    rules: { rounds: 1, failRule: 'noStar' },
+  });
+  g = advanceTurn(judge(rollDice(g, dice(3)), false, dice(1)));
+  return judge(rollDice(g, dice(3)), p2Success, dice(1));
+}
 const P = () => usePresentation.getState();
 const engine = () => useGameStore.getState().game!;
 
@@ -143,7 +157,7 @@ describe('GameStage — no flicker (HUD-03, D-25)', () => {
 });
 
 describe('GameStage — displayed stars (D-01, HUD-01)', () => {
-  it('stars rise only after the 600 ms stars beat', async () => {
+  it('stars rise only after the stars beat', async () => {
     await mountApp(atJudgement());
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
@@ -154,11 +168,79 @@ describe('GameStage — displayed stars (D-01, HUD-01)', () => {
     expect(screen.queryByRole('button', { name: '다음 ➡️' })).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(600);
+      vi.advanceTimersByTime(BEAT_MS.stars - 1);
+    });
+    expect(within(screen.getByRole('list', { name: '별 순위' })).getAllByText('⭐0')).toHaveLength(2);
+    act(() => {
+      vi.advanceTimersByTime(1);
     });
     expect(within(screen.getByRole('list', { name: '별 순위' })).getByText('⭐3')).toBeInTheDocument();
     expect(screen.getByText('🎉 성공! ⭐+3')).toHaveClass('game-judge-result', 'ok');
     expect(screen.getByRole('button', { name: '다음 ➡️' })).toBeInTheDocument();
+  });
+});
+
+describe('GameStage — miss beat (07-01, D-13, HUD-03)', () => {
+  it('❌ on attempt 1 hides the quest card at once; the retry card shows after the miss beat', async () => {
+    await mountApp(atJudgement()); // retrySame
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
+    expect(engine().card!.attempt).toBe(2);
+    expect(questCard()).toBeNull();
+    expect(document.querySelector('.beat-banner')).toBeNull(); // no banner, no text for a miss
+    act(() => {
+      vi.advanceTimersByTime(BEAT_MS.miss - 1);
+    });
+    expect(questCard()).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(within(questCard()!).getByText('🔁 한 번 더 도전!')).toBeInTheDocument();
+  });
+});
+
+describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7f)', () => {
+  it('🏆 결과 보기 keeps the stage for the 🏆 우승! banner, then the result screen after 1500 ms', async () => {
+    await mountApp(atLastTurn(true));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
+    expect(engine().phase).toBe('gameOver');
+    expect(screen.queryByText('게임 끝!')).toBeNull();
+    const banner = document.querySelector<HTMLElement>('.beat-banner')!;
+    expect(banner).toHaveClass('beat-banner--final', 'beat-banner--win');
+    expect(banner).toHaveTextContent('🏆 우승!');
+    expect(within(banner).getByRole('img', { name: '토끼' })).toHaveTextContent('🐰');
+    expect(screen.getByRole('img', { name: '20칸 순환 보드, 게임 끝' })).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(BEAT_MS.win - 1);
+    });
+    expect(screen.queryByText('게임 끝!')).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+  });
+
+  it('two zero-star players → 🏆 공동 우승! with both animals in participant order', async () => {
+    await mountApp(atLastTurn(false));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
+    const banner = document.querySelector<HTMLElement>('.beat-banner')!;
+    expect(banner).toHaveTextContent('🏆 공동 우승!');
+    expect(within(banner).getByRole('img', { name: '곰, 토끼' })).toHaveTextContent('🐻 🐰');
+  });
+
+  it('지금 끝내기 → 게임 끝내기 during the win banner shows the result screen at once (C7e)', async () => {
+    await mountApp(atLastTurn(true));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
+    expect(P().current?.kind).toBe('win');
+    const ended = engine();
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    fireEvent.click(screen.getByRole('button', { name: '게임 끝내기' }));
+    expect(engine()).toBe(ended); // the engine's endGame is a no-op at gameOver
+    expect(P().busy).toBe(false);
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
   });
 });
 

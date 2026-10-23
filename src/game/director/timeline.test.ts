@@ -1,4 +1,5 @@
-// src/game/director/timeline.test.ts — engine log → beat mapping (06-02 Task 1, D-19, D-24).
+// src/game/director/timeline.test.ts — engine log → beat mapping (06-02 Task 1, D-19, D-24;
+// Phase 7 07-01: miss / win reaction beats, stars 900 ms, D-12~D-16).
 // Every scenario drives the REAL engine transitions so the event order is the engine's own.
 import { describe, it, expect } from 'vitest';
 import { advanceTurn, endGame, judge, rollDice, undoJudgement } from '../../engine/game';
@@ -20,6 +21,7 @@ const ctxOf = (g: GameState, reducedMotion = false): TimelineCtx => ({
   firstPid: g.config.participants[0].id,
   reducedMotion,
   lastEvent: g.lastMove?.event ?? null,
+  animalOf: Object.fromEntries(g.config.participants.map((p) => [p.id, p.animal])),
 });
 
 const beatsOf = (g: GameState, reducedMotion = false) => buildTimeline(g.log.events, ctxOf(g, reducedMotion));
@@ -155,17 +157,18 @@ describe('buildTimeline — judgement, undo, end', () => {
     const g = onQuest('normal');
     expect(g.phase).toBe('awaitingJudgement');
     const beats = beatsOf(judge(g, true, dice(1)));
-    expect(beats).toEqual([{ kind: 'stars', pid: 'p1', stars: 2, ms: 600 }]);
+    expect(beats).toEqual([{ kind: 'stars', pid: 'p1', stars: 2, ms: BEAT_MS.stars }]);
+    expect(BEAT_MS.stars).toBe(900); // D-12
   });
 
-  it('judged fail with a retry (judged + questDrawn attempt 2) → no beats', () => {
+  it('judged fail with a retry (judged + questDrawn attempt 2) → one miss beat (D-13)', () => {
     const next = judge(onQuest('easy', 'retrySame'), false, dice(1));
     expect(next.log.events.map((e) => e.t)).toEqual(['judged', 'questDrawn']);
-    expect(beatsOf(next)).toEqual([]);
+    expect(beatsOf(next)).toEqual([{ kind: 'miss', pid: 'p1', ms: 700 }]);
   });
 
-  it('final judged fail → no beats', () => {
-    expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)))).toEqual([]);
+  it('final judged fail → the same single miss beat', () => {
+    expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)))).toEqual([{ kind: 'miss', pid: 'p1', ms: 700 }]);
   });
 
   it('judgementUndone → no beats', () => {
@@ -174,14 +177,61 @@ describe('buildTimeline — judgement, undo, end', () => {
     expect(beatsOf(next)).toEqual([]);
   });
 
-  it('gameEnded → no beats', () => {
+  it('gameEnded (manual) → no beats', () => {
     const next = endGame(onQuest('easy'), 'manual');
     expect(next.log.events[0].t).toBe('gameEnded');
     expect(beatsOf(next)).toEqual([]);
   });
 
+  // A 1-round game played to its natural end; p2's judgement decides the winners.
+  const playOut = (p2Success: boolean) => {
+    let g = makeGame({ board: boardWith(20, { 3: questTile('easy') }), rules: { rounds: 1, failRule: 'noStar' } });
+    g = advanceTurn(judge(rollDice(g, dice(3)), false, dice(1))); // p1 ❌ → p2
+    return advanceTurn(judge(rollDice(g, dice(3)), p2Success, dice(1))); // p2 → game over
+  };
+
+  it('gameEnded (rounds-complete) → one 1500 ms win beat with the engine winners and their animals (D-14)', () => {
+    const next = playOut(true);
+    const ended = next.log.events[0] as Extract<GameEvent, { t: 'gameEnded' }>;
+    expect(ended).toMatchObject({ t: 'gameEnded', reason: 'rounds-complete' });
+    expect(beatsOf(next)).toEqual([{ kind: 'win', winners: ended.winners, animals: ['rabbit'], ms: 1500 }]);
+    expect(ended.winners).toEqual(['p2']);
+  });
+
+  it('co-winners (both zero stars) → every winner and animal in participant order', () => {
+    const next = playOut(false);
+    const beats = beatsOf(next);
+    expect(beats).toEqual([{ kind: 'win', winners: ['p1', 'p2'], animals: ['bear', 'rabbit'], ms: 1500 }]);
+    const win = beats[0] as Extract<BeatSpec, { kind: 'win' }>;
+    const ended = next.log.events[0] as Extract<GameEvent, { t: 'gameEnded' }>;
+    expect(win.winners).not.toBe(ended.winners); // copied, not shared with the engine log
+  });
+
+  it('a winner without an animalOf entry is skipped in animals (defensive)', () => {
+    const next = playOut(true);
+    expect(buildTimeline(next.log.events, { ...ctxOf(next), animalOf: {} })).toEqual([
+      { kind: 'win', winners: ['p2'], animals: [], ms: 1500 },
+    ]);
+  });
+
+  it('reducedMotion keeps miss 700 and win 1500 (D-16, Pitfall 9)', () => {
+    expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)), true)).toEqual([
+      { kind: 'miss', pid: 'p1', ms: 700 },
+    ]);
+    expect(beatsOf(playOut(false), true)[0]).toMatchObject({ kind: 'win', ms: 1500 });
+  });
+
+  it('D-15 length caps: stars ≤ 900, miss 700, win 1500; event / startBonus / finalRound unchanged', () => {
+    expect(BEAT_MS.stars).toBeLessThanOrEqual(900);
+    expect(BEAT_MS.miss).toBe(700);
+    expect(BEAT_MS.win).toBe(1500);
+    expect(BEAT_MS.event).toBe(1000);
+    expect(BEAT_MS.startBonus).toBe(800);
+    expect(BEAT_MS.finalRound).toBe(1500);
+  });
+
   it('landed / questDrawn / gameStarted alone → no beats', () => {
-    const ctx: TimelineCtx = { totalRounds: 3, firstPid: 'p1', reducedMotion: false, lastEvent: null };
+    const ctx: TimelineCtx = { totalRounds: 3, firstPid: 'p1', reducedMotion: false, lastEvent: null, animalOf: {} };
     expect(buildTimeline([{ t: 'landed', pid: 'p1', tile: 3, kind: 'quest' }], ctx)).toEqual([]);
     expect(
       buildTimeline([{ t: 'questDrawn', pid: 'p1', missionId: 'e1', diff: 'easy', stars: 1, attempt: 1 }], ctx),
@@ -191,7 +241,7 @@ describe('buildTimeline — judgement, undo, end', () => {
 });
 
 describe('buildTimeline — finalRound (ROUND-02, D-24)', () => {
-  const ctx: TimelineCtx = { totalRounds: 3, firstPid: 'p1', reducedMotion: false, lastEvent: null };
+  const ctx: TimelineCtx = { totalRounds: 3, firstPid: 'p1', reducedMotion: false, lastEvent: null, animalOf: {} };
   const ts = (over: Partial<Extract<GameEvent, { t: 'turnStarted' }>>): GameEvent => ({
     t: 'turnStarted',
     pid: 'p1',
