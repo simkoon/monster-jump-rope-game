@@ -2,14 +2,17 @@
 // src/game/scene/chibi.test.tsx — the code-built chibi animals (D-01..D-03, D-07, D-09, D-18, D-20, CHAR-01/02).
 // Runs in node (no WebGL): the geometry helpers, the 8 species nodes, the 9 faces per species, the
 // shared materials and the view-only ChibiModel mounted with @react-three/test-renderer.
-import { describe, it, expect, vi } from 'vitest';
-import { BufferGeometry, Color, Float32BufferAttribute, SphereGeometry, Vector3 } from 'three';
-import { ANIMALS } from '../../engine/animals';
-import { FACE_KEYS, HEAD_B } from '../layout/chibiDims';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import ReactThreeTestRenderer from '@react-three/test-renderer';
+import { BufferGeometry, Color, Float32BufferAttribute, Mesh, SphereGeometry, Vector3, type Object3D } from 'three';
+import { ANIMALS, type AnimalId } from '../../engine/animals';
+import { REST } from '../layout/charMotion';
+import { ARM_REST, FACE_KEYS, HEAD_B, HEAD_TILT, type FaceKey } from '../layout/chibiDims';
 import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, SCENE_COLOR } from '../palette';
 import { bake, hull, M, part, surfaceZ } from './chibiParts';
 import { CHAR_MAT, GROUND_MAT, chibiNodes } from './chibiSpecies';
 import { faceGeo } from './chibiFaces';
+import ChibiModel, { applyPose, createChibiRig, type ChibiRig } from './ChibiModel';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -266,5 +269,114 @@ describe('chibi materials (D-03-5)', () => {
     expect(GROUND_MAT.vertexColors).toBe(true);
     expect(GROUND_MAT.transparent).toBe(true);
     expect(GROUND_MAT.depthWrite).toBe(false);
+  });
+});
+
+type Renderer = Awaited<ReturnType<typeof ReactThreeTestRenderer.create>>;
+
+const named = (r: Renderer, name: string): Object3D[] =>
+  r.scene.findAll((n) => (n.instance as Object3D | undefined)?.name === name).map((n) => n.instance as Object3D);
+
+const one = (r: Renderer, name: string): Object3D => {
+  const found = named(r, name);
+  expect(found, name).toHaveLength(1);
+  return found[0];
+};
+
+function meshes(r: Renderer): Mesh[] {
+  const out: Mesh[] = [];
+  (r.scene.instance as Object3D).traverse((o) => {
+    if (o instanceof Mesh) out.push(o);
+  });
+  return out;
+}
+
+let open: Renderer[] = [];
+afterEach(async () => {
+  for (const r of open) await r.unmount();
+  open = [];
+});
+
+async function mountModel(
+  animal: AnimalId,
+  opts: { ring?: boolean; crown?: boolean; face?: FaceKey } = {},
+): Promise<{ r: Renderer; rig: ChibiRig }> {
+  const rig = createChibiRig();
+  const r = await ReactThreeTestRenderer.create(
+    <ChibiModel animal={animal} rig={rig} face={opts.face ?? 'idle'} ring={opts.ring ?? false} crown={opts.crown ?? false} />,
+  );
+  open.push(r);
+  return { r, rig };
+}
+
+const CHIBI_MESHES = ['chibi-ground', 'chibi-torso', 'chibi-arm-l', 'chibi-arm-r', 'chibi-head', 'chibi-ears', 'chibi-face'];
+
+describe('ChibiModel (D-08, D-20, D-21)', () => {
+  it('is exactly 7 named meshes per animal, inside one pawn-body group', async () => {
+    for (const a of ANIMALS) {
+      const { r } = await mountModel(a);
+      const m = meshes(r);
+      expect(m.map((x) => x.name).sort(), a).toEqual([...CHIBI_MESHES].sort());
+      one(r, 'pawn-body');
+    }
+  });
+
+  it('adds the turn ring on the floor and the crown on the tilted head', async () => {
+    const { r } = await mountModel('rabbit', { ring: true, crown: true });
+    expect(meshes(r)).toHaveLength(9);
+    const body = one(r, 'pawn-body');
+    const headPivot = one(r, 'chibi-head-pivot');
+    const ancestors = (o: Object3D) => {
+      const out: Object3D[] = [];
+      o.traverseAncestors((p) => out.push(p));
+      return out;
+    };
+    expect(ancestors(one(r, 'turn-ring'))).not.toContain(body);
+    expect(ancestors(one(r, 'crown'))).toContain(headPivot);
+  });
+
+  it('uses the shared materials and the face geometry of the face prop', async () => {
+    const { r } = await mountModel('fox', { face: 'joy' });
+    expect((one(r, 'chibi-face') as Mesh).geometry).toBe(faceGeo('fox', 'joy'));
+    for (const name of CHIBI_MESHES) {
+      expect((one(r, name) as Mesh).material, name).toBe(name === 'chibi-ground' ? GROUND_MAT : CHAR_MAT);
+    }
+    expect((one(r, 'chibi-head') as Mesh).geometry).toBe(chibiNodes('fox').head);
+  });
+
+  it('mounts in the rest pose: head tilted back, arms resting outward', async () => {
+    const { rig } = await mountModel('bear');
+    expect(rig.head.current!.rotation.x).toBeCloseTo(-HEAD_TILT, 9);
+    expect(rig.armR.current!.rotation.z).toBeCloseTo(ARM_REST, 9);
+    expect(rig.armL.current!.rotation.z).toBeCloseTo(-ARM_REST, 9);
+    const b = rig.body.current!;
+    expect(b.position.y).toBe(0);
+    expect([b.rotation.x, b.rotation.y, b.rotation.z]).toEqual([0, 0, 0]);
+    expect([b.scale.x, b.scale.y, b.scale.z]).toEqual([1, 1, 1]);
+    expect(rig.ears.current!.rotation.x).toBeCloseTo(0, 9);
+  });
+
+  it('applyPose writes the UI-SPEC C4 sign conventions', async () => {
+    const { rig } = await mountModel('cat');
+    applyPose(rig, { ...REST, squashY: 0.9 });
+    const b = rig.body.current!;
+    expect(b.scale.y).toBeCloseTo(0.9, 9);
+    expect(b.scale.x).toBeCloseTo(1.05, 9);
+    expect(b.scale.z).toBeCloseTo(1.05, 9);
+    applyPose(rig, { ...REST, armR: 2.4, armL: 0.5 });
+    expect(rig.armR.current!.rotation.z).toBeCloseTo(ARM_REST + 2.4, 9);
+    expect(rig.armL.current!.rotation.z).toBeCloseTo(-(ARM_REST + 0.5), 9);
+    applyPose(rig, { ...REST, headPitch: 0.35 });
+    expect(rig.head.current!.rotation.x).toBeCloseTo(-HEAD_TILT + 0.35, 9);
+    applyPose(rig, { ...REST, yaw: 1, lean: 0.08, y: 0.3 });
+    expect(b.rotation.y).toBeCloseTo(1, 9);
+    expect(b.rotation.x).toBeCloseTo(0.08, 9);
+    expect(b.position.y).toBeCloseTo(0.3, 9);
+    applyPose(rig, { ...REST, earTilt: 0.4 });
+    expect(rig.ears.current!.rotation.x).toBeCloseTo(-0.4, 9);
+  });
+
+  it('applyPose is a no-op on an unmounted rig', () => {
+    expect(() => applyPose(createChibiRig(), { ...REST, y: 1 })).not.toThrow();
   });
 });
