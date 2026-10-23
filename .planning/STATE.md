@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 7
 current_phase_name: 치비 동물 캐릭터 & 표정
-status: executing
+status: verifying
 stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-10-23T05:17:48.704Z"
+last_updated: "2026-10-23T05:36:06.371Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
-  completed_plans: 15
-  percent: 50
+  completed_plans: 16
+  percent: 75
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 
 Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-23 — Phase 7 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -78,6 +78,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P02 | 7min | 3 tasks | 8 files |
 | Phase 07 P03 | 14min | 3 tasks | 7 files |
 | Phase 07 P04 | 12min | 3 tasks | 10 files |
+| Phase 07 P05 | 14min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-04: Character pose blend-out is additive (new curve + (old pose - REST) * exp(-12t)) so new curves play at full height
 - [Phase 07]: 07-04: success spin yaw follows the curve; hop yaw eases to the segment direction (rate 20); other acts ease back to 0 (rate 8)
 - [Phase 07]: 07-04: CHAR-01..03 / BOARD-05 stay Pending until the 07-05 gallery + UAT
+- [Phase 07]: 07-05: dev gallery is an extra root HTML served only by the Vite dev server; vite.config.ts keeps no input list and source guard (g) blocks app imports
+- [Phase 07]: 07-05: stars on occupied quest tiles rise to top + 1.20 at 0.75x, eased per tile; in-bound tuning dog ears r 0.11 / x 0.29, start n5 slot 1 +0.10 z
 
 ### Pending Todos
 
@@ -160,6 +163,7 @@ v1.0 시기의 항목(요구사항 개수 표기, 이벤트 확률 UX, R3F vs �
 - [Phase 7]: 연구 플래그 — 코드로 만든 캐릭터의 "귀여움"은 디자인 스파이크/스케치 권장(견본보다 확실히 더 귀엽게). 동물 종 수(6~8종) 확정, 8인 드로우콜 예산(약 150, 추정) 실측.
 - [Phase 8]: 연구 플래그 — 3D 앵커 → DOM 점수판 별 비행 좌표 정합(리사이즈·safe-area) 짧은 스파이크.
 - [Phase 8]: STAB-03 실기기 UAT(iPhone·iPad Safari)가 완료 조건 — 강사(사용자) 기기 확인 일정 필요.
+- Start-gate arch hides one back-slot face at game start (two from 6 players); no fix within the 0.10 +z bound - needs a user decision (slot x moves or gate change)
 
 ### Roadmap Evolution
 
@@ -183,6 +187,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T05:17:48.698Z
+Last session: 2026-10-23T05:35:53.840Z
 Stopped at: Completed 07-04-PLAN.md
 Resume file: None

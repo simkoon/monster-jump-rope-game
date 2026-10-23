@@ -32,7 +32,7 @@
 - [x] **BOARD-02**: 출발 칸이 랜드마크로 확연히 구분되고, 칸마다 진행 방향이 표시되며, 칸은 서로 간격을 두어 하나씩 셀 수 있다
 - [x] **BOARD-03**: 도착 전에 칸 종류를 구분할 수 있다 — 퀘스트 칸은 난이도 색과 받을 별 개수로, 이벤트 칸은 모양·아이콘으로 (글자 없이)
 - [x] **BOARD-04**: 칸 배치(퀘스트 칸 난이도, 이벤트 칸의 이벤트)는 게임 시작 때 가중치에 따라 정해지고 게임 중에는 바뀌지 않는다
-- [ ] **BOARD-05**: 한 칸에 말이 여러 개(최대 8개) 서 있어도 모든 말이 구분된다
+- [x] **BOARD-05**: 한 칸에 말이 여러 개(최대 8개) 서 있어도 모든 말이 구분된다
 
 ### 턴 흐름 (TURN)
 
@@ -61,9 +61,9 @@
 
 ### 캐릭터 (CHAR)
 
-- [ ] **CHAR-01**: 말은 코드로 만든 귀여운 치비 동물 캐릭터이며 여러 종(6~8종)이 있다 (외부 3D 모델 파일 없음)
-- [ ] **CHAR-02**: 캐릭터는 상황에 따라 표정이 바뀐다 — 기본 / 두근 / 기쁨(^^ 눈) / 아쉬움 / 놀람 / 우승
-- [ ] **CHAR-03**: 캐릭터는 대기, 칸 이동 점프, 성공 점프·회전, 실패 아쉬움, 우승 환호 동작을 한다
+- [x] **CHAR-01**: 말은 코드로 만든 귀여운 치비 동물 캐릭터이며 여러 종(6~8종)이 있다 (외부 3D 모델 파일 없음)
+- [x] **CHAR-02**: 캐릭터는 상황에 따라 표정이 바뀐다 — 기본 / 두근 / 기쁨(^^ 눈) / 아쉬움 / 놀람 / 우승
+- [x] **CHAR-03**: 캐릭터는 대기, 칸 이동 점프, 성공 점프·회전, 실패 아쉬움, 우승 환호 동작을 한다
 
 ### 성공 연출 (FX)
 
@@ -144,7 +144,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOARD-02 | Phase 6 | Complete |
 | BOARD-03 | Phase 6 | Complete |
 | BOARD-04 | Phase 5 | Complete |
-| BOARD-05 | Phase 7 | Pending |
+| BOARD-05 | Phase 7 | Complete |
 | TURN-01 | Phase 5 | Complete |
 | TURN-02 | Phase 5 | Complete |
 | TURN-03 | Phase 5 | Complete |
@@ -161,9 +161,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HUD-02 | Phase 6 | Complete |
 | HUD-03 | Phase 6 | Complete |
 | HUD-04 | Phase 6 | Complete |
-| CHAR-01 | Phase 7 | Pending |
-| CHAR-02 | Phase 7 | Pending |
-| CHAR-03 | Phase 7 | Pending |
+| CHAR-01 | Phase 7 | Complete |
+| CHAR-02 | Phase 7 | Complete |
+| CHAR-03 | Phase 7 | Complete |
 | FX-01 | Phase 8 | Pending |
 | FX-02 | Phase 8 | Pending |
 | FX-03 | Phase 8 | Pending |

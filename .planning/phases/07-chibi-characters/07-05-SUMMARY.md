@@ -287,3 +287,8 @@ Phase 6 deferred device checks (06-VERIFICATION):
 - The phase verifier can rely on the automated gate (1070 tests, build, dist checks). The look items above go to the end-of-phase UAT.
 - Phase 8 (success animation) can reuse the gallery act view for new effects. `Board` takes `occupied` from `SceneContents`, so effects that change displayed positions lift and drop the stars automatically.
 - Open decision: the start-gate arch fix (outside the 07-05 bounds).
+
+## Self-Check: PASSED
+
+- FOUND: gallery.html, src/gallery.tsx, src/game/scene/CharacterGallery.tsx, src/game/scene/Board.tsx, src/game/sourceGuard.test.ts, 07-05-SUMMARY.md
+- FOUND commits: 06bbd1a, 25e7587, 439bf75
