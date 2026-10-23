@@ -12,16 +12,21 @@ import GameApp from '../GameApp';
 import { usePresentation } from '../usePresentation';
 import { EMPTY_DISPLAYED } from '../director/displayed';
 import { useGameStore } from '../../harness/useGameStore';
-import { makeGame } from '../../engine/testkit';
+import { boardWith, makeGame } from '../../engine/testkit';
+import { isValidElement, type ReactElement } from 'react';
+import { ContactShadows } from '@react-three/drei';
 
 const gl = vi.hoisted(() => ({ setClearColor: vi.fn(), forceContextLoss: vi.fn() }));
+// The last children handed to the (fake) Canvas: the scene graph is inspected as React elements.
+const canvasKids = vi.hoisted(() => ({ last: null as unknown }));
 
 vi.mock('@react-three/fiber', async () => {
   const { useEffect, useRef } = await import('react');
-  type Props = { onCreated?: (s: unknown) => void; frameloop?: string };
+  type Props = { onCreated?: (s: unknown) => void; frameloop?: string; children?: unknown };
   return {
-    Canvas: ({ onCreated, frameloop }: Props) => {
+    Canvas: ({ onCreated, frameloop, children }: Props) => {
       const ref = useRef<HTMLCanvasElement>(null);
+      canvasKids.last = children;
       useEffect(() => {
         onCreated?.({ gl: { ...gl, domElement: ref.current } });
       }, []); // mount-only, like R3F's onCreated
@@ -108,6 +113,46 @@ describe('GameCanvas — context-loss glue (D-27, STAB-02)', () => {
     expect(gl.forceContextLoss).toHaveBeenCalledTimes(1);
     unmount();
     expect(window.__loseContext).toBeUndefined();
+  });
+});
+
+// The props of the ContactShadows element inside the last Canvas children.
+function shadowProps(): { frames?: number; scale?: number } | null {
+  const walk = (n: unknown): { frames?: number; scale?: number } | null => {
+    if (Array.isArray(n)) {
+      for (const k of n) {
+        const hit = walk(k);
+        if (hit) return hit;
+      }
+      return null;
+    }
+    if (!isValidElement(n)) return null;
+    const el = n as ReactElement<{ children?: unknown; frames?: number; scale?: number }>;
+    if (el.type === ContactShadows) return el.props;
+    return walk(el.props.children);
+  };
+  return walk(canvasKids.last);
+}
+
+describe('GameCanvas — ContactShadows follows a new board size without a remount (WR-02)', () => {
+  it('frames goes up by one when tiles.length changes; same size keeps it; the canvas stays mounted', () => {
+    const p = props({ tiles: boardWith(20) });
+    const { rerender } = render(<GameCanvas {...p} />);
+    const canvas = screen.getByTestId('r3f-canvas');
+    expect(shadowProps()!.frames).toBe(1);
+    const scale20 = shadowProps()!.scale;
+
+    rerender(<GameCanvas {...p} tiles={boardWith(20)} />); // 🔁 다시 하기, same size: a new array only
+    expect(shadowProps()!.frames).toBe(1);
+
+    rerender(<GameCanvas {...p} tiles={boardWith(24)} />); // 🔁 다시 하기 after 보드 크기 → 24
+    expect(shadowProps()!.frames).toBe(2);
+    expect(shadowProps()!.scale).toBeGreaterThan(scale20!);
+    rerender(<GameCanvas {...p} tiles={boardWith(16)} />);
+    expect(shadowProps()!.frames).toBe(3);
+
+    expect(screen.getByTestId('r3f-canvas')).toBe(canvas); // never remounted (one WebGL context)
+    expect(p.onReady).toHaveBeenCalledTimes(1);
   });
 });
 

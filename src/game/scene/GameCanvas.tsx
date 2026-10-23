@@ -6,7 +6,10 @@
 //   - DPR capped at 1.5 on phones (smaller window side ≤ 560) and 2 elsewhere (D-28)
 //   - frameloop 'always' while visible, 'never' while hidden (GameStage also calls skipAll)
 //   - no shadow maps and no post-processing: one static ContactShadows (frames=1, rendered once)
-//     under the board base plus the blob shadows under pawns (D-04)
+//     under the board base plus the blob shadows under pawns (D-04). 🔁 다시 하기 keeps this canvas
+//     but may bring a new board size (16/20/24): `frames` then goes up by one, so the shadow is
+//     drawn again for the new board (WR-02) without remounting it. drei 10.7 happens to reset its
+//     frame count on every render too; the bump keeps the redraw from depending on that detail.
 //   - no pointer interaction: tapping the board does nothing (D-21); touch-action blocks double-tap zoom
 // Ceremony (08-09, D-11, RESEARCH Pattern 6): the ContactShadows sits in a group that only turns
 // invisible during the ceremony. drei creates its two render targets in useMemo and never disposes
@@ -18,7 +21,7 @@
 // Soak metrics (Phase 8 D-22, STAB-01): a DEV-only window.__pjRenderInfo() returns renderer.info
 // (geometries / textures / programs / last frame's draw calls) for the dev soak page (soak.html);
 // both DEV hooks are stripped from the production build and deleted on unmount.
-import { useCallback, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
 import { CAMERA_FOV } from '../layout/fitCamera';
@@ -68,6 +71,9 @@ export default function GameCanvas({ visible, onReady, onLost, ...scene }: GameC
 
   const dpr = useMemo<[number, number]>(() => [1, isPhone() ? 1.5 : 2], []);
   const shadowScale = useMemo(() => boardExtents(ringLayout(scene.tiles.length)).hx * 2 * 1.3, [scene.tiles.length]);
+  // One more shadow frame per board-size change (adjusting state during render: no extra commit).
+  const [shadow, setShadow] = useState({ tiles: scene.tiles.length, frames: 1 });
+  if (shadow.tiles !== scene.tiles.length) setShadow({ tiles: scene.tiles.length, frames: shadow.frames + 1 });
 
   const handleCreated = useCallback(({ gl }: RootState) => {
     gl.setClearColor(0x000000, 0);
@@ -110,7 +116,7 @@ export default function GameCanvas({ visible, onReady, onLost, ...scene }: GameC
       <SceneContents {...scene} />
       <group visible={!scene.ceremony}>
         <ContactShadows
-          frames={1}
+          frames={shadow.frames}
           position={[0, SHADOW_Y, 0]}
           scale={shadowScale}
           opacity={0.35}
