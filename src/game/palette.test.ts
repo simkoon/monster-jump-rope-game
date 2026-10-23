@@ -132,7 +132,7 @@ describe('EVENT_COLOR / SCENE_COLOR / LIGHTS', () => {
 
   it('every SCENE_COLOR value is a 6-digit hex', () => {
     const values = Object.values(SCENE_COLOR);
-    expect(values.length).toBeGreaterThanOrEqual(22);
+    expect(values.length).toBeGreaterThanOrEqual(20); // 22 in Phase 6 minus the two pawn-only colors (07-04)
     for (const v of values) expect(v).toMatch(HEX);
   });
 

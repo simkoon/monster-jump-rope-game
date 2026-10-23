@@ -21,7 +21,8 @@ export const ANIMAL_COLOR: Readonly<Record<AnimalId, string>> = {
   chick: '#FFCB2E', // --sun
 };
 
-// Pawn eye color: white on the two dark bodies, ink everywhere else.
+// Line-eye color (blinks, ^^ arcs, sad-closed eyes): ink on light bodies; white = the sclera-eye
+// species (dog, panda), whose round eyes get a white sclera.
 export const ANIMAL_EYE: Readonly<Record<AnimalId, string>> = {
   bear: '#173A57',
   rabbit: '#173A57',
@@ -64,8 +65,6 @@ export const SCENE_COLOR = {
   starEmissive: '#FF9F1C',
   chevron: '#FFFFFF',
   outline: '#173A57',
-  pawnBase: '#FFFFFF',
-  cheek: '#FF80B5',
   crown: '#FFCB2E',
   turnRing: '#22B0F2',
   preview: '#22B0F2',
