@@ -8,12 +8,20 @@ import { useSettings, DEFAULT_SETTINGS } from './settings';
 import { useSetupDraft } from './game/useSetupDraft';
 import { seedContent } from './seed';
 import type { Mission } from './schema';
+import { usePresentation } from './game/usePresentation';
+import { EMPTY_DISPLAYED } from './game/director/displayed';
+import { fakeCanvas, settle, waitForCanvas } from './test/fakeGameCanvas';
+
+// The 3D chunk is swapped for the fake canvas (jsdom has no WebGL — 06-06, RESEARCH Pitfall 2/3).
+vi.mock('./game/scene/GameCanvas', () => import('./test/fakeGameCanvas'));
 
 function resetToSeed() {
   localStorage.clear();
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS }); // settings changed by one test never leak into another
   useSetupDraft.getState().reset(); // the start-screen draft lives outside the component (WR-03)
+  usePresentation.getState().reset(EMPTY_DISPLAYED, null); // no beats leak between tests
+  fakeCanvas.reset();
   const s = seedContent();
   useStore.setState({ version: s.version, categories: s.categories, missions: s.missions, events: s.events });
 }
@@ -62,19 +70,25 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(container.querySelector('.game-stage')).not.toBeNull();
   });
 
-  it('plays one full game from 게임 시작 to the result screen, then 🔁 다시 하기 (Phase 5 goal)', () => {
+  it('plays one full game from 게임 시작 to the result screen, then 🔁 다시 하기 (Phase 5 goal)', async () => {
     useSettings.setState({ defaultRounds: 1, boardSize: 16, failRule: 'noStar' });
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
-    expect(container.querySelector('.game-stage.temp-play')).not.toBeNull();
+    expect(container.querySelector('.game-stage.stage')).not.toBeNull();
     expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
+    await waitForCanvas(); // the lazy 3D chunk (fake) resolves on real timers
 
     const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
+    const findBtn = () => labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
     let clicks = 0;
     vi.useFakeTimers(); // real taps are further apart than the double-tap input lock (CR-01)
     try {
       while (!screen.queryByText('게임 끝!') && clicks < 40) {
-        const btn = labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
+        let btn = findBtn();
+        if (!btn) {
+          settle(); // beats still running: the controls are hidden until they end (HUD-03)
+          btn = findBtn();
+        }
         expect(btn).toBeTruthy();
         fireEvent.click(btn!);
         act(() => {
