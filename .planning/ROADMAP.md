@@ -148,12 +148,12 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans:** 11 plans
+**Plans:** 1/11 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — 엔진 참가자 통계(도전·성공·실패·재도전 성공·⭐3·행운) + undo·퍼즈 불변식 + 순수 칭찬 배지 배정 awardBadges (wave 1)
+- [x] 08-01-PLAN.md — 엔진 참가자 통계(도전·성공·실패·재도전 성공·⭐3·행운) + undo·퍼즈 불변식 + 순수 칭찬 배지 배정 awardBadges (wave 1)
 - [ ] 08-02-PLAN.md — 등급별 stars 비트(1600/1900/2200, reduced 1200)·단일 시간표 successPlan + "퀘스트 성공! ⭐+N"·다정한 실패 배너 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -189,4 +189,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/11 | Planned | - |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 1/11 | In Progress|  |

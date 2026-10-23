@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: 3D 블루마블 재구축
-current_phase: 7
-current_phase_name: 치비 동물 캐릭터 & 표정
+current_phase: 8
+current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-10-23T16:08:28.956Z"
+last_updated: "2026-10-23T16:14:58.436Z"
 last_activity: 2026-10-23
-last_activity_desc: Phase 7 execution started
+last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 19
-  completed_plans: 19
-  percent: 75
+  total_plans: 30
+  completed_plans: 20
+  percent: 67
 ---
 
 # Project State
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-22)
 
 **Core value:** 주사위 → 이동 → 도착 칸 줄넘기 퀘스트 → 성공하면 성공 애니메이션과 별 — 이 핵심 루프가 아이들에게 신나고 매끄럽게 돌아가고, 강사가 미션을 자유롭게 관리할 수 있는 것.
-**Current focus:** Phase 7 — 치비 동물 캐릭터 & 표정
+**Current focus:** Phase 8 — 퀘스트 성공 연출 & 시상식 & 마감
 
 ## Current Position
 
-Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
-Plan: 8 of 8 (gap closure: 07-06, 07-07 done, next 07-08)
+Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
+Plan: 2 of 11
 Status: Ready to execute
-Last activity: 2026-10-23 — Phase 7 execution started
+Last activity: 2026-10-23 — Phase 8 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -82,6 +82,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P06 | 9min | 3 tasks | 11 files |
 | Phase 07 P07 | 4min | 2 tasks | 9 files |
 | Phase 07 P08 | 7min | 3 tasks | 7 files |
+| Phase 08 P01 | 6 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-07: win banner emoji row is one flex item per animal (BannerCopy.bigItems); more than 4 winners use --game-heading so 8 fit in two rows (IN-01)
 - [Phase 07]: 07-08: faceOcclusion.test.tsx (mounted scene raycast, real gate/ears/crowns/stars, <= 30 % per face) is the final BOARD-05 criterion; slotOcclusion.test.ts stays as the D-19 disc check
 - [Phase 07]: 07-08: start gate unchanged (D-17a(2)); START moved to gate-free zones, lone start slot (0.25, 0.3); REGULAR theater layout with current at (0, 0.62); rabbit ears len 0.15 / y 0.31 (D-17a(3))
+- [Phase 08]: 08-01: A badge rule whose max is 0 awards nobody (A1); those players fall back to 응원왕
+- [Phase 08]: 08-01: isLuckyEvent (engine/stats.ts) is the single source for 🍀 luckyCount and the 3D sparkle-vs-puff choice
 
 ### Pending Todos
 
@@ -196,6 +199,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T15:06:17.751Z
+Last session: 2026-10-23T16:14:53.906Z
 Stopped at: Phase 8 UI-SPEC approved
 Resume file: .planning/phases/08-success-fx-awards/08-UI-SPEC.md
