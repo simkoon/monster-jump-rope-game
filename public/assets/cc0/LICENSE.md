@@ -15,3 +15,10 @@ See `kenney/NOTICE.md` plus the original license files:
 - `kenney/board-game-icons/License.txt`
 
 Both imported Kenney packs are Creative Commons Zero (CC0) 1.0.
+
+## Project-created sound effects
+
+Sound effects: project-created (Web Audio synthesis), CC0 1.0
+
+No audio files are shipped: every sound is synthesized at runtime by `src/game/sfx`
+(recipes in `src/game/sfx/recipes.ts`).
