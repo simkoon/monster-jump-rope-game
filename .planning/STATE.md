@@ -6,15 +6,15 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-10-23T16:14:58.436Z"
+last_updated: "2026-10-23T16:24:24.714Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 20
-  percent: 67
+  completed_plans: 21
+  percent: 70
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 2 of 11
+Plan: 3 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -83,6 +83,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P07 | 4min | 2 tasks | 9 files |
 | Phase 07 P08 | 7min | 3 tasks | 7 files |
 | Phase 08 P01 | 6 min | 2 tasks | 8 files |
+| Phase 08 P02 | 8 min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-08: start gate unchanged (D-17a(2)); START moved to gate-free zones, lone start slot (0.25, 0.3); REGULAR theater layout with current at (0, 0.62); rabbit ears len 0.15 / y 0.31 (D-17a(3))
 - [Phase 08]: 08-01: A badge rule whose max is 0 awards nobody (A1); those players fall back to 응원왕
 - [Phase 08]: 08-01: isLuckyEvent (engine/stats.ts) is the single source for 🍀 luckyCount and the 3D sparkle-vs-puff choice
+- [Phase 08]: 08-02: successPlan(stars, ms, reduced) is the single success timing/size table; reduced zeroes every motion size incl. radii
+- [Phase 08]: 08-02: delayed-mount stars banner offsets its end fade with --banner-at so the fade still ends at the beat end
 
 ### Pending Todos
 
@@ -199,6 +202,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T16:14:53.906Z
+Last session: 2026-10-23T16:24:12.198Z
 Stopped at: Phase 8 UI-SPEC approved
 Resume file: .planning/phases/08-success-fx-awards/08-UI-SPEC.md

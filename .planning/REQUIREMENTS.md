@@ -68,10 +68,10 @@
 ### 성공 연출 (FX)
 
 - [ ] **FX-01**: 퀘스트에 성공하면 성공 애니메이션이 나온다 — 캐릭터 점프·회전·팔 들기, 컨페티, 별 버스트, 바닥 충격파 링
-- [ ] **FX-02**: 큰 별이 캐릭터 위에서 점수판으로 날아가 점수가 오르고 "퀘스트 성공! ⭐+N" 배너가 표시된다
+- [x] **FX-02**: 큰 별이 캐릭터 위에서 점수판으로 날아가 점수가 오르고 "퀘스트 성공! ⭐+N" 배너가 표시된다
 - [ ] **FX-03**: 성공 판정부터 다음 진행이 가능해질 때까지 2.5초 이내이며, 화면을 탭하면 연출을 건너뛸 수 있다 (별은 그대로 지급)
-- [ ] **FX-04**: 난이도가 높을수록 성공 연출이 더 커진다 (예: ⭐3은 화면 흔들림 추가)
-- [ ] **FX-05**: 실패하면 1초 이내로 짧고 다정한 반응이 나온다 (빨간 X·버저음 없음)
+- [x] **FX-04**: 난이도가 높을수록 성공 연출이 더 커진다 (예: ⭐3은 화면 흔들림 추가)
+- [x] **FX-05**: 실패하면 1초 이내로 짧고 다정한 반응이 나온다 (빨간 X·버저음 없음)
 - [ ] **FX-06**: 출발 보너스와 이벤트 발동도 짧은 연출로 알려 준다
 
 ### 시상식 (END)
@@ -165,10 +165,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAR-02 | Phase 7 | Complete |
 | CHAR-03 | Phase 7 | Complete |
 | FX-01 | Phase 8 | Pending |
-| FX-02 | Phase 8 | Pending |
+| FX-02 | Phase 8 | Complete |
 | FX-03 | Phase 8 | Pending |
-| FX-04 | Phase 8 | Pending |
-| FX-05 | Phase 8 | Pending |
+| FX-04 | Phase 8 | Complete |
+| FX-05 | Phase 8 | Complete |
 | FX-06 | Phase 8 | Pending |
 | END-01 | Phase 8 | Pending |
 | END-02 | Phase 8 | Pending |
