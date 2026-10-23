@@ -8,6 +8,7 @@
 // next phase's controls before its beats (HUD-03, RESEARCH Pattern 3). It lives here, above the
 // router, so it keeps listening across setup → stage → result (a fresh game's own log still plays
 // its "마지막 라운드!" banner).
+// useSfx (Phase 8 D-19) sits right next to it: the one beat → sound subscriber with the gesture unlock.
 //
 // gameOver is held behind the `busy` flag so a winning move's beats finish on the board BEFORE the
 // result screen takes over (D-07) — otherwise the canvas would unmount mid-move. The per-beat
@@ -16,12 +17,14 @@
 import { useGameStore } from '../harness/useGameStore';
 import { usePresentation } from './usePresentation';
 import { useDirector } from './director/useDirector';
+import { useSfx } from './sfx/useSfx';
 import SetupView from './hud/SetupView';
 import ResultView from './hud/ResultView';
 import GameStage from './GameStage';
 
 export default function GameApp() {
   useDirector();
+  useSfx();
   const game = useGameStore((s) => s.game);
   const busy = usePresentation((s) => s.busy);
 

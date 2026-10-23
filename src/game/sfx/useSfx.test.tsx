@@ -297,14 +297,14 @@ describe('StrictMode and cleanup (D-23)', () => {
   it('unmount removes every document / window listener and every store subscription it added', () => {
     const TYPES = ['pointerup', 'touchend', 'click', 'keydown', 'visibilitychange'];
     const net: Record<string, number> = {};
-    for (const target of [document, window]) {
+    for (const target of [document, window] as EventTarget[]) {
       const add = target.addEventListener.bind(target);
       const remove = target.removeEventListener.bind(target);
-      vi.spyOn(target, 'addEventListener').mockImplementation((type, l, o) => {
+      vi.spyOn(target, 'addEventListener').mockImplementation((type: string, l, o?) => {
         net[type] = (net[type] ?? 0) + 1;
         add(type, l, o);
       });
-      vi.spyOn(target, 'removeEventListener').mockImplementation((type, l, o) => {
+      vi.spyOn(target, 'removeEventListener').mockImplementation((type: string, l, o?) => {
         net[type] = (net[type] ?? 0) - 1;
         remove(type, l, o);
       });
@@ -366,7 +366,7 @@ describe('D-20: soundOn is read live', () => {
     useSettings.getState().setSoundOn(true);
     vi.advanceTimersByTime(1900);
     P().completeBeat(current().id);
-    expect(current().stars).toBe(1);
+    expect(current()).toMatchObject({ kind: 'stars', stars: 1 });
     expect(activeVoiceCount()).toBeGreaterThan(0);
   });
 
