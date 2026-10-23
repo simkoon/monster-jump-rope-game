@@ -72,7 +72,7 @@ Plans:
   4. 화면에 별 순으로 정렬된 점수판(동점은 같은 등수, 보드의 말과 같은 색·아이콘으로 대응), 지금 차례와 다음 차례(팀전은 팀 이름과 지금 뛸 팀원 이름), 현재 라운드 / 전체 라운드가 표시되고, 마지막 라운드가 시작되면 "마지막 라운드!" 알림이 나온다
   5. 다른 앱에 다녀와 3D 화면이 꺼져도 "화면 다시 그리기"를 누르면 별·위치·차례가 그대로 유지된 채 복구되고, 인터넷 연결이 없어도 모든 글자와 화면이 정상 표시된다
 
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 **Wave 1**
@@ -83,7 +83,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 06-03-PLAN.md — 정지한 3D 순환판: 받침·난이도 색 칸·3D 별·육각 이벤트 발판·출발 게이트·셰브런·모서리 화살표 + 고정 카메라 (wave 2)
-- [ ] 06-04-PLAN.md — DOM HUD 부품: 점수판 v2·차례 바 v2·조작 영역 v2·상태 칩·비트 배너·복구 오버레이 + HUD CSS (wave 2)
+- [x] 06-04-PLAN.md — DOM HUD 부품: 점수판 v2·차례 바 v2·조작 영역 v2·상태 칩·비트 배너·복구 오버레이 + HUD CSS (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -134,6 +134,6 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
-| 6. 3D 순환판 & 게임 화면 | 3/6 | In Progress|  |
+| 6. 3D 순환판 & 게임 화면 | 4/6 | In Progress|  |
 | 7. 치비 동물 캐릭터 & 표정 | 0/TBD | Not started | - |
 | 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |

@@ -54,10 +54,10 @@
 
 ### 화면 정보 (HUD)
 
-- [ ] **HUD-01**: 별 점수판에 모든 플레이어/팀의 별 개수가 별 순으로 정렬되어 표시되고(동점은 같은 등수), 보드의 말과 같은 캐릭터 아이콘으로 대응된다
+- [x] **HUD-01**: 별 점수판에 모든 플레이어/팀의 별 개수가 별 순으로 정렬되어 표시되고(동점은 같은 등수), 보드의 말과 같은 캐릭터 아이콘으로 대응된다
 - [x] **HUD-02**: 지금 차례(팀전이면 팀 이름과 지금 뛸 팀원 이름)와 다음 차례가 표시된다
 - [x] **HUD-03**: 주사위·이동·연출이 진행되는 동안 진행 버튼이 숨겨지고, 연출이 끝나야 다음 단계로 넘어간다
-- [ ] **HUD-04**: 버튼은 크고 단순하며 글자를 최소화해 아동이 쉽게 조작할 수 있다
+- [x] **HUD-04**: 버튼은 크고 단순하며 글자를 최소화해 아동이 쉽게 조작할 수 있다
 
 ### 캐릭터 (CHAR)
 
@@ -157,10 +157,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ROUND-02 | Phase 6 | Complete |
 | ROUND-03 | Phase 5 | Complete |
 | ROUND-04 | Phase 5 | Complete |
-| HUD-01 | Phase 6 | Pending |
+| HUD-01 | Phase 6 | Complete |
 | HUD-02 | Phase 6 | Complete |
 | HUD-03 | Phase 6 | Complete |
-| HUD-04 | Phase 6 | Pending |
+| HUD-04 | Phase 6 | Complete |
 | CHAR-01 | Phase 7 | Pending |
 | CHAR-02 | Phase 7 | Pending |
 | CHAR-03 | Phase 7 | Pending |
