@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
-status: executing
+status: verifying
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T18:14:08.092Z"
+last_updated: "2026-10-23T19:00:26.974Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 30
-  completed_plans: 29
-  percent: 75
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
 Plan: 11 of 11
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-23 — Phase 8 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -92,6 +92,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P08 | 6min | 2 tasks | 5 files |
 | Phase 08 P09 | 20 min | 3 tasks | 11 files |
 | Phase 08 P10 | 14min | 3 tasks | 14 files |
+| Phase 08 P11 | 45min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-09: ceremony loop clock is offset by the intro (winners 0.8 s, others 0.4 s) and switches blend the pose gap, so intro → loop has no seam
 - [Phase 08]: 08-10: ceremony intro keyed on game.board — fanfare once per game, same game never replays; leaving the ceremony fades the fanfare group
 - [Phase 08]: 08-10: in the ceremony DomPodium replaces every not-ready overlay (loading/lost/failed) with no error copy; role=img on an inner figure so the 🔄 button stays a control
+- [Phase 08]: 08-11: the soak test counts zustand subscriptions by wrapping create's api.subscribe, so hook subscriptions count too
+- [Phase 08]: 08-11: soak.html has an optional ?seed identical-games mode. Headless geometries rise only from first-use uploads of the bounded face cache (the seeded run is flat from game 2), so the strict geometries-equal rule is recorded as not met as written, not as a leak
 
 ### Pending Todos
 
@@ -229,6 +232,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T18:13:58.627Z
+Last session: 2026-10-23T19:00:15.019Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None

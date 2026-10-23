@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: 새 규칙 엔진 & 강사 설정** - v1 데이터를 지키며 강사 설정과 순환판 새 규칙(별·라운드·실패 규칙·출발 보너스)을 만들고, 임시 DOM 화면으로 한 판을 끝까지 플레이한다 (completed 2026-10-22)
 - [x] **Phase 6: 3D 순환판 & 게임 화면** - 3D 사각 순환판·주사위·연출 디렉터와 DOM 점수판·차례·라운드 표시로 임시 화면을 교체한다 (말은 임시 말) (completed 2026-10-23)
 - [x] **Phase 7: 치비 동물 캐릭터 & 표정** - 말을 코드로 만든 귀여운 치비 동물 캐릭터로 바꾸고, 상황에 따라 표정·동작이 바뀌게 한다 (completed 2026-10-23)
-- [ ] **Phase 8: 퀘스트 성공 연출 & 시상식 & 마감** - 신나는 성공 애니메이션, 시상식, 효과음을 넣고 연속 플레이·실기기 안정성을 확인해 마무리한다
+- [x] **Phase 8: 퀘스트 성공 연출 & 시상식 & 마감** - 신나는 성공 애니메이션, 시상식, 효과음을 넣고 연속 플레이·실기기 안정성을 확인해 마무리한다 (completed 2026-10-23)
 
 ## Phase Details
 
@@ -148,7 +148,7 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans:** 10/11 plans executed
+**Plans:** 11/11 plans complete
 
 Plans:
 **Wave 1**
@@ -175,7 +175,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 08-11-PLAN.md — 5판 연속 점검: jsdom 5판 누수 테스트 + dev 전용 soak 페이지·헤드리스 Chrome 실측(heap 미측정 시 N/A 규칙) + 단계 끝 UAT 08-UAT.md(Phase 7 이월 8건 포함, STAB-03 실기기) (wave 5)
+- [x] 08-11-PLAN.md — 5판 연속 점검: jsdom 5판 누수 테스트 + dev 전용 soak 페이지·헤드리스 Chrome 실측(heap 미측정 시 N/A 규칙) + 단계 끝 UAT 08-UAT.md(Phase 7 이월 8건 포함, STAB-03 실기기) (wave 5)
 
 **UI hint**: yes
 
@@ -189,4 +189,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 10/11 | In Progress|  |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 11/11 | Complete   | 2026-10-23 |
