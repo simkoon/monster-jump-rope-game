@@ -43,7 +43,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  usePresentation.getState().reset(EMPTY_DISPLAYED, null);
+  act(() => {
+    usePresentation.getState().reset(EMPTY_DISPLAYED, null);
+  });
   vi.useRealTimers();
 });
 

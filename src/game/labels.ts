@@ -5,8 +5,11 @@ import type { AnimalId } from '../engine/animals';
 import { DIFF_ORDER, type Tile } from '../engine/board';
 import { starsFor } from '../engine/scoring';
 import type { ContentAnalysis } from '../engine/setup';
-import type { Difficulty } from '../schema';
+import type { GameState, MoveResult } from '../engine/state';
+import type { Difficulty, Event } from '../schema';
 import type { FailRule, Settings } from '../settings';
+import type { BeatKind, BeatSpec } from './director/timeline';
+import { nextUp } from './turnOrder';
 
 export const ANIMAL_EMOJI: Record<AnimalId, string> = {
   bear: '🐻',
@@ -113,3 +116,131 @@ export function tileAriaLabel(index: number, tile: Tile, occupants: readonly Ani
   if (occupants.length === 0) return base;
   return `${base}, ${occupants.map((a) => ANIMAL_NAME[a]).join(' ')} 있음`;
 }
+
+// ---- Phase 6 HUD copy (06-04, UI-SPEC "Copywriting Contract") ----
+// Pure helpers for the DOM HUD over the 3D board. User strings (participant / member / event
+// names) are returned verbatim and rendered by React as JSX text only (T-06-08).
+
+// HUD-02 / D-22: who plays after this turn, as a display record.
+export interface NextUpView {
+  animal: AnimalId;
+  name: string;
+  member: string | null; // team mode only
+  sameAgain: boolean; // an extra turn was granted this turn
+}
+
+export function nextUpView(game: GameState): NextUpView | null {
+  const n = nextUp(game);
+  if (!n) return null;
+  const p = game.config.participants.find((x) => x.id === n.pid);
+  if (!p) return null;
+  return {
+    animal: p.animal,
+    name: p.name,
+    member: game.config.mode === 'team' ? n.member : null,
+    sameAgain: n.sameAgain,
+  };
+}
+
+// null = this turn is the last one of the game.
+export function nextUpText(next: NextUpView | null): string {
+  if (!next) return '🏁 이번이 마지막 차례!';
+  const who = `${ANIMAL_EMOJI[next.animal]} ${next.name}`;
+  if (next.sameAgain) return `🔁 한 번 더: ${who}`;
+  return next.member ? `${who} · ${next.member}` : who;
+}
+
+// ROUND-02 / D-24: round block label and accessible name. Dots only up to ROUND_DOTS_MAX rounds.
+export const ROUND_DOTS_MAX = 10;
+
+export function roundLabel(round: number, total: number): string {
+  return round >= total ? '마지막 라운드' : '라운드';
+}
+
+export function roundAria(round: number, total: number): string {
+  return `라운드 ${total}개 중 ${round}번째`;
+}
+
+// D-23 / UI-SPEC S6(a): per-turn status chips. A chip shows only when its source exists in the
+// move AND its beat is no longer pending (dice ↔ dice, bonus ↔ startBonus, event ↔ event,
+// start tile ↔ hop). Event names never appear in chips (the banner shows them).
+export type ChipTone = 'plain' | 'sun' | 'grass' | 'coral' | 'grape';
+
+export interface ChipItem {
+  key: 'dice' | 'bonus' | 'event' | 'start';
+  text: string;
+  tone: ChipTone;
+}
+
+export function chipItems(move: MoveResult | null, pending: readonly BeatKind[]): ChipItem[] {
+  if (!move) return [];
+  const done = (k: BeatKind) => !pending.includes(k);
+  const out: ChipItem[] = [];
+  if (done('dice')) out.push({ key: 'dice', text: `🎲 ${move.roll}`, tone: 'plain' });
+  if (move.startBonus > 0 && done('startBonus')) {
+    out.push({ key: 'bonus', text: `🏁 ⭐+${move.startBonus}`, tone: 'sun' });
+  }
+  const e = move.event;
+  if (e && done('event')) {
+    if (e.eff === 'forward') out.push({ key: 'event', text: `➡️ 앞으로 ${e.steps}칸`, tone: 'grass' });
+    else if (e.eff === 'backward') out.push({ key: 'event', text: `⬅️ 뒤로 ${e.steps}칸`, tone: 'coral' });
+    else out.push({ key: 'event', text: move.extraSuppressed ? '🔁 이번엔 넘어가요' : '🔁 한 번 더!', tone: 'grape' });
+  }
+  if (move.finalKind === 'start' && done('hop')) out.push({ key: 'start', text: '🏁 출발 칸!', tone: 'plain' });
+  return out;
+}
+
+// D-23 / D-24 / UI-SPEC S6(b): banner copy per banner beat; null for dice / preview / hop.
+export type BannerTone = 'sun' | 'grass' | 'coral' | 'grape' | 'final';
+
+export interface BannerCopy {
+  top: string | null; // Heading line (event name for event beats)
+  big: string | null; // Display line
+  sub: string | null; // Body line
+  tone: BannerTone;
+  label: Event['label']; // 보너스 / 함정 chip, '' for none
+}
+
+export function bannerCopy(beat: BeatSpec): BannerCopy | null {
+  switch (beat.kind) {
+    case 'startBonus':
+      return { top: '🏁 출발 보너스', big: `⭐+${beat.stars}`, sub: null, tone: 'sun', label: '' };
+    case 'event': {
+      if (beat.eff === 'extra' && beat.suppressed) {
+        return { top: '🔁 한 번 더는 연속 한 번까지!', big: null, sub: '이번엔 넘어가요', tone: 'grape', label: '' };
+      }
+      if (beat.eff === 'forward') {
+        return { top: beat.name, big: `➡️ 앞으로 ${beat.steps}칸!`, sub: null, tone: 'grass', label: beat.label };
+      }
+      if (beat.eff === 'backward') {
+        return { top: beat.name, big: `⬅️ 뒤로 ${beat.steps}칸!`, sub: null, tone: 'coral', label: beat.label };
+      }
+      return { top: beat.name, big: '🔁 한 번 더!', sub: null, tone: 'grape', label: beat.label };
+    }
+    case 'stars':
+      return { top: '🎉 성공!', big: `⭐+${beat.stars}`, sub: null, tone: 'grass', label: '' };
+    case 'finalRound':
+      return { top: null, big: '🔔 마지막 라운드!', sub: '이번 라운드가 마지막이에요', tone: 'final', label: '' };
+    default:
+      return null;
+  }
+}
+
+// HUD-01: score cell accessible name; the crown prefix only for a rank-1 cell with stars.
+export function scoreAria(rank: number, animal: AnimalId, name: string, stars: number, crowned: boolean): string {
+  return `${crowned ? '1등 왕관, ' : ''}${rank}등 ${ANIMAL_NAME[animal]} ${name} 별 ${stars}개`;
+}
+
+// Canvas cell accessible name (role="img").
+export function boardAria(length: number, name: string): string {
+  return `${length}칸 순환 보드, 지금 ${name} 차례`;
+}
+
+// STAB-02 / D-27 / UI-SPEC S7: loading line and recovery overlay copy.
+export const CTX_COPY = {
+  loading: '판을 준비하고 있어요…',
+  lost: { title: '화면이 잠깐 꺼졌어요', body: '별과 위치는 그대로예요. 아래 버튼을 눌러 다시 그려 주세요.' },
+  failed: { title: '판을 그리지 못했어요', body: '게임은 그대로예요. 버튼을 눌러 다시 시도해 주세요.' },
+} as const;
+
+export const REDRAW_LABEL = '🔄 화면 다시 그리기';
