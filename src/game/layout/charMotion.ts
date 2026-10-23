@@ -201,18 +201,3 @@ export function approachAngle(cur: number, target: number, rate: number, dt: num
   else if (d < -Math.PI) d += TAU;
   return cur + d * clamp01(1 - Math.exp(-rate * dt));
 }
-
-// Field-by-field blend: w = 0 → a, w = 1 → b.
-export function lerpPose(a: Pose, b: Pose, w: number): Pose {
-  const m = (x: number, y: number) => x * (1 - w) + y * w; // exact a at w 0 and b at w 1
-  return {
-    y: m(a.y, b.y),
-    yaw: m(a.yaw, b.yaw),
-    squashY: m(a.squashY, b.squashY),
-    headPitch: m(a.headPitch, b.headPitch),
-    armL: m(a.armL, b.armL),
-    armR: m(a.armR, b.armR),
-    earTilt: m(a.earTilt, b.earTilt),
-    lean: m(a.lean, b.lean),
-  };
-}

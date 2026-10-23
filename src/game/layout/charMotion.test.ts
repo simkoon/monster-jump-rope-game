@@ -9,7 +9,6 @@ import {
   breathePose,
   cheerPose,
   hopPose,
-  lerpPose,
   slumpPose,
   successPose,
   surprisePose,
@@ -193,7 +192,7 @@ describe('breathePose (D-10, not the current turn)', () => {
   });
 });
 
-describe('approachAngle / lerpPose', () => {
+describe('approachAngle', () => {
   it('takes the short way through ±π and never overshoots', () => {
     const short = TAU - 6; // from 3 to −3 the short way is +0.283 through π
     for (const dt of [0.001, 0.016, 0.1, 0.25, 10]) {
@@ -205,14 +204,6 @@ describe('approachAngle / lerpPose', () => {
     expect(b).toBeLessThan(-3);
     expect(b).toBeGreaterThanOrEqual(-3 - short - 1e-12);
     expect(approachAngle(0.5, 0.5, 20, 0.1)).toBe(0.5);
-  });
-
-  it('lerpPose blends field by field', () => {
-    const a = successPose(0.45);
-    const b = slumpPose(0.5);
-    expect(lerpPose(a, b, 0)).toEqual(a);
-    expect(lerpPose(a, b, 1)).toEqual(b);
-    expect(lerpPose(a, b, 0.5).headPitch).toBeCloseTo((a.headPitch + b.headPitch) / 2, 12);
   });
 });
 
