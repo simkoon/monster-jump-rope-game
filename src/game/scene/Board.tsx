@@ -13,8 +13,10 @@
 // (stars beat) or its winner cheer (win beat) the row hides (D-12a), and a tile with 2 or more
 // characters (`crowded`) hides its row so it never covers a back-row face (BOARD-05, D-17a(4), the
 // Pitfall 4 alternative); the tile color still shows the difficulty. Hiding shrinks the row in place
-// (1 − exp(−30·dt)). Under reduced motion lift and crowd hide snap and the act hide is off: bodies
-// hold REST, below the lifted row (D-16). The star count never changes, and no mesh is added: the
+// (1 − exp(−30·dt)). During a hop beat the rows of the mover's departure tile and of every tile on
+// its path snap away, and a hidden row takes its new lift at once, so the landing tile's row is
+// already up when it shows again (07-REVIEW WR-04). Under reduced motion lift and crowd hide snap
+// and the act and hop hides are off: bodies hold REST, below the lifted row (D-16). The star count never changes, and no mesh is added: the
 // same instances are rewritten, and only on frames where a lift or visibility factor moved.
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -208,14 +210,25 @@ export default function Board({ tiles, occupied = NO_TILES, crowded = NO_TILES }
     const pos = displayed.positions;
     const jumper = !reduced && beat?.kind === 'stars' ? pos[beat.pid] : undefined;
     const winners = !reduced && beat?.kind === 'win' ? beat.winners : null;
+    const hop = !reduced && beat?.kind === 'hop' ? beat : null;
     const k = lift.current;
     const v = show.current;
     let moved = false;
     for (const row of rows.current) {
       let acting = row.tile === jumper;
       if (!acting && winners) for (const w of winners) if (pos[w] === row.tile) acting = true;
-      moved = ease(k, row.tile, occupied.has(row.tile) ? 1 : 0, eLift) || moved;
-      moved = ease(v, row.tile, crowded.has(row.tile) || acting ? 0 : 1, eShow) || moved;
+      // 07-REVIEW WR-04: a hopping character's head passes through the row of its departure tile
+      // and of every tile on its path. It reaches the next tile within 100–250 ms, too soon for the
+      // eased hide, so those rows snap away.
+      const hopping = hop !== null && (pos[hop.pid] === row.tile || hop.path.includes(row.tile));
+      // The props follow `displayed` one React render late; a hop that just landed is already in pos.
+      let count = 0;
+      for (const id in pos) if (pos[id] === row.tile) count++;
+      // A hidden row lifts at once, so a landing character never meets it on the way up.
+      const lifted = occupied.has(row.tile) || count > 0 ? 1 : 0;
+      moved = ease(k, row.tile, lifted, v[row.tile] === 0 ? 1 : eLift) || moved;
+      const hide = crowded.has(row.tile) || count > 1 || acting || hopping;
+      moved = ease(v, row.tile, hide ? 0 : 1, hopping ? 1 : eShow) || moved;
     }
     if (!moved || !starRef.current) return;
     writeStars(starRef.current, rows.current, k, v, scratch);

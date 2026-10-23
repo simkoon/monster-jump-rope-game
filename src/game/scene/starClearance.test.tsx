@@ -2,8 +2,9 @@
 // src/game/scene/starClearance.test.tsx — the floating stars of a quest tile never overlap the
 // character standing there (D-12a, 07-REVIEW WR-02, BOARD-05 / D-17a(4)). Mounts the real
 // SceneContents (real Character and Board meshes) and checks every frame: a lone character's lifted
-// stars clear its idle bounce and crown, they hide for its success jump and winner cheer, and a
-// tile with 2+ characters hides its stars. Reduced motion is mocked through a mutable flag.
+// stars clear its idle bounce and crown, they hide for its success jump and winner cheer, a tile
+// with 2+ characters hides its stars, and a hopping character never meets the rows of the tiles it
+// leaves, crosses or lands on (07-REVIEW WR-04). Reduced motion is mocked through a mutable flag.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { Box3, Matrix4, Vector3, type InstancedMesh, type Mesh, type Object3D } from 'three';
@@ -118,6 +119,7 @@ interface Star {
   y: number;
   scale: number;
   bottom: number;
+  box: Box3; // world bounds
 }
 
 // The tile-stars instances of one tile (xz within 0.4 of its center), in world space.
@@ -135,7 +137,8 @@ function tileStars(r: Renderer, tile: number): Star[] {
     if (Math.hypot(p.x - c.x, p.z - c.z) > 0.4) continue;
     // Column length, not decompose: decompose reports scale 1 for a fully hidden (0-scale) matrix.
     const scale = new Vector3().setFromMatrixColumn(m, 0).length();
-    out.push({ y: p.y, scale, bottom: box.copy(bounds(GEO.star)).applyMatrix4(m).min.y });
+    const b = new Box3().copy(bounds(GEO.star)).applyMatrix4(m);
+    out.push({ y: p.y, scale, bottom: b.min.y, box: b });
   }
   return out;
 }
@@ -158,6 +161,28 @@ function expectClear(r: Renderer, tile: number, pid: string, label: string): boo
   expect(stars).toHaveLength(starsFor('hard'));
   for (const st of stars) if (!hidden(st)) expect(st.bottom, label).toBeGreaterThanOrEqual(top + MARGIN);
   return stars.every(hidden);
+}
+
+// World bounds of each character mesh, floor parts (ground disc, turn ring) excluded.
+function charBoxes(r: Renderer, pid: string): Box3[] {
+  refresh(r);
+  const out: Box3[] = [];
+  one(r, `pawn-${pid}`).traverse((o) => {
+    const m = o as Mesh;
+    if (!m.isMesh || o.name === 'chibi-ground' || o.name === 'turn-ring') return;
+    out.push(new Box3().copy(bounds(m.geometry)).applyMatrix4(m.matrixWorld).expandByScalar(MARGIN));
+  });
+  return out;
+}
+
+// Every shown star of the tile stays out of every mesh box of the character (a moving character
+// may be anywhere around the row, so this compares boxes instead of heights).
+function expectApart(r: Renderer, tile: number, pid: string, label: string): void {
+  const parts = charBoxes(r, pid);
+  for (const st of tileStars(r, tile)) {
+    if (hidden(st)) continue;
+    for (const b of parts) expect(st.box.intersectsBox(b), label).toBe(false);
+  }
 }
 
 const LONE = [{ id: 'r', animal: 'rabbit' as const, tile: 3, stars: 1 }]; // crowned leader, current
@@ -204,6 +229,43 @@ describe('star clearance (D-12a, WR-02)', () => {
     expect(allHidden).toBeGreaterThan(0);
     await complete(id, LONE_SHOWN);
     await frames(r, 30);
+    expectRow(tileStars(r, 3), 3, Y_UP, 0.75);
+  });
+
+  // A long miss beat after each hop keeps the queue from draining (which would resync `displayed`
+  // to the empty engine state) while the landing is checked.
+  const HOLD = { kind: 'miss', pid: 'r', ms: 60_000 } as const;
+
+  it('hides the rows of the departure tile and every crossed tile while a character hops (WR-04)', async () => {
+    const r = await mountScene([{ id: 'r', animal: 'rabbit', tile: 2, stars: 1 }], 'r');
+    await frames(r, 60);
+    await ReactThreeTestRenderer.act(async () => {
+      usePresentation.getState().play([{ kind: 'hop', pid: 'r', path: [3, 4], by: 'dice', ms: 500 }, HOLD]);
+    });
+    let crossedHidden = 0;
+    for (let f = 0; f < 30; f++) {
+      await frames(r, 1);
+      for (const tile of [2, 3, 4]) expectApart(r, tile, 'r', `hop frame ${f}, tile ${tile}`);
+      if (tileStars(r, 3).every(hidden)) crossedHidden++;
+    }
+    expect(usePresentation.getState().current?.kind).toBe('miss');
+    expect(crossedHidden).toBeGreaterThan(0);
+    // The crossed hard row comes back at its resting height once the character has passed.
+    await frames(r, 30);
+    expectRow(tileStars(r, 3), 3, Y_REST, 1);
+  });
+
+  it('lands under an already lifted row: the landing tile never meets the character (WR-04)', async () => {
+    const r = await mountScene([{ id: 'r', animal: 'rabbit', tile: 1, stars: 1 }], 'r');
+    await frames(r, 60);
+    await ReactThreeTestRenderer.act(async () => {
+      usePresentation.getState().play([{ kind: 'hop', pid: 'r', path: [2, 3], by: 'dice', ms: 500 }, HOLD]);
+    });
+    for (let f = 0; f < 60; f++) {
+      await frames(r, 1);
+      expectApart(r, 3, 'r', `landing frame ${f}`);
+    }
+    expect(usePresentation.getState().displayed.positions.r).toBe(3);
     expectRow(tileStars(r, 3), 3, Y_UP, 0.75);
   });
 
