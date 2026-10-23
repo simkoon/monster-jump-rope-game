@@ -8,6 +8,8 @@
 // so nobody slides during the win beat. 07-05/07-06: Board gets the displayed tiles as `occupied`
 // (≥ 1 character: the floating stars rise above the head) and `crowded` (≥ 2: the stars hide so
 // they never cover a back-row face).
+// Phase 8 (08-04, D-06): the four effect pools (FxPools) are ALWAYS mounted — never behind a
+// condition or a changing key — so success effects never create or remount GPU objects (Pitfall 2).
 // Lights are code-only (D-03): hemisphere + key + rim from palette LIGHTS — no environment map,
 // no shadow maps, no post-processing (D-04). The ground shadow lives in GameCanvas.
 import { useMemo } from 'react';
@@ -21,6 +23,7 @@ import Board from './Board';
 import CameraRig from './CameraRig';
 import Character from './Character';
 import Dice from './Dice';
+import FxPools from './FxPools';
 import PathPreview from './PathPreview';
 
 export interface SceneProps {
@@ -79,6 +82,7 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
       ))}
       <Dice boardLength={tiles.length} restFace={restFace} />
       <PathPreview points={points} />
+      <FxPools points={points} slots={slots} />
     </>
   );
 }

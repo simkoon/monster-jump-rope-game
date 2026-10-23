@@ -163,7 +163,7 @@ describe('FxPools — stars beat (FX-01, FX-04, D-03, D-04)', () => {
     const ring = pool(r, 'fx-ring');
     const r0 = instancePos(ring, 0);
     expect(near(r0, 0.46)).toBe(true);
-    expect(r0.y).toBeCloseTo(tile.y + 0.02, 9);
+    expect(r0.y).toBeCloseTo(tile.y + 0.02, 6); // instanceMatrix is Float32
     const burst = pool(r, 'fx-burst');
     for (let i = 0; i < 18; i++) expect(near(instancePos(burst, i), 0.46 + 1.4)).toBe(true);
 
