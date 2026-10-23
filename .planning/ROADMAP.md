@@ -148,7 +148,7 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans:** 6/11 plans executed
+**Plans:** 7/11 plans executed
 
 Plans:
 **Wave 1**
@@ -165,7 +165,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-07-PLAN.md — DOM 별 비행: three 없는 순수 투영·머리 위 앵커 + body portal 별 + 점수판 data-pid·도착 반짝임 + reduced·3D 없음 대체 (wave 3)
+- [x] 08-07-PLAN.md — DOM 별 비행: three 없는 순수 투영·머리 위 앵커 + body portal 별 + 점수판 data-pid·도착 반짝임 + reduced·3D 없음 대체 (wave 3)
 - [ ] 08-08-PLAN.md — 효과음 연결: 비트 구독 useSfx(GameApp, 제스처 잠금 해제·건너뛰기 정리) + 🔊/🔇 토글 부품 (wave 3)
 - [ ] 08-09-PLAN.md — 같은 캔버스 3D 시상식 모드: 금색 단 하나 + 우승자 전원 단 위·나머지 바닥 환호 + 보드·그림자 숨김(리마운트 금지) + 등장 컨페티 (wave 3)
 
@@ -189,4 +189,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 6/11 | In Progress|  |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 7/11 | In Progress|  |

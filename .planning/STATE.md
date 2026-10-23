@@ -6,14 +6,14 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T17:16:11.707Z"
+last_updated: "2026-10-23T17:29:28.077Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 7 of 11
+Plan: 8 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -88,6 +88,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P04 | 15min | 3 tasks | 9 files |
 | Phase 08 P05 | 12 min | 2 tasks | 7 files |
 | Phase 08 P06 | 10 min | 2 tasks | 12 files |
+| Phase 08 P07 | 12 min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-06: sfx engine does not import settings — enabled defaults true; 08-08 useSfx syncs soundOn via setEnabled()
 - [Phase 08]: 08-06: sfx.play returns 0 unless the AudioContext is running (no backlog burst on resume); iOS ladder per gesture = suspend+resume, then close+recreate (max 3)
 - [Phase 08]: 08-06: FakeAudioContext ends sources on a manual clock (advance) so stopGroup / fade / cleanup are testable
+- [Phase 08]: 08-07: StarFlight keeps props in a ref so beat-id-keyed timers are not re-armed; the avatar is found by comparing .sb-cell dataset.pid values
+- [Phase 08]: 08-07: star flight CSS uses individual transform properties (translate/scale/rotate) so stacked keyframes never overwrite each other
 
 ### Pending Todos
 
@@ -215,6 +218,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T17:15:48.539Z
+Last session: 2026-10-23T17:29:18.373Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None
