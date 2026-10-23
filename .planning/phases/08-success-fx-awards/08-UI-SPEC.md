@@ -1,7 +1,8 @@
 ---
 phase: 8
 slug: success-fx-awards
-status: draft
+status: approved
+reviewed_at: 2026-10-24
 shadcn_initialized: false
 preset: none
 created: 2026-10-23
@@ -83,10 +84,10 @@ Phase 6 base-4 스케일을 그대로 상속한다(xs 4 · sm 8 · md 12 · base
 
 | 요소 | 태블릿·노트북 | 폰(≤560px) | 짧은 화면(max-height 760px) |
 |------|------|------|------|
-| `🔁 다시 하기` | 72px(`--tap`) | 64px | 56px |
+| `🔁 다시 하기` | 72px(`--tap`) | 64px — **전용 값**(`.ceremony-actions .game-btn { min-height: 64px }`; 폰 `--tap`=58px보다 크게 덮어씀) | 56px |
 | `처음으로` | 같은 줄의 `다시 하기`와 같은 높이로 늘림(72/64/56) **[auto]** — 한 줄 두 버튼의 높이가 다르면 어색하고, 아이 손가락 기준으로 크게 | 〃 | 〃 |
-| 🔊/🔇 | 56px | 48px | 48px |
-| DOM 대체 시상대의 `🔄 화면 다시 그리기` | 56px(`.game-btn--sm`) | 44px | 40px |
+| 🔊/🔇 | 56px | 48px — **전용 값**(`.sound-toggle` 고정 width/height; 폰 `--tap-sm`=46px 토큰을 쓰지 않음) | 48px |
+| DOM 대체 시상대의 `🔄 화면 다시 그리기` | 56px(`.game-btn--sm`) | 44px | **44px**(최소 터치 타깃 44px 유지 — Phase 6 짧은 화면 40px 값을 시상식에서는 쓰지 않음) |
 
 **Exceptions:** (0) Phase 6·7에서 이어받은 예외(md 12px·lg 20px 토큰, 반지름 토큰, Phase 4.1 iPhone 블록, 갤러리 실측 캔버스)는 그대로다. (1) 3D 효과 치수는 px가 아니라 월드 단위(칸 한 변 t = 1.0)이며 §F2 표에서 정한다. (2) `48dvh`, `minmax(200px, 1fr)`, 배너 `min(%, px)`는 비율 값이다. (3) 설정 탭 새 스위치는 편집기 화면 스케일(`.field`·`.hint` 12px, index.css)을 그대로 따른다(Phase 5 승인 스케일).
 
@@ -158,7 +159,7 @@ Phase 6 게임 스케일을 그대로 쓴다. 크기 4개(Display 40 / Heading 2
 | `burst` | `#FFCB2E`(⭐3은 `#FFFFFF`와 번갈아) | 별 버스트, 출발 보너스 반짝이 |
 | `ring` / `ringGold` | `#FFFFFF` / `#FFCB2E` | 충격파 링 / ⭐3 두 번째 링·시상식 링 |
 | `sparkle` | `#FFCB2E` 50% · `#FFFFFF` 50% | 이벤트 보너스 계열 반짝이 |
-| `puff` | `#D8EAF8`(line) 60% · `#FFFFFF` 40% | 이벤트 함정 계열 연기 퍼프(회색·어두운 색 금지 — 겁주지 않게) |
+| `puff` | `#D8EAF8`(line — `palette.ts`에 `FX_COLOR.puff`로 새로 추가되는 유일한 값이며, palette 테스트가 index.css `--line`과 같은지 확인한다) 60% · `#FFFFFF` 40% | 이벤트 함정 계열 연기 퍼프(회색·어두운 색 금지 — 겁주지 않게) |
 | `podium` | `#FFCB2E` + emissive `#FF9F1C` 0.2 | 시상식 금색 단(출발 칸과 같은 금색 계열) |
 | `podiumGround` | `#DDFCED`(candy-mint) | 시상식 바닥 원판(Phase 6 안쪽 마당 색) |
 
@@ -595,11 +596,11 @@ Phase 6 게임 스케일을 그대로 쓴다. 크기 4개(Display 40 / Heading 2
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS (권장: `puff` 색 palette↔index.css 일치 테스트 — 반영함)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS (권장: 폰 다시 하기 64px·🔊 48px 전용 값 명시, 다시 그리기 44px 하한 — 반영함)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-24 (gsd-ui-checker, 6/6 PASS, 권장 3건 반영)
