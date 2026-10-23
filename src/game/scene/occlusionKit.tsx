@@ -477,3 +477,34 @@ export async function sweepPair(L: number, a: number, b: number): Promise<FaceRe
 }
 // Records per sweepPair: (2 + 5 + 5 + 8 + 8 + 8) slots × 8 animals × 6 views.
 export const PAIR_SWEEP_RECORDS = 36 * 8 * VIEWS.length;
+
+// The splits where a sweep of every adjacent pair (all splits na + nb ≤ 8, the current turn on
+// either tile or on neither, 07-VERIFICATION run 3) found faces over 30 %: a full-size current on a
+// side tile in front of a far corner's 6, a crown on tile L − 1 over a lone face on L − 2, the start
+// tile's back row over tile L − 1, rabbit ears across two side tiles.
+export const CROWD_SPLITS = [
+  [2, 6],
+  [6, 2],
+  [1, 6],
+  [4, 3],
+  [2, 5],
+  [5, 2],
+] as const;
+
+// Where the current turn stands on two tiles: the first (p0), the second (its first participant)
+// or neither. 8 on two tiles always include it.
+const pairCurrents = (na: number, nb: number) => (na + nb < 8 ? ['p0', `p${na}`, 'away'] : ['p0', `p${na}`]);
+
+// Two adjacent tiles, every split of CROWD_SPLITS, the current turn on either tile or on neither.
+export async function sweepPairCurrents(L: number, a: number, b: number): Promise<FaceRecord[]> {
+  const out: FaceRecord[] = [];
+  for (const [na, nb] of CROWD_SPLITS) {
+    for (const cur of pairCurrents(na, nb)) {
+      const where = cur === 'away' ? 'away' : `on t${cur === 'p0' ? a : b}`;
+      out.push(...(await sweepOrders(L, [[a, na], [b, nb]], `pair L${L} t${a}+t${b} ${na}+${nb} current ${where}`, cur)));
+    }
+  }
+  return out;
+}
+// Records per sweepPairCurrents: (8 · 2 + 8 · 2 + 7 · 3 · 4) slots × 8 animals × 6 views.
+export const PAIR_CURRENTS_SWEEP_RECORDS = 116 * 8 * VIEWS.length;
