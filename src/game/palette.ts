@@ -75,6 +75,27 @@ export const SCENE_COLOR = {
   shadow: '#123A58',
 } as const;
 
+// Chibi character part colors (Phase 7, 07-UI-SPEC "캐릭터 부품 색", D-01/D-03). Body and head use
+// ANIMAL_COLOR; every other part color comes from here. Only six hexes are new (tints or shades of
+// existing hues); the rest reuse a token or a palette value. Same hex in the dark theme (toy plastic).
+export const CHAR_COLOR = {
+  ink: '#173A57', // outline hull, pupils, noses, closed mouth lines, panda parts, disc rim — = SCENE_COLOR.outline
+  white: '#FFFFFF', // highlights, sclera, panda head, fox muzzle / tail tip, rabbit tail — --panel
+  cheek: '#FF9EC4', // NEW (--pink tint): cheeks (not pig), rabbit / cat inner ears
+  cheekPig: '#FF5C7A', // pig cheeks, dark enough on the pink body — --coral
+  mouth: '#C2304F', // NEW (--coral shade): open mouths, chick mouth
+  tongue: '#FF80B5', // tongues, rabbit / cat noses — --pink
+  sweat: '#7FD3FF', // NEW (sky tint, not the accent): the sad sweat drop
+  sparkle: '#FFCB2E', // the three winner sparkles — --sun
+  bearMuzzle: '#E8C9A0', // NEW (bear tint): bear muzzle, belly and inner ears
+  dogMuzzle: '#EFF8FF', // dog muzzle and belly — --panel-2
+  dogEar: '#0C5E9A', // NEW (--sky-deep shade): dog floppy ears
+  pigNose: '#F0609E', // NEW (--pink shade): pig snout and ears
+  cream: '#FFFDF4', // fox inner ears — SCENE_COLOR.track
+  beak: '#FF9F1C', // chick beak — --sun-deep
+  feather: '#FFB020', // chick head feathers, wings, tail — --normal
+} as const;
+
 // Bright toy-candy lighting: no shadow maps, no post-processing, no HDRI (D-03/D-04).
 export const LIGHTS = {
   hemi: { sky: '#FFFFFF', ground: '#CFE4F5', intensity: 1.4 },

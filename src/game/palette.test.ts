@@ -3,7 +3,7 @@
 // scoreboard dots can never drift apart.
 import css from '../styles/index.css?raw';
 import { ANIMALS } from '../engine/animals';
-import { ANIMAL_COLOR, ANIMAL_EYE, DIFF_COLOR, EVENT_COLOR, LIGHTS, SCENE_COLOR } from './palette';
+import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, DIFF_COLOR, EVENT_COLOR, LIGHTS, SCENE_COLOR } from './palette';
 
 // First occurrence of `--name:#HEX` = the light :root block (the dark block comes later).
 function token(name: string): string {
@@ -64,6 +64,58 @@ describe('ANIMAL_EYE', () => {
     for (const a of ANIMALS) {
       expect(ANIMAL_EYE[a]).toBe(a === 'dog' || a === 'panda' ? '#FFFFFF' : '#173A57');
     }
+  });
+});
+
+describe('CHAR_COLOR (Phase 7 chibi parts)', () => {
+  it('has the UI-SPEC hex values', () => {
+    expect(CHAR_COLOR).toEqual({
+      ink: '#173A57',
+      white: '#FFFFFF',
+      cheek: '#FF9EC4',
+      cheekPig: '#FF5C7A',
+      mouth: '#C2304F',
+      tongue: '#FF80B5',
+      sweat: '#7FD3FF',
+      sparkle: '#FFCB2E',
+      bearMuzzle: '#E8C9A0',
+      dogMuzzle: '#EFF8FF',
+      dogEar: '#0C5E9A',
+      pigNose: '#F0609E',
+      cream: '#FFFDF4',
+      beak: '#FF9F1C',
+      feather: '#FFB020',
+    });
+  });
+
+  it('reuses existing palette values and tokens for the 9 shared keys', () => {
+    expect(CHAR_COLOR.ink).toBe(SCENE_COLOR.outline);
+    expect(CHAR_COLOR.white).toBe(ANIMAL_COLOR.rabbit);
+    expect(CHAR_COLOR.cheekPig).toBe(DIFF_COLOR.hard);
+    expect(CHAR_COLOR.tongue).toBe(ANIMAL_COLOR.pig);
+    expect(CHAR_COLOR.sparkle).toBe(ANIMAL_COLOR.chick);
+    expect(CHAR_COLOR.beak).toBe(ANIMAL_COLOR.fox);
+    expect(CHAR_COLOR.feather).toBe(DIFF_COLOR.normal);
+    expect(CHAR_COLOR.cream).toBe(SCENE_COLOR.track);
+    expect(up(CHAR_COLOR.dogMuzzle)).toBe(token('panel-2'));
+  });
+
+  it('adds only six new hexes (cheek, mouth, sweat, bearMuzzle, dogEar, pigNose)', () => {
+    const known = new Set(
+      [
+        ...Object.values(ANIMAL_COLOR),
+        ...Object.values(ANIMAL_EYE),
+        ...Object.values(DIFF_COLOR),
+        ...Object.values(EVENT_COLOR),
+        ...Object.values(SCENE_COLOR),
+        token('panel-2'),
+      ].map(up),
+    );
+    const fresh = Object.entries(CHAR_COLOR)
+      .filter(([, hex]) => !known.has(up(hex)))
+      .map(([k]) => k)
+      .sort();
+    expect(fresh).toEqual(['bearMuzzle', 'cheek', 'dogEar', 'mouth', 'pigNose', 'sweat']);
   });
 });
 
