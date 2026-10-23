@@ -6,15 +6,15 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T16:35:05.256Z"
+last_updated: "2026-10-23T16:53:40.268Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 22
-  percent: 73
+  completed_plans: 23
+  percent: 75
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 4 of 11
+Plan: 5 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -85,6 +85,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P01 | 6 min | 2 tasks | 8 files |
 | Phase 08 P02 | 8 min | 2 tasks | 11 files |
 | Phase 08 P03 | 10 min | 2 tasks | 8 files |
+| Phase 08 P04 | 15min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -162,6 +163,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-02: delayed-mount stars banner offsets its end fade with --banner-at so the fade still ends at the beat end
 - [Phase 08]: 08-03: useTapToSkip re-installs listeners per beat id (resetKey) so each skippable beat is protected from its starting tap; onSkip held in a ref for inline callers
 - [Phase 08]: 08-03: Escape skip uses bubble-phase document keydown; Modal overlay is data-skip-ignore so Escape in a dialog only closes it
+- [Phase 08]: 08-04: Puffs use their own fourth pool (PUFF_CAP 8); ring inner-ratio thinning is approximated by the shared opacity fade (instances cannot change vertex radii)
+- [Phase 08]: 08-04: 3-star shake offsets world x/y on both camera and lookAt target inside CameraRig; restore writes the exact fit values
 
 ### Pending Todos
 
@@ -205,6 +208,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T16:35:05.250Z
+Last session: 2026-10-23T16:53:17.613Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None
