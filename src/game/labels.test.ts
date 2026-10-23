@@ -3,6 +3,9 @@ import { describe, it, expect } from 'vitest';
 import {
   ANIMAL_EMOJI,
   ANIMAL_NAME,
+  BADGE_COPY,
+  CEREMONY_LIST_LABEL,
+  CEREMONY_TITLE,
   CTX_COPY,
   DIFF_LABEL,
   FAIL_RULE_LABEL,
@@ -15,6 +18,10 @@ import {
   SOUND_SETTING_LABEL,
   SOUND_TOGGLE_EMOJI,
   bannerCopy,
+  ceremonyCardAria,
+  endReasonCopy,
+  podiumAria,
+  winnerLine,
   soundToggleLabel,
   boardAria,
   chipItems,
@@ -436,5 +443,66 @@ describe('sound copy (AUDIO-02, D-20, UI-SPEC F8 / Copywriting)', () => {
     expect(soundToggleLabel(true)).toBe('효과음 끄기');
     expect(soundToggleLabel(false)).toBe('효과음 켜기');
     expect(SOUND_TOGGLE_EMOJI).toEqual({ on: '🔊', off: '🔇' });
+  });
+});
+
+describe('ceremony copy (END-01, END-02, D-13, D-14, UI-SPEC F7 / Copywriting)', () => {
+  it('badge copy: emoji, name and the mouse-over title for all six badges', () => {
+    expect(BADGE_COPY).toEqual({
+      challenger: { emoji: '🏃', name: '도전왕', title: '퀘스트에 가장 많이 도전했어요' },
+      persistent: { emoji: '💪', name: '끈기왕', title: '다시 도전해서 성공했어요' },
+      traveler: { emoji: '🌏', name: '여행왕', title: '판을 가장 멀리 돌았어요' },
+      master: { emoji: '🔥', name: '고수왕', title: '어려운 ⭐3 퀘스트를 가장 많이 성공했어요' },
+      lucky: { emoji: '🍀', name: '행운왕', title: '보너스를 가장 많이 받았어요' },
+      cheer: { emoji: '🎉', name: '응원왕', title: '끝까지 함께 응원했어요' },
+    });
+  });
+
+  it('title, end reasons and list label', () => {
+    expect(CEREMONY_TITLE).toBe('게임 끝!');
+    expect(endReasonCopy('rounds-complete', 2)).toBe('2라운드를 모두 마쳤어요!');
+    expect(endReasonCopy('manual', 3)).toBe('게임을 일찍 마쳤어요!');
+    expect(CEREMONY_LIST_LABEL).toBe('모두의 별');
+  });
+
+  it('winner line: single, co-winners, none (prefixes kept for test compatibility)', () => {
+    expect(winnerLine([{ animal: 'cat', name: '바다' }])).toBe('🏆 우승! 🐱 바다');
+    expect(
+      winnerLine([
+        { animal: 'bear', name: '하늘' },
+        { animal: 'cat', name: '바다' },
+      ]),
+    ).toBe('🏆 공동 우승! 🐻 하늘, 🐱 바다');
+    expect(winnerLine([])).toBeNull();
+  });
+
+  it('card aria: winner prefix, animal name, stars, badge names; podium aria', () => {
+    expect(ceremonyCardAria('bear', '하늘', 5, ['고수왕', '도전왕'], true)).toBe(
+      '우승, 곰 하늘, 별 5개, 칭찬 배지 고수왕, 도전왕',
+    );
+    expect(ceremonyCardAria('cat', '바다', 0, ['응원왕'], false)).toBe('고양이 바다, 별 0개, 칭찬 배지 응원왕');
+    expect(podiumAria(['하늘', '바다'])).toBe('시상대, 우승: 하늘, 바다');
+  });
+
+  it('ceremony copy never uses the banned words (꼴찌, N등)', () => {
+    const copy = [
+      CEREMONY_TITLE,
+      CEREMONY_LIST_LABEL,
+      endReasonCopy('rounds-complete', 4),
+      endReasonCopy('manual', 4),
+      winnerLine([{ animal: 'cat', name: '바다' }])!,
+      winnerLine([
+        { animal: 'bear', name: '하늘' },
+        { animal: 'cat', name: '바다' },
+      ])!,
+      ceremonyCardAria('bear', '하늘', 5, ['고수왕'], true),
+      ceremonyCardAria('fox', '숲', 0, ['응원왕'], false),
+      podiumAria(['하늘']),
+      ...Object.values(BADGE_COPY).flatMap((b) => [b.emoji, b.name, b.title]),
+    ];
+    for (const line of copy) {
+      expect(line).not.toContain('꼴찌');
+      expect(line).not.toMatch(/\d+\s*등/);
+    }
   });
 });
