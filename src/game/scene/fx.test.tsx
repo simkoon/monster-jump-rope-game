@@ -18,6 +18,8 @@ import { boardWith } from '../../engine/testkit';
 import { standPoints } from '../layout/pawnSlots';
 import { BONUS_SPARKLE, BURST_CAP, CONFETTI_CAP, EVENT_SPARKLE, PUFF_CAP, RING_CAP } from '../layout/fxMotion';
 import { FX_COLOR } from '../palette';
+import { boardExtents, ringLayout } from '../layout/ringLayout';
+import { fitCamera } from '../layout/fitCamera';
 
 const rm = vi.hoisted(() => ({ reduced: false }));
 vi.mock('../reducedMotion', () => ({ prefersReducedMotion: () => rm.reduced }));
@@ -379,5 +381,135 @@ describe('FxPools — reduced motion (D-08)', () => {
       await frames(r, 1);
       expect(counts(r)).toEqual([0, 0, 0, 0]);
     }
+  });
+});
+
+// ── Task 3: ⭐3 camera shake + exact restore (FX-04, D-04, D-07, D-08, RESEARCH Pitfall 7) ──────
+
+describe('CameraRig — ⭐3 shake with exact restore', () => {
+  const STEP = 0.02; // 20 ms frames: landMs 770 and 770 + 320 never fall on a frame boundary
+  const layout20 = ringLayout(20);
+  const fitFor = (w: number, h: number) => fitCamera(w / h, boardExtents(layout20));
+
+  // Component-wise (angleTo's acos loses precision near 0, ~3e-8 for identical quaternions).
+  const qDiff = (a: Quaternion, b: Quaternion) =>
+    Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y), Math.abs(a.z - b.z), Math.abs(a.w - b.w));
+
+  function expectFitted(cam: PerspectiveCamera, fit: ReturnType<typeof fitFor>, fitQ: Quaternion) {
+    expect(Math.abs(cam.position.x - fit.position[0])).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(cam.position.y - fit.position[1])).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(cam.position.z - fit.position[2])).toBeLessThanOrEqual(1e-9);
+    expect(qDiff(cam.quaternion, fitQ)).toBeLessThanOrEqual(1e-9);
+  }
+
+  it('⭐3: shakes ≤ 0.06 per axis, translation only, during [landMs, landMs + 320] and restores exactly', async () => {
+    const r = await mount(scene());
+    const cam = probe!.camera;
+    const fit = fitFor(800, 600);
+    const fitQ = cam.quaternion.clone();
+    expectFitted(cam, fit, fitQ);
+    const plan = successPlan(3, STARS_MS[3], false);
+    expect(plan.shakeMs).toBe(320);
+    expect(plan.shakeMs).toBeLessThanOrEqual(350);
+    await play([starsSpec(3)]);
+    let maxOff = 0;
+    for (let k = 1; k * STEP * 1000 < STARS_MS[3]; k++) {
+      await frames(r, 1, STEP);
+      const t = k * STEP * 1000;
+      const dx = cam.position.x - fit.position[0];
+      const dy = cam.position.y - fit.position[1];
+      const dz = cam.position.z - fit.position[2];
+      // Translation only: the view direction never changes (lookAt target moves with the camera).
+      expect(qDiff(cam.quaternion, fitQ)).toBeLessThanOrEqual(1e-9);
+      expect(Math.abs(dz)).toBeLessThanOrEqual(1e-12);
+      if (t > plan.landMs && t < plan.landMs + plan.shakeMs) {
+        expect(Math.abs(dx)).toBeLessThanOrEqual(0.06 + 1e-12);
+        expect(Math.abs(dy)).toBeLessThanOrEqual(0.06 + 1e-12);
+        maxOff = Math.max(maxOff, Math.hypot(dx, dy));
+      } else {
+        expectFitted(cam, fit, fitQ);
+      }
+    }
+    expect(maxOff).toBeGreaterThan(0.01);
+    await completeCurrent();
+    await frames(r, 1, STEP);
+    expectFitted(cam, fit, fitQ);
+  });
+
+  it('D-07: completing the ⭐3 beat mid-shake (skip / watchdog / skipAll) restores in the next frame', async () => {
+    const r = await mount(scene());
+    const cam = probe!.camera;
+    const fit = fitFor(800, 600);
+    const fitQ = cam.quaternion.clone();
+    await play([starsSpec(3)]);
+    await frames(r, 40, STEP); // 800 ms: inside the shake
+    expect(cam.position.distanceTo(new Vector3(...fit.position))).toBeGreaterThan(1e-4);
+    await completeCurrent();
+    await frames(r, 1, STEP);
+    expectFitted(cam, fit, fitQ);
+
+    await play([starsSpec(3)]);
+    await frames(r, 41, STEP);
+    expect(cam.position.distanceTo(new Vector3(...fit.position))).toBeGreaterThan(1e-4);
+    await ReactThreeTestRenderer.act(async () => usePresentation.getState().skipAll());
+    await frames(r, 1, STEP);
+    expectFitted(cam, fit, fitQ);
+  });
+
+  it('⭐1 and ⭐2 never move the camera', async () => {
+    const r = await mount(scene());
+    const cam = probe!.camera;
+    const fit = fitFor(800, 600);
+    const fitQ = cam.quaternion.clone();
+    for (const stars of [1, 2]) {
+      await play([starsSpec(stars)]);
+      for (let k = 0; k < 90; k++) {
+        await frames(r, 1, STEP);
+        expectFitted(cam, fit, fitQ);
+      }
+      await completeCurrent();
+    }
+  });
+
+  it('D-08: reduced motion never shakes', async () => {
+    rm.reduced = true;
+    const r = await mount(scene());
+    const cam = probe!.camera;
+    const fit = fitFor(800, 600);
+    const fitQ = cam.quaternion.clone();
+    await play([starsSpec(3)]);
+    for (let k = 0; k < 110; k++) {
+      await frames(r, 1, STEP);
+      expectFitted(cam, fit, fitQ);
+    }
+  });
+
+  it('a resize during the shake re-fits, keeps shaking around the new fit, then restores to it', async () => {
+    const r = await mount(scene());
+    const cam = probe!.camera;
+    const plan = successPlan(3, STARS_MS[3], false);
+    await play([starsSpec(3)]);
+    await frames(r, 40, STEP); // 800 ms
+    await ReactThreeTestRenderer.act(async () => {
+      probe!.setSize(844, 330);
+    });
+    const fit2 = fitFor(844, 330);
+    let moved = 0;
+    let k = 40;
+    for (; (k + 1) * STEP * 1000 < plan.landMs + plan.shakeMs; k++) {
+      await frames(r, 1, STEP);
+      const dx = cam.position.x - fit2.position[0];
+      const dy = cam.position.y - fit2.position[1];
+      expect(Math.abs(dx)).toBeLessThanOrEqual(0.06 + 1e-12);
+      expect(Math.abs(dy)).toBeLessThanOrEqual(0.06 + 1e-12);
+      expect(Math.abs(cam.position.z - fit2.position[2])).toBeLessThanOrEqual(1e-12);
+      moved = Math.max(moved, Math.hypot(dx, dy));
+    }
+    expect(moved).toBeGreaterThan(1e-4);
+    await frames(r, 5, STEP); // past landMs + 320
+    expect(Math.abs(cam.position.x - fit2.position[0])).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(cam.position.y - fit2.position[1])).toBeLessThanOrEqual(1e-9);
+    expect(Math.abs(cam.position.z - fit2.position[2])).toBeLessThanOrEqual(1e-9);
+    expect(cam.aspect).toBeCloseTo(844 / 330, 9);
   });
 });
