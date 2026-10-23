@@ -6,7 +6,7 @@
 // more behind the same occluder. sweepOrders (occlusionKit.tsx) measures every slot against every
 // animal in every other slot and keeps, per face and view, the worst of all distinct animal orders.
 // faceOrders.bottomTop / leftRight / corners / pairs.test.tsx cover the other tiles of the matrix
-// and the pairs.
+// and the pairs, faceOrders.bottomEnds / topEnds.test.tsx the tiles next to the corners.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   SIZES,
