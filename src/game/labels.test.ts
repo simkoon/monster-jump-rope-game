@@ -3,9 +3,20 @@ import { describe, it, expect } from 'vitest';
 import {
   ANIMAL_EMOJI,
   ANIMAL_NAME,
+  CTX_COPY,
   DIFF_LABEL,
   FAIL_RULE_LABEL,
+  REDRAW_LABEL,
+  ROUND_DOTS_MAX,
   RULES_HINT,
+  bannerCopy,
+  boardAria,
+  chipItems,
+  nextUpText,
+  nextUpView,
+  roundAria,
+  roundLabel,
+  scoreAria,
   estimateBasis,
   estimateLine,
   missingNotices,
@@ -17,6 +28,9 @@ import {
 import { ANIMALS } from '../engine/animals';
 import type { Tile } from '../engine/board';
 import type { Event } from '../schema';
+import { makeGame, player } from '../engine/testkit';
+import type { MoveResult } from '../engine/state';
+import type { BeatSpec } from './director/timeline';
 
 const ev = (eff: Event['eff'], steps: number, name = '로켓 점프'): Event => ({
   id: `e-${eff}-${steps}`,
@@ -158,5 +172,175 @@ describe('tileAriaLabel (D-26)', () => {
     expect(tileAriaLabel(9, { kind: 'event', event: ev('extra', 0, '보너스 점프') }, ['cat'])).toBe(
       '9번 칸, 이벤트 한 번 더(보너스 점프), 고양이 있음',
     );
+  });
+});
+
+// ---- Phase 6 HUD copy (06-04: D-22, D-23, D-24, D-25, D-27, ROUND-02, STAB-02) ----
+
+const mv = (over: Partial<MoveResult> = {}): MoveResult => ({
+  roll: 4,
+  dicePath: [1, 2, 3, 4],
+  landed: 4,
+  event: null,
+  eventPath: [],
+  extraSuppressed: false,
+  to: 4,
+  finalKind: 'quest',
+  startBonus: 0,
+  ...over,
+});
+
+describe('nextUpText / nextUpView (HUD-02, D-22)', () => {
+  it('formats null, sameAgain, team and solo', () => {
+    expect(nextUpText(null)).toBe('🏁 이번이 마지막 차례!');
+    expect(nextUpText({ animal: 'bear', name: '하늘', member: null, sameAgain: true })).toBe('🔁 한 번 더: 🐻 하늘');
+    expect(nextUpText({ animal: 'fox', name: 'A팀', member: '민수', sameAgain: false })).toBe('🦊 A팀 · 민수');
+    expect(nextUpText({ animal: 'rabbit', name: '별이', member: null, sameAgain: false })).toBe('🐰 별이');
+  });
+
+  it('renders user names verbatim (no escaping or HTML parsing in the helper)', () => {
+    expect(nextUpText({ animal: 'pig', name: '<b>x</b>', member: null, sameAgain: false })).toBe('🐷 <b>x</b>');
+  });
+
+  it('nextUpView maps the next participant (solo: member null)', () => {
+    const g = makeGame();
+    expect(nextUpView(g)).toEqual({ animal: 'rabbit', name: 'P2', member: null, sameAgain: false });
+  });
+
+  it('nextUpView: team mode carries the member; null when the game ends after this turn', () => {
+    const g = makeGame({
+      mode: 'team',
+      participants: [
+        player('t1', 'A팀', 'fox', { memberNames: ['민수', '지아'] }),
+        player('t2', 'B팀', 'pig', { memberNames: ['하준', '서윤'] }),
+      ],
+    });
+    expect(nextUpView(g)).toEqual({ animal: 'pig', name: 'B팀', member: '하준', sameAgain: false });
+    expect(nextUpView({ ...g, currentIndex: 1, round: 3 })).toBeNull();
+  });
+});
+
+describe('round copy (ROUND-02, D-24)', () => {
+  it('label switches to 마지막 라운드 from the last round; aria reads R then r', () => {
+    expect(roundLabel(2, 5)).toBe('라운드');
+    expect(roundLabel(5, 5)).toBe('마지막 라운드');
+    expect(roundAria(2, 5)).toBe('라운드 5개 중 2번째');
+    expect(ROUND_DOTS_MAX).toBe(10);
+  });
+});
+
+describe('chipItems (D-23, UI-SPEC S6a)', () => {
+  const texts = (m: MoveResult | null, p: Parameters<typeof chipItems>[1]) => chipItems(m, p).map((c) => c.text);
+  const evMove = mv({ startBonus: 1, event: ev('forward', 3, '점프대'), finalKind: 'quest' });
+
+  it('no move → no chips', () => {
+    expect(chipItems(null, [])).toEqual([]);
+  });
+
+  it('all beats done → dice, bonus, event in order with tones', () => {
+    const items = chipItems(evMove, []);
+    expect(items.map((c) => c.text)).toEqual(['🎲 4', '🏁 ⭐+1', '➡️ 앞으로 3칸']);
+    expect(items.map((c) => c.tone)).toEqual(['plain', 'sun', 'grass']);
+  });
+
+  it('chips appear only after their beat is no longer pending', () => {
+    expect(texts(evMove, ['preview', 'hop', 'startBonus', 'event'])).toEqual(['🎲 4']);
+    expect(texts(evMove, ['dice', 'preview', 'hop', 'startBonus', 'event'])).toEqual([]);
+  });
+
+  it('backward / extra / suppressed extra', () => {
+    const back = chipItems(mv({ event: ev('backward', 2, '미끄럼') }), []);
+    expect(back[1]).toMatchObject({ text: '⬅️ 뒤로 2칸', tone: 'coral' });
+    const extra = chipItems(mv({ event: ev('extra', 0, '보너스 점프'), finalKind: 'event' }), []);
+    expect(extra[1]).toMatchObject({ text: '🔁 한 번 더!', tone: 'grape' });
+    const sup = chipItems(mv({ event: ev('extra', 0, '보너스 점프'), finalKind: 'event', extraSuppressed: true }), []);
+    expect(sup[1]).toMatchObject({ text: '🔁 이번엔 넘어가요', tone: 'grape' });
+  });
+
+  it('start tile chip only once no hop is pending; event names never appear', () => {
+    expect(texts(mv({ to: 0, finalKind: 'start' }), []).at(-1)).toBe('🏁 출발 칸!');
+    expect(texts(mv({ to: 0, finalKind: 'start' }), ['hop'])).not.toContain('🏁 출발 칸!');
+    expect(texts(evMove, []).join(' ')).not.toContain('점프대');
+  });
+});
+
+describe('bannerCopy (D-23, D-24, UI-SPEC S6b)', () => {
+  const evBeat = (eff: 'forward' | 'backward' | 'extra', steps: number, suppressed = false): BeatSpec => ({
+    kind: 'event',
+    pid: 'p1',
+    eff,
+    steps,
+    suppressed,
+    name: '점프대',
+    label: '보너스',
+    ms: 1000,
+  });
+
+  it('startBonus', () => {
+    expect(bannerCopy({ kind: 'startBonus', pid: 'p1', stars: 2, ms: 800 })).toMatchObject({
+      top: '🏁 출발 보너스',
+      big: '⭐+2',
+      tone: 'sun',
+    });
+  });
+
+  it('event forward / backward / extra / suppressed', () => {
+    expect(bannerCopy(evBeat('forward', 3))).toMatchObject({
+      top: '점프대',
+      big: '➡️ 앞으로 3칸!',
+      tone: 'grass',
+      label: '보너스',
+    });
+    expect(bannerCopy(evBeat('backward', 2))).toMatchObject({ big: '⬅️ 뒤로 2칸!', tone: 'coral' });
+    expect(bannerCopy(evBeat('extra', 0))).toMatchObject({ big: '🔁 한 번 더!', tone: 'grape' });
+    expect(bannerCopy(evBeat('extra', 0, true))).toMatchObject({
+      top: '🔁 한 번 더는 연속 한 번까지!',
+      big: null,
+      sub: '이번엔 넘어가요',
+      tone: 'grape',
+    });
+  });
+
+  it('stars and finalRound', () => {
+    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 3, ms: 600 })).toMatchObject({
+      top: '🎉 성공!',
+      big: '⭐+3',
+      tone: 'grass',
+    });
+    expect(bannerCopy({ kind: 'finalRound', ms: 1500 })).toMatchObject({
+      big: '🔔 마지막 라운드!',
+      sub: '이번 라운드가 마지막이에요',
+      tone: 'final',
+    });
+  });
+
+  it('non-banner beats → null', () => {
+    expect(bannerCopy({ kind: 'dice', pid: 'p1', face: 3, ms: 1000 })).toBeNull();
+    expect(bannerCopy({ kind: 'preview', pid: 'p1', path: [1], ms: 500 })).toBeNull();
+    expect(bannerCopy({ kind: 'hop', pid: 'p1', path: [1], by: 'dice', ms: 250 })).toBeNull();
+  });
+});
+
+describe('scoreAria / boardAria / recovery copy (HUD-01, STAB-02)', () => {
+  it('score cell aria with and without the crown', () => {
+    expect(scoreAria(1, 'bear', '하늘', 3, true)).toBe('1등 왕관, 1등 곰 하늘 별 3개');
+    expect(scoreAria(2, 'cat', '별이', 1, false)).toBe('2등 고양이 별이 별 1개');
+  });
+
+  it('board aria', () => {
+    expect(boardAria(20, '하늘')).toBe('20칸 순환 보드, 지금 하늘 차례');
+  });
+
+  it('recovery copy', () => {
+    expect(CTX_COPY.loading).toBe('판을 준비하고 있어요…');
+    expect(CTX_COPY.lost).toEqual({
+      title: '화면이 잠깐 꺼졌어요',
+      body: '별과 위치는 그대로예요. 아래 버튼을 눌러 다시 그려 주세요.',
+    });
+    expect(CTX_COPY.failed).toEqual({
+      title: '판을 그리지 못했어요',
+      body: '게임은 그대로예요. 버튼을 눌러 다시 시도해 주세요.',
+    });
+    expect(REDRAW_LABEL).toBe('🔄 화면 다시 그리기');
   });
 });
