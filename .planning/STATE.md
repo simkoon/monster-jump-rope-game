@@ -5,15 +5,15 @@ milestone_name: 3D 블루마블 재구축
 current_phase: 6
 current_phase_name: 3D 순환판 & 게임 화면
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-10-22T20:46:56.053Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-10-23T01:29:00.206Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 11
-  completed_plans: 6
+  completed_plans: 7
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 6 (3D 순환판 & 게임 화면) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-10-22 — Phase 6 execution started
 
@@ -69,6 +69,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P04 | 4min | 2 tasks | 7 files |
 | Phase 05 P05 | 10min | 3 tasks | 31 files |
 | Phase 06 P02 | 5min | 3 tasks | 9 files |
+| Phase 06 P01 | 7min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,9 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-05: Start-screen animal picks freeze the displayed assignment so one row's pick never reshuffles another; count decrease truncates picks
 - [Phase 06]: 06-02: beat lengths are data (BEAT_MS); one watchdog (ms+500) per beat — no summed budget
 - [Phase 06]: 06-02: director subscribes synchronously to useGameStore; controls visible only when !busy && consumedLog === game.log; drains resync from the engine
+- [Phase 06]: 06-01: D-05 3D versions kept (user approved after registry check), recorded in 06-01-VERSIONS.json
+- [Phase 06]: 06-01: event hex pad circumradius 0.52 (UI-SPEC 0.56) keeps D-11 tile gap >= 0.1t; start tile shifted +0.2 on both axes
+- [Phase 06]: 06-01: vitest css.include lets *.css?raw text reach tests; normal CSS imports stay blanked
 
 ### Pending Todos
 
@@ -154,6 +158,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T20:46:47.365Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-board-game-screen/06-UI-SPEC.md
+Last session: 2026-10-23T01:29:00.201Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

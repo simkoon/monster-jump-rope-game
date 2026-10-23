@@ -28,8 +28,8 @@
 
 ### 순환판 (BOARD)
 
-- [ ] **BOARD-01**: 출발 칸·퀘스트 칸·이벤트 칸으로 된 사각 순환판이 3D로 표시되고, 세로 폰 화면에서도 판 전체가 한 화면에 들어온다
-- [ ] **BOARD-02**: 출발 칸이 랜드마크로 확연히 구분되고, 칸마다 진행 방향이 표시되며, 칸은 서로 간격을 두어 하나씩 셀 수 있다
+- [x] **BOARD-01**: 출발 칸·퀘스트 칸·이벤트 칸으로 된 사각 순환판이 3D로 표시되고, 세로 폰 화면에서도 판 전체가 한 화면에 들어온다
+- [x] **BOARD-02**: 출발 칸이 랜드마크로 확연히 구분되고, 칸마다 진행 방향이 표시되며, 칸은 서로 간격을 두어 하나씩 셀 수 있다
 - [ ] **BOARD-03**: 도착 전에 칸 종류를 구분할 수 있다 — 퀘스트 칸은 난이도 색과 받을 별 개수로, 이벤트 칸은 모양·아이콘으로 (글자 없이)
 - [x] **BOARD-04**: 칸 배치(퀘스트 칸 난이도, 이벤트 칸의 이벤트)는 게임 시작 때 가중치에 따라 정해지고 게임 중에는 바뀌지 않는다
 - [ ] **BOARD-05**: 한 칸에 말이 여러 개(최대 8개) 서 있어도 모든 말이 구분된다
@@ -55,7 +55,7 @@
 ### 화면 정보 (HUD)
 
 - [ ] **HUD-01**: 별 점수판에 모든 플레이어/팀의 별 개수가 별 순으로 정렬되어 표시되고(동점은 같은 등수), 보드의 말과 같은 캐릭터 아이콘으로 대응된다
-- [ ] **HUD-02**: 지금 차례(팀전이면 팀 이름과 지금 뛸 팀원 이름)와 다음 차례가 표시된다
+- [x] **HUD-02**: 지금 차례(팀전이면 팀 이름과 지금 뛸 팀원 이름)와 다음 차례가 표시된다
 - [x] **HUD-03**: 주사위·이동·연출이 진행되는 동안 진행 버튼이 숨겨지고, 연출이 끝나야 다음 단계로 넘어간다
 - [ ] **HUD-04**: 버튼은 크고 단순하며 글자를 최소화해 아동이 쉽게 조작할 수 있다
 
@@ -88,7 +88,7 @@
 ### 안정성 (STAB)
 
 - [ ] **STAB-01**: 새로고침 없이 여러 판(5판)을 연속으로 해도 느려지거나 멈추지 않는다
-- [ ] **STAB-02**: 다른 앱에 다녀와 3D 화면이 꺼지면 "화면 다시 그리기"로 진행 상황을 그대로 유지한 채 복구할 수 있다
+- [x] **STAB-02**: 다른 앱에 다녀와 3D 화면이 꺼지면 "화면 다시 그리기"로 진행 상황을 그대로 유지한 채 복구할 수 있다
 - [ ] **STAB-03**: iPhone·iPad Safari와 노트북 Chrome에서 원활하게 동작한다 (실기기로 확인)
 - [ ] **STAB-04**: 인터넷 연결이 없어도 모든 글자와 화면이 정상 표시된다 (외부 CDN 요청 없음)
 
@@ -140,8 +140,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETUP-07 | Phase 5 | Complete |
 | SETUP-08 | Phase 5 | Complete |
 | SETUP-09 | Phase 5 | Complete |
-| BOARD-01 | Phase 6 | Pending |
-| BOARD-02 | Phase 6 | Pending |
+| BOARD-01 | Phase 6 | Complete |
+| BOARD-02 | Phase 6 | Complete |
 | BOARD-03 | Phase 6 | Pending |
 | BOARD-04 | Phase 5 | Complete |
 | BOARD-05 | Phase 7 | Pending |
@@ -158,7 +158,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ROUND-03 | Phase 5 | Complete |
 | ROUND-04 | Phase 5 | Complete |
 | HUD-01 | Phase 6 | Pending |
-| HUD-02 | Phase 6 | Pending |
+| HUD-02 | Phase 6 | Complete |
 | HUD-03 | Phase 6 | Complete |
 | HUD-04 | Phase 6 | Pending |
 | CHAR-01 | Phase 7 | Pending |
@@ -176,7 +176,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIO-01 | Phase 8 | Pending |
 | AUDIO-02 | Phase 8 | Pending |
 | STAB-01 | Phase 8 | Pending |
-| STAB-02 | Phase 6 | Pending |
+| STAB-02 | Phase 6 | Complete |
 | STAB-03 | Phase 8 | Pending |
 | STAB-04 | Phase 6 | Pending |
 
