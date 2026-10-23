@@ -1,9 +1,9 @@
 // src/game/PlayView.tsx — the temporary DOM play screen (UI-SPEC S3, D-26). Phase 6 replaces it
 // with the 3D ring board and the presentation director.
 //
-// It draws the engine state as-is: turn bar → star scoreboard → ring strip → last-move panel +
-// judgement line → in-flow quest card → phase-driven buttons. No animation, no timers, no effects:
-// every tap calls one harness action and the screen simply re-renders from the new state.
+// It draws the engine state as-is: turn bar → star scoreboard → ring strip → last-move panel →
+// in-flow quest card → phase-driven buttons (which own the judgement line since 06-04).
+// No animation, no timers, no effects: every tap calls one harness action and the screen simply re-renders from the new state.
 // The roll / judge / next / undo buttons go through one short input lock so the second tap of a
 // double tap cannot fire the button drawn in the same place for the next phase or the retry card
 // (CR-01, WR-01 — see useInputLock).
@@ -18,6 +18,7 @@ import DiceResultPanel from './hud/DiceResultPanel';
 import MissionOverlay from './hud/MissionOverlay';
 import ControlsBar, { type NextKind } from './hud/ControlsBar';
 import { useInputLock } from './useInputLock';
+import { nextUpView } from './labels';
 
 export default function PlayView() {
   const game = useGameStore((s) => s.game);
@@ -45,6 +46,7 @@ export default function PlayView() {
         isExtra={turn.isExtra}
         round={game.round}
         totalRounds={config.rules.rounds}
+        next={nextUpView(game)}
         onEndNow={() => useGameStore.getState().endNow()}
       />
 
@@ -54,13 +56,6 @@ export default function PlayView() {
 
       <div aria-live="polite">
         {showMove && lastMove && <DiceResultPanel move={lastMove} />}
-        {phase === 'turnResolved' && lastJudgement && (
-          lastJudgement.success ? (
-            <p className="game-judge-result ok">🎉 성공! ⭐+{lastJudgement.starsAwarded}</p>
-          ) : (
-            <p className="game-judge-result miss">아쉬워요! 이번엔 별 없이 다음 차례</p>
-          )
-        )}
       </div>
 
       {phase === 'awaitingJudgement' && card && (
@@ -77,6 +72,7 @@ export default function PlayView() {
         phase={phase}
         canUndo={canUndo(game)}
         nextKind={nextKind}
+        judgement={phase === 'turnResolved' ? lastJudgement : null}
         onRoll={() => guard(() => useGameStore.getState().roll())}
         onNext={() => guard(() => useGameStore.getState().next())}
         onUndo={() => guard(handleUndo)}
