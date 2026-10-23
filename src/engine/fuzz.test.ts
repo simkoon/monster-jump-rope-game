@@ -1,4 +1,5 @@
-// src/engine/fuzz.test.ts — whole-game invariants over 300 seeded random games (T-05-10, BOARD-04).
+// src/engine/fuzz.test.ts — whole-game invariants over 300 seeded random games (T-05-10, BOARD-04,
+// D-15 per-participant stats).
 import { describe, it, expect } from 'vitest';
 import { advanceTurn, createGame, judge, rollDice } from './game';
 import { ANIMALS } from './animals';
@@ -55,6 +56,12 @@ describe('fuzz: whole-game invariants', () => {
     const rounds = s.config.rules.rounds;
     const all: GameEvent[] = [...s.log.events];
     let prevExtraPid: string | null = null;
+    // D-15 running tallies per pid from the event feed (the fuzz never undoes).
+    const judgedN = new Map<string, number>();
+    const judgedOk = new Map<string, number>();
+    const bonusN = new Map<string, number>();
+    const starSum = new Map<string, number>();
+    const inc = (m: Map<string, number>, k: string, by = 1) => m.set(k, (m.get(k) ?? 0) + by);
 
     let step = 0;
     for (; step < 5000 && s.phase !== 'gameOver'; step++) {
@@ -91,6 +98,31 @@ describe('fuzz: whole-game invariants', () => {
         } else {
           prevExtraPid = null;
         }
+      }
+      for (const e of s.log.events) {
+        if (e.t === 'judged') {
+          inc(judgedN, e.pid);
+          if (e.success) inc(judgedOk, e.pid);
+          inc(starSum, e.pid, e.stars);
+        } else if (e.t === 'startBonus') {
+          inc(bonusN, e.pid);
+          inc(starSum, e.pid, e.stars);
+        }
+      }
+      for (const p of s.config.participants) {
+        const cur = s.stats[p.id];
+        const prev = before.stats[p.id];
+        expect(cur).toBeDefined();
+        for (const k of Object.keys(cur) as (keyof typeof cur)[]) expect(cur[k]).toBeGreaterThanOrEqual(prev[k]);
+        expect(cur.attempts).toBe(cur.successes + cur.failures);
+        expect(cur.retrySuccesses).toBeLessThanOrEqual(cur.successes);
+        expect(cur.hardSuccesses).toBeLessThanOrEqual(cur.successes);
+        expect(cur.attempts).toBe(judgedN.get(p.id) ?? 0);
+        expect(cur.successes).toBe(judgedOk.get(p.id) ?? 0);
+        expect(cur.luckyCount).toBeGreaterThanOrEqual(bonusN.get(p.id) ?? 0);
+      }
+      if (s.phase === 'gameOver') {
+        for (const p of s.config.participants) expect(p.stars).toBe(starSum.get(p.id) ?? 0);
       }
       all.push(...s.log.events);
     }

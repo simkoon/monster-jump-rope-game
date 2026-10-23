@@ -15,6 +15,7 @@ import {
   willEndOnAdvance,
 } from './game';
 import { mulberry32 } from './rng';
+import { EMPTY_STATS } from './stats';
 import { wrap } from './ring';
 import {
   boardWith,
@@ -696,5 +697,131 @@ describe('endGame (ROUND-04, D-22) and selectors', () => {
     const s = makeGame({ rules: { rounds: 1 }, board: boardWith(L) });
     expect(willEndOnAdvance(s)).toBe(false);
     expect(willEndOnAdvance(endGame(s, 'manual'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Phase 8: per-participant game stats (D-15)
+// ---------------------------------------------------------------------------------------------
+
+describe('stats (D-15)', () => {
+  const st = (s: GameState, pid = 'p1') => s.stats[pid];
+
+  it('createGame starts every participant at all zeros (restart = createGame again)', () => {
+    const s = makeGame({ participants: [player('a', 'A', 'bear'), player('b', 'B', 'rabbit')] });
+    expect(s.stats).toEqual({ a: EMPTY_STATS, b: EMPTY_STATS });
+    const played = judge(rollDice(makeGame({ board: boardWith(L) }), dice(1)), true, dice(1));
+    expect(st(played).attempts).toBe(1);
+    const again = makeGame({ board: boardWith(L) });
+    expect(again.stats).toEqual({ p1: EMPTY_STATS, p2: EMPTY_STATS });
+  });
+
+  it('✅ on a hard attempt-1 card counts attempt, success and hard success', () => {
+    const r = judge(onQuest('hard'), true, dice(1));
+    expect(st(r)).toEqual({ ...EMPTY_STATS, attempts: 1, successes: 1, hardSuccesses: 1 });
+    expect(st(r, 'p2')).toEqual(EMPTY_STATS);
+  });
+
+  it('✅ on an easy card is not a hard success', () => {
+    const r = judge(onQuest('easy'), true, dice(1));
+    expect(st(r)).toEqual({ ...EMPTY_STATS, attempts: 1, successes: 1 });
+  });
+
+  it('❌ (retrySame) then ✅ on the retry counts a retry success', () => {
+    const f = judge(onQuest('normal', 'retrySame'), false, dice(1));
+    expect(f.card!.attempt).toBe(2);
+    expect(st(f)).toEqual({ ...EMPTY_STATS, attempts: 1, failures: 1 });
+    const r = judge(f, true, dice(1));
+    expect(st(r)).toEqual({ ...EMPTY_STATS, attempts: 2, failures: 1, successes: 1, retrySuccesses: 1 });
+  });
+
+  it('❌ twice counts two failures', () => {
+    const r = judge(judge(onQuest('normal', 'retryNew'), false, dice(1)), false, dice(1));
+    expect(r.phase).toBe('turnResolved');
+    expect(st(r)).toEqual({ ...EMPTY_STATS, attempts: 2, failures: 2 });
+  });
+
+  it('❌ with failRule noStar counts one attempt and one failure', () => {
+    const r = judge(onQuest('hard', 'noStar'), false, dice(1));
+    expect(r.phase).toBe('turnResolved');
+    expect(st(r)).toEqual({ ...EMPTY_STATS, attempts: 1, failures: 1 });
+  });
+
+  it('undoJudgement after a ✅ restores the pre-verdict stats exactly', () => {
+    const q = onQuest('hard');
+    const u = undoJudgement(judge(q, true, dice(1)));
+    expect(u.stats).toEqual(q.stats);
+    expect(st(u)).toEqual(EMPTY_STATS);
+  });
+
+  it('undo of a retry success restores the failure-only stats', () => {
+    const f = judge(onQuest('normal', 'retrySame'), false, dice(1));
+    const u = undoJudgement(judge(f, true, dice(1)));
+    expect(u.stats).toEqual(f.stats);
+  });
+
+  it('endGame(manual) over a pending quest does not count an attempt', () => {
+    const q = onQuest('hard');
+    const e = endGame(q, 'manual');
+    expect(e.phase).toBe('gameOver');
+    expect(e.stats).toEqual(q.stats);
+    expect(st(e).attempts).toBe(0);
+  });
+
+  it('passing start with startBonus 1 counts one lucky moment', () => {
+    const r = rollDice(at(makeGame({ board: boardWith(L) }), 18), dice(4));
+    expect(r.lastMove!.startBonus).toBe(1);
+    expect(st(r).luckyCount).toBe(1);
+  });
+
+  it('passing start with startBonus 0 is not lucky', () => {
+    const r = rollDice(at(makeGame({ board: boardWith(L), rules: { startBonus: 0 } }), 18), dice(4));
+    expect(st(r).luckyCount).toBe(0);
+  });
+
+  it('start bonus + lucky forward event in one roll counts twice', () => {
+    const board = boardWith(L, { 2: eventTile('forward', 3), 5: questTile('hard') });
+    const r = rollDice(at(makeGame({ board }), 18), dice(4));
+    expect(r.lastMove!.startBonus).toBe(1);
+    expect(st(r).luckyCount).toBe(2);
+  });
+
+  const landOn = (tile: ReturnType<typeof eventTile>, patch?: (g: GameState) => GameState) =>
+    rollDice(makeGame({ board: boardWith(L, { 3: tile }), patch }), dice(3));
+
+  it('forward event with no label is lucky', () => {
+    expect(st(landOn(eventTile('forward', 2))).luckyCount).toBe(1);
+  });
+
+  it('backward event with no label is not lucky', () => {
+    expect(st(landOn(eventTile('backward', 2))).luckyCount).toBe(0);
+  });
+
+  it('forward event labelled 함정 is not lucky', () => {
+    expect(st(landOn(eventTile('forward', 2, { label: '함정' }))).luckyCount).toBe(0);
+  });
+
+  it('backward event labelled 보너스 is lucky', () => {
+    expect(st(landOn(eventTile('backward', 2, { label: '보너스' }))).luckyCount).toBe(1);
+  });
+
+  it('a granted extra is lucky, a suppressed extra is not', () => {
+    const granted = landOn(eventTile('extra'));
+    expect(granted.turn.extraGranted).toBe(true);
+    expect(st(granted).luckyCount).toBe(1);
+    const suppressed = landOn(eventTile('extra'), (g) => ({
+      ...g,
+      turn: { isExtra: true, bonusPaid: false, extraGranted: false },
+    }));
+    expect(suppressed.lastMove!.extraSuppressed).toBe(true);
+    expect(st(suppressed).luckyCount).toBe(0);
+  });
+
+  it('transitions never mutate the input stats', () => {
+    const q = onQuest('hard');
+    const before = JSON.stringify(q.stats);
+    judge(q, true, dice(1));
+    judge(q, false, dice(1));
+    expect(JSON.stringify(q.stats)).toBe(before);
   });
 });
