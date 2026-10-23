@@ -53,12 +53,14 @@ const REGULAR: readonly SlotTable[] = [
 // Start tile (1.4 × 1.4), index n − 2: slot 0 is the frontmost (largest z); every slot keeps clear
 // of the two gate pillars (StartGate.tsx). UI-SPEC C5 values, except six slots moved off the pillars
 // so no head runs into one (07-02, slotOcclusion.test.ts): n 3 slot 2, n 4 slot 3, n 7 slots 0/1/6,
-// n 8 slot 0.
+// n 8 slot 0. 07-05 (UI-SPEC C6 arch check): n 5 slot 1 pulled 0.10 toward +z, which brings the
+// arch's cover of that face from about 51 % to 27 %; the other arch-covered back slots do not get
+// better within the 0.10 bound and are left for the phase-end look check.
 const START: readonly SlotTable[] = [
   { s: 0.9, slots: [[0.32, 0.15], [0.12, -0.46]] },
   { s: 0.85, slots: [[0.15, 0.27], [-0.53, 0.01], [0.27, -0.48]] },
   { s: 0.85, slots: [[0.28, 0.42], [-0.09, -0.53], [-0.55, 0.22], [0.37, -0.55]] },
-  { s: 0.72, slots: [[0.46, 0.37], [0.02, 0.15], [-0.58, -0.16], [-0.24, -0.57], [0.47, -0.57]] },
+  { s: 0.72, slots: [[0.46, 0.37], [0.02, 0.25], [-0.58, -0.16], [-0.24, -0.57], [0.47, -0.57]] },
   { s: 0.68, slots: [[0.51, 0.42], [-0.08, 0.09], [-0.57, 0.27], [-0.51, -0.42], [-0.03, -0.56], [0.37, -0.52]] },
   {
     s: 0.65,
