@@ -130,11 +130,13 @@ describe('설정 저장·복구 (DATA-07)', () => {
   });
 
   it('soundOn이 없는 예전 저장분은 효과음 켜짐으로 복구되고 나머지 필드는 유지된다 (버전 그대로)', async () => {
+    // In-memory soundOn false first (setState persists, so before the legacy raw is written): the
+    // rehydrated true must come from the schema's .catch, not from memory.
+    useSettings.setState({ soundOn: false });
     localStorage.setItem(
       SETTINGS_KEY,
       '{"state":{"failRule":"noStar","defaultRounds":8,"startBonus":0,"boardSize":16},"version":1}',
     );
-    useSettings.setState({ soundOn: false }); // the rehydrated value must come from the schema, not memory
     await useSettings.persist.rehydrate();
     expect(pickSettings()).toEqual({ failRule: 'noStar', defaultRounds: 8, startBonus: 0, boardSize: 16, soundOn: true });
   });

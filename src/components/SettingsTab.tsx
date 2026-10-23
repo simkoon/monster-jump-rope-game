@@ -9,10 +9,15 @@ import {
   type BoardSizeValue,
 } from '../settings';
 import { useGameStore } from '../harness/useGameStore';
+import { SOUND_OPTIONS, SOUND_SETTING_HINTS, SOUND_SETTING_LABEL } from '../game/labels';
 
 // 편집기 ⚙️ 설정 탭 (UI-SPEC S1, D-23, CFG-01~04, DATA-07).
 // 값을 바꾸는 즉시 별도 키(powerjumping_settings_v1)에 자동 저장된다 — 저장 버튼·토스트·
 // "기본값으로 되돌리기" 버튼 없음. 설정은 내보내기 파일에 들어가지 않는다.
+// 효과음(Phase 8 D-20)만은 진행 중인 판에도 바로 적용된다 — sfx 모듈은 여기서 부르지 않는다
+// (편집기에는 게임 화면이 없고, AudioContext는 다음 게임 탭에서 잠금 해제된다).
+
+const SOUND_SEG_OPTIONS: SegOption<string>[] = SOUND_OPTIONS.map((o) => ({ ...o }));
 
 const FAIL_RULE_OPTIONS: SegOption<FailRule>[] = [
   { value: 'retrySame', label: '같은 미션 한 번 더' },
@@ -49,6 +54,8 @@ export default function SettingsTab() {
   const setDefaultRounds = useSettings((s) => s.setDefaultRounds);
   const setStartBonus = useSettings((s) => s.setStartBonus);
   const setBoardSize = useSettings((s) => s.setBoardSize);
+  const soundOn = useSettings((s) => s.soundOn);
+  const setSoundOn = useSettings((s) => s.setSoundOn);
   const activeGame = useGameStore((s) => s.game);
 
   return (
@@ -112,6 +119,21 @@ export default function SettingsTab() {
           ariaLabel="보드 크기"
         />
         <p className="hint">칸이 많을수록 한 바퀴가 길어요. (기본 20칸)</p>
+      </div>
+
+      <div className="field settings-group">
+        <label>{SOUND_SETTING_LABEL}</label>
+        <SegmentedControl<string>
+          options={SOUND_SEG_OPTIONS}
+          value={soundOn ? 'on' : 'off'}
+          onChange={(v) => setSoundOn(v === 'on')}
+          ariaLabel={SOUND_SETTING_LABEL}
+        />
+        {SOUND_SETTING_HINTS.map((h) => (
+          <p key={h} className="hint">
+            {h}
+          </p>
+        ))}
       </div>
 
       <p className="settings-note">

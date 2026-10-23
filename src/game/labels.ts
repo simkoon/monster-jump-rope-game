@@ -276,3 +276,27 @@ export const CTX_COPY = {
 } as const;
 
 export const REDRAW_LABEL = '🔄 화면 다시 그리기';
+
+// ---- Phase 8 sound copy (AUDIO-02, D-20, UI-SPEC F8 / Copywriting) ----
+// The 설정 탭 효과음 group and the 🔊/🔇 toggle (SoundToggle, 08-08) share these strings.
+export const SOUND_SETTING_LABEL = '효과음';
+
+// SegmentedControl takes string values only — the settings tab maps 'on' / 'off' to soundOn.
+export const SOUND_OPTIONS: readonly { value: 'on' | 'off'; label: string }[] = [
+  { value: 'on', label: '🔊 켜기' },
+  { value: 'off', label: '🔇 끄기' },
+];
+
+// Hint 1 says the switch applies at once (it sits under the "다음 판부터" banner, Pitfall 9).
+export const SOUND_SETTING_HINTS: readonly string[] = [
+  '바로 적용돼요. 게임 화면 오른쪽 위 🔊 버튼으로도 켜고 끌 수 있어요.',
+  '아이폰·아이패드는 무음 모드를 켜면 소리가 나지 않아요.',
+  '성공 축하는 화면을 한 번 톡 치면 바로 넘어가요.',
+];
+
+// Toggle aria-label / title: what a tap will do (on → "끄기"). The emoji shows the current state.
+export function soundToggleLabel(on: boolean): string {
+  return on ? '효과음 끄기' : '효과음 켜기';
+}
+
+export const SOUND_TOGGLE_EMOJI = { on: '🔊', off: '🔇' } as const;
