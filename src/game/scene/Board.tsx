@@ -21,11 +21,10 @@ import {
   tileTop,
   type RingLayout,
 } from '../layout/ringLayout';
-import { DIFF_THREE, GEO, MAT } from './geometries';
+import { DIFF_THREE, GEO, MAT, STAR_CAP, TILE_CAP } from './geometries';
 import StartGate from './StartGate';
-
-export const TILE_CAP = 24; // largest board (D-07: 16/20/24)
-export const STAR_CAP = 72; // 24 tiles × 3 stars
+import Arrows from './Arrows';
+import TileIcons from './TileIcons';
 
 const STAR_LIFT = 0.55; // above the tile top
 const STAR_SPACING = 0.3; // across the travel direction
@@ -146,6 +145,8 @@ export default function Board({ tiles }: { tiles: readonly Tile[] }) {
         dispose={null}
       />
       <StartGate layout={layout} />
+      <Arrows layout={layout} />
+      <TileIcons layout={layout} tiles={tiles} />
     </group>
   );
 }

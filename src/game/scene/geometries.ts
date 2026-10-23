@@ -150,6 +150,11 @@ function centered<G extends BufferGeometry>(g: G): G {
   return g;
 }
 
+// Fixed InstancedMesh capacities (Pitfall 8): the largest board is 24 tiles (D-07) with at most
+// 3 stars each. Meshes keep these capacities and only change `count`.
+export const TILE_CAP = 24;
+export const STAR_CAP = 72;
+
 // ── shared geometries ───────────────────────────────────────────────────────────────────────
 
 export const GEO = {
