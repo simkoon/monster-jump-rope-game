@@ -5,15 +5,15 @@ milestone_name: 3D 블루마블 재구축
 current_phase: 7
 current_phase_name: 치비 동물 캐릭터 & 표정
 status: executing
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-10-23T04:43:42.322Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-10-23T05:02:31.337Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 7 execution started
 
@@ -76,6 +76,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P06 | 2 sessions | 3 tasks | 16 files |
 | Phase 07 P01 | 7min | 2 tasks | 14 files |
 | Phase 07 P02 | 7min | 3 tasks | 8 files |
+| Phase 07 P03 | 14min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,9 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-01: director skips beats only for a manual gameEnded; rounds-complete plays the 1500 ms win beat before the result screen
 - [Phase 07]: 07-02: six start-table slots moved off the gate pillars (n3 s2, n4 s3, n7 s0/1/6, n8 s0) so no head runs into one; slotOcclusion.test.ts proves <=30% head cover with the real fitCamera
 - [Phase 07]: 07-02: charMotion curves are clock-free and end at REST (successPose holds yaw 2pi); reduced motion is applied by the consumer
+- [Phase 07]: 07-03: chibi parts sit on ellipsoid surfaces via onSurface (normal = local +Z); bear/dog/fox mouths on the muzzle front
+- [Phase 07]: 07-03: panda eyes lifted 0.022 and scaled 0.8 over the ink patches; torus tails/arcs get end caps and fattened inverted-torus outlines
+- [Phase 07]: 07-03: CHAR-01/CHAR-02 stay Pending - parts built here, 07-04 renders the characters, 07-05 closes after the gallery
 
 ### Pending Todos
 
@@ -175,6 +179,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T04:43:42.316Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-10-23T05:02:31.332Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None

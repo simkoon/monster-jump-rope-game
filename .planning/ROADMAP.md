@@ -107,7 +107,7 @@ Plans:
   3. 캐릭터가 기다리는 동안 살짝 움직이고(대기), 칸을 지날 때마다 점프하며, 성공하면 점프·회전, 실패하면 아쉬워하고, 우승하면 환호한다
   4. 한 칸에 말이 최대 8개 모여도 모든 캐릭터가 서로 가리지 않고 하나하나 구분된다
 
-**Plans:** 2/5 plans executed
+**Plans:** 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -117,7 +117,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 07-03-PLAN.md — 치비 8종 지오메트리: CHAR_COLOR, 버텍스 컬러 부품·inverted hull, 종별 정적 노드 6개, 얼굴 9종 캐시, 보이기 전용 ChibiModel (wave 2)
+- [x] 07-03-PLAN.md — 치비 8종 지오메트리: CHAR_COLOR, 버텍스 컬러 부품·inverted hull, 종별 정적 노드 6개, 얼굴 9종 캐시, 보이기 전용 ChibiModel (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -154,5 +154,5 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
-| 7. 치비 동물 캐릭터 & 표정 | 2/5 | In Progress|  |
+| 7. 치비 동물 캐릭터 & 표정 | 3/5 | In Progress|  |
 | 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |
