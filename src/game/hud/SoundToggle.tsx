@@ -8,7 +8,8 @@
 // The skip-ignore attribute: a tap here never skips the success / win beat (useSkipOnTap). No input-lock
 //   guard either — this is not a play action. The emoji shows the current state; aria-label and
 //   title say what a tap will do (no aria-pressed, the label already changes).
-// Placement (canvas cell top-right) and styling are added by 08-10 (GameStage layout).
+// Placement (canvas cell top-right, GameStage) and styling (game.css, 08-10); `is-off` only picks
+// the flat off background.
 import { useSettings } from '../../settings';
 import { SOUND_TOGGLE_EMOJI, soundToggleLabel } from '../labels';
 import sfx from '../sfx/sfx';
@@ -25,7 +26,14 @@ export default function SoundToggle() {
   };
 
   return (
-    <button type="button" className="sound-toggle" data-skip-ignore aria-label={label} title={label} onClick={onClick}>
+    <button
+      type="button"
+      className={soundOn ? 'sound-toggle' : 'sound-toggle is-off'}
+      data-skip-ignore
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+    >
       {soundOn ? SOUND_TOGGLE_EMOJI.on : SOUND_TOGGLE_EMOJI.off}
     </button>
   );

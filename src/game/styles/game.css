@@ -1232,3 +1232,376 @@
   .sb-cell.is-hit .sb-avatar { animation: none; }
   .fx-star.fx-star--still { animation: fx-star-still 200ms ease-out both; }
 }
+
+/* ============================================================
+   === Phase 8: ceremony (08-10) ===
+   The award ceremony as a mode of the same stage (UI-SPEC F7, D-11 ~ D-16):
+   portrait = head / podium cell (the same canvas cell, ≥ 200px) / panel
+   (winner line + 모두의 별 cards, max 48dvh, scrolls inside) / actions;
+   landscape = the podium cell over every row of column 1, head, panel and
+   actions in a 360px right column (300px on phone landscape). Overrides beat
+   the play-stage grid rules through .game-stage.stage.stage--ceremony.
+   D-12 / D-13: every non-winner card has the same look — no place-based
+   selectors, no dimming; only .is-winner is gold. Badge chips all share one
+   look (the emoji carries the color). The 🔊/🔇 toggle sits in the canvas
+   cell's top-right corner in play and ceremony (UI-SPEC F8, z 4: over the
+   banner 3 and the overlays 2, under the star flight 40). The DOM podium
+   fallback stands in the canvas cell when the 3D podium is missing.
+   Intro: title scale .85 → 1 + fade 200ms; cards fade + 8px rise 200ms,
+   staggered by --i × 40ms while .is-intro; DOM podium winners pop 200ms.
+   Tokens and color-mix only; participant color through the inline --pc.
+   ============================================================ */
+.game-stage.stage.stage--ceremony {
+  grid-template-rows: auto minmax(200px, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---- head: 게임 끝! + the end reason ---- */
+.ceremony-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+}
+.ceremony-title {
+  margin: 0;
+  font-size: var(--game-display);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ink);
+  animation: ceremony-title-in 200ms ease-out both;
+}
+.ceremony-reason {
+  margin: 0;
+  font-size: var(--game-body);
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+/* ---- panel: winner line + the 모두의 별 card grid ---- */
+.ceremony-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  max-height: 48dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.ceremony-winner {
+  margin: 0;
+  font-size: var(--game-heading);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.ceremony-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.ceremony-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 88px;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  border: 2px solid var(--toy-edge);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+.ceremony-card.is-winner {
+  background: color-mix(in srgb, var(--sun) 22%, var(--panel));
+  border: 3px solid var(--sun);
+}
+.ceremony-panel.is-intro .ceremony-card {
+  animation: ceremony-card-in 200ms ease-out calc(var(--i, 0) * 40ms) both;
+}
+.ceremony-card-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ceremony-avatar {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--pc, var(--panel-2));
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: var(--game-body);
+  line-height: 1;
+}
+.ceremony-trophy {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--sun);
+  display: grid;
+  place-items: center;
+  font-size: var(--game-caption);
+  line-height: 1;
+  box-shadow: var(--shadow-sm);
+}
+.ceremony-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--game-body);
+  font-weight: 800;
+  line-height: 1.35;
+}
+.ceremony-stars {
+  flex: none;
+  font-size: var(--game-body);
+  font-weight: 900;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.ceremony-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ceremony-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid color-mix(in srgb, var(--sun-deep) 55%, var(--panel));
+  color: var(--ink);
+  font-size: var(--game-caption);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ---- actions: 🔁 다시 하기 (sky, flex 2) + 처음으로 (neutral, flex 1), one height ---- */
+.ceremony-actions {
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+}
+.game-stage.stage.stage--ceremony .ceremony-actions > .game-btn,
+.game-stage.stage.stage--ceremony .ceremony-actions > .game-btn--sm {
+  min-height: 72px;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+}
+.game-stage.stage.stage--ceremony .ceremony-actions > .game-btn { flex: 2; }
+.game-stage.stage.stage--ceremony .ceremony-actions > .game-btn--sm { flex: 1; font-weight: 900; }
+
+/* ---- 🔊/🔇 sound toggle: canvas cell top-right, play and ceremony ---- */
+.sound-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 2px solid var(--toy-edge);
+  box-shadow: var(--shadow-sm), var(--gloss);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--game-heading);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s;
+}
+.sound-toggle.is-off { background: var(--panel-2); }
+.sound-toggle:active { transform: translateY(2px); box-shadow: none; }
+.sound-toggle:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+/* ---- DOM podium fallback (no 3D): one gold block, 👑 over each winner ---- */
+.dom-podium {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.dom-podium-figure {
+  flex: 1;
+  min-height: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dom-podium-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 100%;
+}
+.dom-podium-winners {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  max-width: calc(4 * 80px + 3 * 8px + 32px);
+}
+.dom-podium.is-many .dom-podium-winners { max-width: calc(4 * 56px + 3 * 8px + 32px); }
+.dom-podium-winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dom-podium-crown {
+  font-size: var(--game-heading);
+  line-height: 1;
+}
+.dom-podium-champ {
+  width: 80px;
+  height: 80px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--pc, var(--panel-2));
+  border: 3px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: var(--game-display);
+  line-height: 1;
+  animation: dom-podium-pop 200ms ease-out both;
+}
+.dom-podium.is-many .dom-podium-champ {
+  width: 56px;
+  height: 56px;
+  font-size: var(--game-heading);
+}
+.dom-podium-block {
+  height: 64px;
+  box-sizing: border-box;
+  border-radius: 16px 16px 8px 8px;
+  background: linear-gradient(180deg, var(--sun), var(--sun-deep));
+  border: 3px solid var(--toy-edge);
+  box-shadow: var(--shadow-sm), var(--gloss);
+}
+.dom-podium-others {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.dom-podium-dot {
+  width: 48px;
+  height: 48px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--pc, var(--panel-2));
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: var(--game-body);
+  line-height: 1;
+}
+.game-stage.stage .dom-podium .dom-podium-redraw { min-height: 56px; flex: none; }
+
+@keyframes ceremony-title-in {
+  from { opacity: 0; scale: .85; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes ceremony-card-in {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes dom-podium-pop {
+  from { scale: .85; }
+  to { scale: 1; }
+}
+
+/* ---- phone (≤ 560px): smaller cards, 64px actions, 48px toggle ---- */
+@media (max-width: 560px) {
+  .ceremony-card { min-height: 80px; }
+  .ceremony-avatar { width: 32px; height: 32px; }
+  .ceremony-actions { gap: 8px; }
+  .game-stage.stage.stage--ceremony .ceremony-actions > .game-btn,
+  .game-stage.stage.stage--ceremony .ceremony-actions > .game-btn--sm { min-height: 64px; padding: 0 8px; }
+  .sound-toggle { width: 48px; height: 48px; }
+  .dom-podium-champ { width: 64px; height: 64px; }
+  .dom-podium.is-many .dom-podium-champ { width: 48px; height: 48px; }
+  .dom-podium-winners { max-width: calc(4 * 64px + 3 * 8px + 32px); }
+  .dom-podium.is-many .dom-podium-winners { max-width: calc(4 * 48px + 3 * 8px + 32px); }
+  .dom-podium-block { height: 48px; }
+  .dom-podium-dot { width: 40px; height: 40px; }
+  .game-stage.stage .dom-podium .dom-podium-redraw { min-height: 44px; }
+}
+
+/* ---- short screens (max-height 760px): 56px actions, 48px toggle, 44px redraw ---- */
+@media (max-height: 760px) {
+  .game-stage.stage.stage--ceremony .ceremony-actions > .game-btn,
+  .game-stage.stage.stage--ceremony .ceremony-actions > .game-btn--sm { min-height: 56px; }
+  .sound-toggle { width: 48px; height: 48px; }
+  .game-stage.stage .dom-podium .dom-podium-redraw { min-height: 44px; }
+}
+
+/* ---- landscape: podium cell over column 1, a 360px right column ---- */
+@media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+  .game-stage.stage.stage--ceremony {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .game-stage.stage.stage--ceremony > .stage-canvas-cell { grid-row: 1 / -1; grid-column: 1; }
+  .game-stage.stage.stage--ceremony > .ceremony-head { grid-row: 1; grid-column: 2; }
+  .game-stage.stage.stage--ceremony > .ceremony-panel { grid-row: 2; grid-column: 2; max-height: none; }
+  .game-stage.stage.stage--ceremony > .ceremony-actions { grid-row: 3; grid-column: 2; }
+}
+@media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 500px) {
+  .game-stage.stage.stage--ceremony { grid-template-columns: minmax(0, 1fr) 300px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ceremony-title,
+  .ceremony-panel.is-intro .ceremony-card,
+  .dom-podium-champ { animation: none; }
+  .sound-toggle { transition: none; }
+}

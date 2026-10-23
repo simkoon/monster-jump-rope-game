@@ -26,17 +26,19 @@ export default function DomPodium({ game, onRedraw }: DomPodiumProps) {
   return (
     <div className={winners.length > 4 ? 'dom-podium is-many' : 'dom-podium'}>
       <div className="dom-podium-figure" role="img" aria-label={podiumAria(winners.map((p) => p.name))}>
-        <div className="dom-podium-winners">
-          {winners.map((p) => (
-            <span key={p.id} className="dom-podium-winner" title={p.name}>
-              <span className="dom-podium-crown">👑</span>
-              <span className="dom-podium-champ" style={color(p.animal)}>
-                {ANIMAL_EMOJI[p.animal]}
+        <div className="dom-podium-tier">
+          <div className="dom-podium-winners">
+            {winners.map((p) => (
+              <span key={p.id} className="dom-podium-winner" title={p.name}>
+                <span className="dom-podium-crown">👑</span>
+                <span className="dom-podium-champ" style={color(p.animal)}>
+                  {ANIMAL_EMOJI[p.animal]}
+                </span>
               </span>
-            </span>
-          ))}
+            ))}
+          </div>
+          <div className="dom-podium-block" />
         </div>
-        <div className="dom-podium-block" />
         {others.length > 0 && (
           <div className="dom-podium-others">
             {others.map((p) => (
