@@ -2,15 +2,16 @@
 phase: 06-board-game-screen
 verified: 2026-10-23T02:49:34Z
 status: human_needed
-score: 53/54 must-haves verified (automatable scope)
-behavior_unverified: 1
+score: 54/54 must-haves verified (automatable scope)
+behavior_unverified: 0
 overrides_applied: 0
 automatable_verdict: passed # every automatable truth, artifact, key link, grep and bundle guard passed; only deferred real-device checks remain
-behavior_unverified_items:
-  - truth: "D-27 / STAB-02 (06-05): GameCanvas registers watchContextLoss on the WebGL canvas in onCreated, so a real webglcontextlost on the R3F canvas calls GameStage's onLost"
-    test: "On a real device (or a dev build on desktop: window.__loseContext()), lose the WebGL context of the running board"
-    expected: "The 🔄 화면 다시 그리기 overlay appears over the canvas cell; tapping it remounts the board with the same stars, positions and turn"
-    why_human: "jsdom has no WebGL. stage.test.tsx swaps GameCanvas for src/test/fakeGameCanvas.tsx and triggers loss through the onLost prop; contextLoss.test.ts tests the watcher on a plain <canvas>. No automated test exercises the GameCanvas.tsx:58-61 onCreated glue on a real WebGL canvas. Covered by deferred human item 6."
+behavior_unverified_items: [] # closed after the first pass: src/game/scene/gameCanvas.test.tsx exercises the real GameCanvas onCreated → watchContextLoss glue
+re_verification:
+  date: 2026-10-23
+  closed:
+    - "GameCanvas onCreated → watchContextLoss → onLost (GameCanvas.tsx:58-61) and unwatch on unmount (:68-75) — 6 unit tests with a mocked R3F Canvas that renders a plain <canvas>, plus a GameApp integration test where a DOM webglcontextlost event shows the alertdialog, hides the controls, and 🔄 remounts with the engine game unchanged (same object)"
+  evidence: "npx tsc -b && npx vitest run → 44 files, 925 tests passed"
 human_verification: # Deferred by user. These do NOT affect the automatable verdict.
   - test: "iPhone Safari portrait: start a 2-player game"
     expected: "The whole square board is visible between the turn bar and the 🎲 button/scoreboard; nothing is cut off and the page does not scroll"
@@ -80,7 +81,7 @@ human_verification: # Deferred by user. These do NOT affect the automatable verd
 | 06-02 (director) | 6 | 6 ✓ | BEAT_MS table, `WATCHDOG_BUFFER_MS = 500`, sync subscribe, 300-seed fuzz in `displayed.test.ts`, id-guarded `completeBeat` (`usePresentation.ts:103`), skipAll/reset resync. timeline/displayed are clock-free (grep = 0) |
 | 06-03 (static board) | 9 | 9 ✓ | RoundedBoxGeometry from `three/addons`, no three-stdlib, no drei, no shadows, no `.dispose()` on singletons, no OrbitControls/Bounds, ≤ 30 draw calls test |
 | 06-04 (DOM HUD) | 8 | 8 ✓ | Banner `completeBeat` by id, StatusChips/ContextLostOverlay props-only, no `dangerouslySetInnerHTML` (0 in all 7 HUD/stage files), HUD CSS has no raw hex and has reduced-motion |
-| 06-05 (moving 3D) | 8 | 7 ✓, 1 ⚠️ | ⚠️ the GameCanvas onCreated → watchContextLoss glue is present and wired (`GameCanvas.tsx:58-61`, unwatch on unmount `:68-75`), but no test runs it on a real WebGL canvas. Marked PRESENT_BEHAVIOR_UNVERIFIED (see frontmatter). Draw-call budget ≤ 100 (8 pawns / 24 tiles) is tested. Source guard enforces no CDN drei module, no remote URL, no 3D text, no three in main-chunk modules |
+| 06-05 (moving 3D) | 8 | 8 ✓ | The GameCanvas onCreated → watchContextLoss glue (`GameCanvas.tsx:58-61`, unwatch on unmount `:68-75`) is exercised by `src/game/scene/gameCanvas.test.tsx` (re-verification). Draw-call budget ≤ 100 (8 pawns / 24 tiles) is tested. Source guard enforces no CDN drei module, no remote URL, no 3D text, no three in main-chunk modules |
 | 06-06 (stage) | 9 | 9 ✓ | See SC1-SC5. PlayView/RingStrip/DiceResultPanel deleted (`git diff --name-status` D ×3; no references left in src). Old CSS selectors = 0. Stage CSS: 72/64/56 px targets, `min-aspect-ratio: 5/4` landscape panel, canvas `pointer-events: none` + `touch-action: manipulation` |
 
 **Score:** 53/54 truths verified (5 roadmap SC + 49 plan truths; 1 present but behavior-unverified).
@@ -94,7 +95,7 @@ human_verification: # Deferred by user. These do NOT affect the automatable verd
 | `src/game/GameStage.tsx` (207 lines) | ✓ VERIFIED | exports default + `READY_TIMEOUT_MS`, contains `lazy(loadGameCanvas)` |
 | `src/game/GameApp.tsx` | ✓ VERIFIED | `useDirector()` at line 24 |
 | `src/test/fakeGameCanvas.tsx` | ✓ VERIFIED | exports default, `fakeCanvas`, `settle`, `waitForCanvas` |
-| `src/game/stage.test.tsx` (11 tests) | ⚠️ PARTIAL (WARNING) | Substantive and passing, but missing the declared `contains: "webglcontextlost"`. Loss is simulated through `fakeCanvas.lastProps.onLost()` (lines 192, 216), not a DOM event, so the real-event glue is not exercised (see the behavior-unverified item) |
+| `src/game/stage.test.tsx` (11 tests) | ✓ VERIFIED (with note) | Substantive and passing. It simulates loss through `fakeCanvas.lastProps.onLost()`; the declared real `webglcontextlost` DOM-event path is covered by the GameApp integration test in `src/game/scene/gameCanvas.test.tsx` (that file needs its own module mocks, so it is kept separate) |
 | All other plan artifacts (scene/*, hud/*, layout/*, director/*, palette, turnOrder, sourceGuard, VERSIONS.json) | ✓ VERIFIED | exist, are substantive and are wired into the SceneContents/GameStage graph |
 
 ### Key Link Verification
@@ -190,9 +191,9 @@ The user asked for automatable verification only. The 8 real-device checks from 
 
 No blocking gaps. Every roadmap success criterion, every plan truth that can be automated, all 10 requirement IDs, all key links, all PLAN acceptance-criteria greps and all bundle guards were verified against the code and fresh command output in this session.
 
-Two non-blocking notes:
+Non-blocking notes:
 
-- **WARNING:** `stage.test.tsx` lacks the declared `webglcontextlost` content. Context loss is driven through the fake canvas's `onLost` prop, so the real-event path inside `GameCanvas.tsx:58-61` is present and wired but not exercised by a test. It is routed to deferred human item 6. An optional future hardening is a test that renders GameCanvas with a mocked `@react-three/fiber` `Canvas` that calls `onCreated` with a plain `<canvas>` and dispatches `webglcontextlost`.
+- **Closed on re-verification:** the real `webglcontextlost` path in `GameCanvas.tsx:58-61` is now tested (`src/game/scene/gameCanvas.test.tsx`, 7 tests: ready once, loss → onLost + preventDefault, latest callback, unwatch on unmount, frameloop by visibility, DEV hook lifecycle, GameApp DOM loss → overlay → 🔄 remount with the same game). Only the iOS Safari device behavior remains, under deferred human item 6.
 - **Tooling:** `gsd-tools verify.key-links` false negatives come from double-escaped regex patterns in the PLAN YAML. Manual grep confirms every link.
 
 The status is `human_needed` only because of the deferred real-device items. On automatable scope alone the phase passes.
