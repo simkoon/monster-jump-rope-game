@@ -10,10 +10,13 @@ import {
   cheerPose,
   hopPose,
   slumpPose,
+  successBeatPose,
   successPose,
   surprisePose,
   type Pose,
 } from './charMotion';
+import { successPlan } from '../director/successPlan';
+import { STARS_MS } from '../director/timeline';
 
 const TAU = 2 * Math.PI;
 const FIELDS = ['y', 'yaw', 'squashY', 'headPitch', 'armL', 'armR', 'earTilt', 'lean'] as const;
@@ -221,5 +224,95 @@ describe('actPose', () => {
   it("'rest' and 'hop' return REST", () => {
     expect(actPose('rest', 0.5)).toEqual({ ...REST });
     expect(actPose('hop', 0.5)).toEqual({ ...REST });
+  });
+});
+
+// Phase 8: the tiered success beat (D-01, D-03, D-04, Pitfall 6). Time arrives in ms from the beat
+// start; the jump runs on landMs, then an arms-up joy hold eases back to REST at the beat end.
+describe('successBeatPose (Phase 8 tiered jump, D-01 / D-03 / D-04)', () => {
+  const TIERS = [1, 2, 3] as const;
+  const plans = [
+    ...TIERS.map((s) => successPlan(s, STARS_MS[s], false)),
+    successPlan(1, 900, false), // the old Phase 7 beat length still ends on REST
+    successPlan(3, 900, false),
+  ];
+  const peakY = (plan: ReturnType<typeof successPlan>) => {
+    let m = 0;
+    for (let t = 0; t <= plan.landMs; t++) m = Math.max(m, successBeatPose(t, plan).y);
+    return m;
+  };
+
+  it('starts on REST and ends on REST with one full turn (yaw 2π)', () => {
+    for (const plan of plans) {
+      expectRest(successBeatPose(0, plan), `${plan.ms} t=0`);
+      expect(successBeatPose(0, plan).yaw).toBe(0);
+      const end = successBeatPose(plan.ms, plan);
+      expect(end).toEqual({ ...REST, yaw: TAU });
+      expect(successBeatPose(plan.ms + 500, plan)).toEqual({ ...REST, yaw: TAU });
+      expect(successBeatPose(-10, plan)).toEqual({ ...REST });
+    }
+  });
+
+  it('peaks at the tier jumpHeight before landMs and touches down at landMs facing the camera', () => {
+    for (const plan of plans) {
+      expect(Math.abs(peakY(plan) - plan.jumpHeight)).toBeLessThanOrEqual(0.01);
+      const land = successBeatPose(plan.landMs, plan);
+      expect(land.y).toBeCloseTo(0, 9);
+      expect(land.yaw).toBeCloseTo(TAU, 9);
+    }
+  });
+
+  it('jumps higher the higher the tier: ⭐1 0.55 < ⭐2 0.65 < ⭐3 0.75', () => {
+    const [p1, p2, p3] = TIERS.map((s) => peakY(successPlan(s, STARS_MS[s], false)));
+    expect(p1).toBeCloseTo(0.55, 2);
+    expect(p2).toBeCloseTo(0.65, 2);
+    expect(p3).toBeCloseTo(0.75, 2);
+    expect(p1).toBeLessThan(p2);
+    expect(p2).toBeLessThan(p3);
+  });
+
+  it('the jump depends only on landMs: same shape for every tier apart from the height (Pitfall 6)', () => {
+    const a = successPlan(1, STARS_MS[1], false);
+    const b = successPlan(3, STARS_MS[3], false);
+    for (const f of GRID) {
+      const pa = successBeatPose(f * a.landMs, a);
+      const pb = successBeatPose(f * b.landMs, b);
+      expect(pa.y / a.jumpHeight).toBeCloseTo(pb.y / b.jumpHeight, 9);
+      for (const k of FIELDS) if (k !== 'y') expect(pa[k]).toBeCloseTo(pb[k], 9);
+      // …and it is the Phase 7 jump at u = 0.75·t/landMs, y scaled by jumpHeight / 0.55.
+      const ref = successPose(0.75 * f);
+      expect(pa.y).toBeCloseTo((ref.y * a.jumpHeight) / 0.55, 9);
+      expect(pa.yaw).toBeCloseTo(ref.yaw, 9);
+      expect(pa.armL).toBeCloseTo(ref.armL, 9);
+    }
+  });
+
+  it('after touchdown: squash recovery, arms-up joy hold, never airborne, smooth back to REST', () => {
+    for (const plan of plans) {
+      const hold = successBeatPose(Math.round((plan.landMs + 120 + plan.ms - 250) / 2), plan);
+      if (plan.ms - plan.landMs > 500) {
+        expect(hold.armL).toBeGreaterThan(1.4);
+        expect(hold.armR).toBeGreaterThan(1.4);
+      }
+      let prev = successBeatPose(plan.landMs, plan);
+      for (let t = plan.landMs + 1; t <= plan.ms; t++) {
+        const p = successBeatPose(t, plan);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeLessThanOrEqual(0.04 + 1e-9); // only a gentle bob after landing
+        expect(p.squashY).toBeGreaterThanOrEqual(0.85 - 1e-9);
+        expect(p.yaw).toBe(TAU);
+        // Continuous at 1 ms steps: no snap anywhere on the way back to REST.
+        for (const k of FIELDS) expect(Math.abs(p[k] - prev[k]), `${plan.ms} t=${t} ${k}`).toBeLessThan(0.05);
+        prev = p;
+      }
+    }
+  });
+
+  it('is pure: a new Pose per call, inputs untouched', () => {
+    const plan = successPlan(2, STARS_MS[2], false);
+    const copy = { ...plan };
+    expect(successBeatPose(300, plan)).not.toBe(successBeatPose(300, plan));
+    expect(successBeatPose(300, plan)).toEqual(successBeatPose(300, plan));
+    expect(plan).toEqual(copy);
   });
 });

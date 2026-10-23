@@ -32,7 +32,13 @@ describe('reactionFor — beat → expression and act (UI-SPEC C4 table)', () =>
   });
 
   it('own stars → joy / success, own startBonus → joy / bonus, own miss → sad / slump', () => {
-    expect(reactionFor('a', stars('a'), true)).toEqual({ expression: 'joy', act: 'success', beatId: 4, ms: 900 });
+    expect(reactionFor('a', stars('a'), true)).toEqual({
+      expression: 'joy',
+      act: 'success',
+      beatId: 4,
+      ms: 900,
+      stars: 2,
+    });
     expect(reactionFor('a', bonus('a'), true)).toEqual({ expression: 'joy', act: 'bonus', beatId: 5, ms: 800 });
     expect(reactionFor('a', miss('a'), true)).toEqual({ expression: 'sad', act: 'slump', beatId: 6, ms: 700 });
   });
@@ -76,6 +82,18 @@ describe('reactionFor — beat → expression and act (UI-SPEC C4 table)', () =>
     for (const b of [finalRound(), stars('b'), miss('b'), hop('b'), event('b', 'backward'), dice('b')]) {
       expect(reactionFor('a', b, true)).toEqual({ expression: 'excited', act: 'rest', beatId: null, ms: 0 });
       expect(reactionFor('a', b, false)).toEqual({ expression: 'idle', act: 'rest', beatId: null, ms: 0 });
+    }
+  });
+});
+
+describe('Reaction.stars (Phase 8 tiered success jump, D-03 / D-04)', () => {
+  it('an own stars beat carries its star count; no other reaction has a stars key', () => {
+    const s3: Beat = { kind: 'stars', pid: 'a', stars: 3, ms: 2200, id: 11 };
+    expect(reactionFor('a', s3, true)).toEqual({ expression: 'joy', act: 'success', beatId: 11, ms: 2200, stars: 3 });
+    expect(reactionFor('a', s3, false).stars).toBe(3);
+    const others = [null, dice('a'), preview('a'), hop('a'), bonus('a'), miss('a'), event('a', 'extra'), win(['a'])];
+    for (const b of [...others, finalRound(), stars('b'), win(['b'])]) {
+      for (const cur of [true, false]) expect('stars' in reactionFor('a', b, cur)).toBe(false);
     }
   });
 });
