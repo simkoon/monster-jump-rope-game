@@ -21,7 +21,7 @@ import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
 import { ANIMALS, type AnimalId } from '../../engine/animals';
 import { boardWith, eventTile, questTile } from '../../engine/testkit';
 import { ACT_FACE, blinkClosed, faceKeyFor } from '../director/reaction';
-import { BEAT_MS } from '../director/timeline';
+import { BEAT_MS, STARS_MS } from '../director/timeline';
 import {
   BREATHE_PERIOD,
   IDLE_PERIOD,
@@ -74,9 +74,9 @@ const ACTS: readonly { key: GalleryAct; label: string }[] = [
   { key: 'cheer', label: '우승' },
 ];
 
-// Beat lengths the game plays these acts with (timeline BEAT_MS).
+// Beat lengths the game plays these acts with (timeline BEAT_MS; success = the ⭐2 STARS_MS tier).
 const ACT_MS: Readonly<Record<Exclude<GalleryAct, 'idle' | 'hop'>, number>> = {
-  success: BEAT_MS.stars,
+  success: STARS_MS[2],
   bonus: BEAT_MS.startBonus,
   surprise: BEAT_MS.event,
   slump: BEAT_MS.miss,

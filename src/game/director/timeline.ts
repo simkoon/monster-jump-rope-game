@@ -9,6 +9,8 @@
 import type { AnimalId } from '../../engine/animals';
 import type { Effect, Event, GameEvent } from '../../engine/state';
 
+// Fixed beat lengths. The success (stars) beat is not here: its length depends on the star tier
+// (STARS_MS below, Phase 8 D-01 — replaces the single Phase 7 D-12 900 ms value).
 export const BEAT_MS = {
   dice: 1000,
   preview: 500,
@@ -17,12 +19,26 @@ export const BEAT_MS = {
   moveCap: 2000,
   startBonus: 800,
   event: 1000,
-  stars: 900, // D-12: 600 → 900 so the success jump and spin fit (D-15 cap ≤ 900)
   finalRound: 1500,
   // Phase 7 reaction beats (D-13, D-14): the 3D characters show their sad / winner faces here.
   miss: 700,
   win: 1500,
 } as const;
+
+// Phase 8 D-01: the success beat grows with the star tier so ⭐3 is clearly bigger. The longest
+// (2200 ms) leaves 300 ms of the 2.5 s judge → next budget for input locks (D-02).
+export const STARS_MS = { 1: 1600, 2: 1900, 3: 2200 } as const;
+// D-08: under reduced motion every tier plays one fixed 1200 ms beat (banner + fade-in, no flight,
+// no confetti). It is NOT collapsed to 0 like the motion beats — the banner still has to be read.
+export const STARS_MS_REDUCED = 1200;
+
+export type StarTier = 1 | 2 | 3;
+
+// Clamp a star count into a tier (0 → 1, 4+ → 3).
+export const starTier = (stars: number): StarTier => (stars >= 3 ? 3 : stars <= 1 ? 1 : 2);
+
+export const starsBeatMs = (stars: number, reduced: boolean): number =>
+  reduced ? STARS_MS_REDUCED : STARS_MS[starTier(stars)];
 
 // Per-tile hop length: clamp(2000 / len, 100, 250). One move (event steps ≤ 20 by schema) stays
 // within about 2 s.
@@ -48,7 +64,9 @@ export type BeatSpec =
   | { kind: 'finalRound'; ms: number }
   // Phase 7 (07-01): one ❌ judgement of pid, and the natural game end (winners and their
   // animals in participant order; no pid — every co-winner cheers).
-  | { kind: 'miss'; pid: string; ms: number }
+  // Phase 8 D-09: retry = a retry quest follows in the same transition (the soft banner reads
+  // "괜찮아! 다시 해 보자" instead of "다음엔 꼭!"). buildTimeline always sets it; absent = false.
+  | { kind: 'miss'; pid: string; retry?: boolean; ms: number }
   | { kind: 'win'; winners: string[]; animals: AnimalId[]; ms: number };
 
 export type BeatKind = BeatSpec['kind'];
@@ -58,7 +76,8 @@ export type Beat = BeatSpec & { id: number };
 export interface TimelineCtx {
   totalRounds: number;
   firstPid: string;
-  // Reduced motion: dice/preview/hop collapse to 0 ms; banner and reaction beats keep their length.
+  // Reduced motion: dice/preview/hop collapse to 0 ms; banner and reaction beats keep their length,
+  // and the stars beat becomes STARS_MS_REDUCED (Phase 8 D-08).
   reducedMotion: boolean;
   // The event tile resolved by this roll (GameState.lastMove.event) — supplies name/label.
   lastEvent: Pick<Event, 'name' | 'label'> | null;
@@ -97,8 +116,15 @@ export function buildTimeline(events: readonly GameEvent[], ctx: TimelineCtx): B
       case 'judged':
         // D-13: every ❌ (also the first one that leads to a retry) is one miss beat. Miss and win
         // keep their length under reduced motion — they show expressions (D-16, Pitfall 9).
-        if (e.success) out.push({ kind: 'stars', pid: e.pid, stars: e.stars, ms: BEAT_MS.stars });
-        else out.push({ kind: 'miss', pid: e.pid, ms: BEAT_MS.miss });
+        // Phase 8 D-01 / D-08: the stars length comes from the tier table, never from motion().
+        // D-09: the engine's retry path pushes questDrawn attempt 2 of the same pid in this log.
+        if (e.success) {
+          out.push({ kind: 'stars', pid: e.pid, stars: e.stars, ms: starsBeatMs(e.stars, ctx.reducedMotion) });
+        } else {
+          const pid = e.pid;
+          const retry = events.some((x) => x.t === 'questDrawn' && x.pid === pid && x.attempt === 2);
+          out.push({ kind: 'miss', pid, retry, ms: BEAT_MS.miss });
+        }
         break;
       case 'gameEnded': {
         // D-14: only the natural end plays the win beat. A manual end (지금 끝내기) yields nothing
@@ -124,12 +150,17 @@ export function buildTimeline(events: readonly GameEvent[], ctx: TimelineCtx): B
 
 export const budgetMs = (beats: readonly BeatSpec[]): number => beats.reduce((s, b) => s + b.ms, 0);
 
-// Beats shown as a DOM banner over the canvas (UI-SPEC S6).
+// Beats shown as a DOM banner over the canvas (UI-SPEC S6). Phase 8 D-09: miss now shows the soft
+// one-line banner too.
 export const isBannerBeat = (beat: BeatSpec): boolean =>
-  beat.kind === 'startBonus' || beat.kind === 'event' || beat.kind === 'stars' || beat.kind === 'finalRound';
+  beat.kind === 'startBonus' ||
+  beat.kind === 'event' ||
+  beat.kind === 'stars' ||
+  beat.kind === 'finalRound' ||
+  beat.kind === 'miss';
 
 // Beats completed by the DOM Banner timer at exactly beat.ms (D-22, UI-SPEC C7a): the banner beats
-// plus the reaction beats miss (no copy) and win. 3D consumers never complete them; the store
-// watchdog (ms + 500) is the fallback when no Banner is mounted.
+// (miss included, with its soft copy since Phase 8 D-09) plus the win beat. 3D consumers never
+// complete them; the store watchdog (ms + 500) is the fallback when no Banner is mounted.
 export const isTimedBeat = (beat: BeatSpec): boolean =>
   isBannerBeat(beat) || beat.kind === 'miss' || beat.kind === 'win';

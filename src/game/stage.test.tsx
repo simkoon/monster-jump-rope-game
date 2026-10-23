@@ -10,7 +10,7 @@ import GameApp from './GameApp';
 import GameStage, { READY_TIMEOUT_MS } from './GameStage';
 import { usePresentation, WATCHDOG_BUFFER_MS } from './usePresentation';
 import { displayedFrom, EMPTY_DISPLAYED } from './director/displayed';
-import { BEAT_MS } from './director/timeline';
+import { BEAT_MS, STARS_MS } from './director/timeline';
 import { startDirector } from './director/useDirector';
 import { useGameStore } from '../harness/useGameStore';
 import Toast, { useToastStore } from '../components/Toast';
@@ -175,7 +175,7 @@ describe('GameStage — displayed stars (D-01, HUD-01)', () => {
     expect(screen.queryByRole('button', { name: '다음 ➡️' })).toBeNull();
 
     act(() => {
-      vi.advanceTimersByTime(BEAT_MS.stars - 1);
+      vi.advanceTimersByTime(STARS_MS[3] - 1); // the hard quest: 3 stars (Phase 8 D-01)
     });
     expect(within(screen.getByRole('list', { name: '별 순위' })).getAllByText('⭐0')).toHaveLength(2);
     act(() => {
