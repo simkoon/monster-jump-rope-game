@@ -1094,3 +1094,141 @@
   .beat-banner--tier3,
   .beat-banner--soft { animation: none; }
 }
+
+/* ============================================================
+   === Phase 8: star flight (08-07) ===
+   The big DOM star of a success (UI-SPEC F3, §Color, §Spacing, D-03, D-05,
+   D-08): a fixed, pointer-transparent layer portaled to body (z 40: over the
+   HUD, under dialogs 50 and toasts 80). The star is centered on --x0 / --y0,
+   pops 0 → 1.2 → 1 over --pop-ms, then the outer box travels x (ease-in-out)
+   while the inner box goes up to --apex and down to --dy, shrinking 1 → 0.5
+   with one full turn of the svg; it fades over the last 80ms. Only computed
+   numbers reach these variables. Individual transform properties (translate,
+   scale, rotate) keep the animations from overwriting each other.
+   Arrival flash on the avatar: scale 1 → 1.25 → 1 (240ms) + a sun ring
+   (160ms). Reduced motion: the still star only fades in, no flash.
+   Tokens and color-mix only.
+   ============================================================ */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  overflow: hidden;
+}
+.fx-star {
+  --size: 80px;
+  position: absolute;
+  left: calc(var(--x0, 0px) - var(--size) / 2);
+  top: calc(var(--y0, 0px) - var(--size) / 2);
+  width: var(--size);
+  height: var(--size);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--sun) 80%, transparent));
+  animation:
+    fx-star-pop var(--pop-ms, 160ms) cubic-bezier(.34, 1.56, .64, 1) both,
+    fx-star-x var(--fly-ms, 900ms) ease-in-out var(--pop-ms, 160ms) both,
+    fx-star-out 80ms linear calc(var(--pop-ms, 160ms) + var(--fly-ms, 900ms)) forwards;
+}
+.fx-star-y {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  animation: fx-star-y var(--fly-ms, 900ms) linear var(--pop-ms, 160ms) both;
+}
+.fx-star-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: fx-star-spin var(--fly-ms, 900ms) ease-in-out var(--pop-ms, 160ms) both;
+}
+.fx-star-body {
+  fill: var(--sun);
+  stroke: var(--sun-deep);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.fx-star-shine { fill: white; opacity: .6; }
+.fx-star-eye { fill: var(--ink); }
+.fx-star-pill {
+  position: absolute;
+  right: -12px;
+  bottom: -4px;
+  height: 32px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--sun-deep);
+  color: var(--ink);
+  font-size: var(--game-body);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.fx-star.fx-star--still {
+  --size: 40px;
+  animation: fx-star-still 200ms ease-out both;
+}
+.fx-star--still .fx-star-y,
+.fx-star--still .fx-star-svg { animation: none; }
+.fx-star--still .fx-star-pill { height: 28px; right: -20px; bottom: -8px; }
+@keyframes fx-star-pop {
+  0% { scale: 0; }
+  70% { scale: 1.2; }
+  100% { scale: 1; }
+}
+@keyframes fx-star-x {
+  from { translate: 0 0; }
+  to { translate: var(--dx, 0px) 0; }
+}
+@keyframes fx-star-y {
+  0% { translate: 0 0; scale: 1; animation-timing-function: ease-out; }
+  50% { translate: 0 var(--apex, -64px); scale: .75; animation-timing-function: ease-in; }
+  100% { translate: 0 var(--dy, 0px); scale: .5; }
+}
+@keyframes fx-star-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+@keyframes fx-star-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fx-star-still {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sb-cell.is-hit .sb-avatar {
+  animation:
+    sb-hit 240ms ease-out,
+    sb-hit-ring 160ms ease-out;
+}
+@keyframes sb-hit {
+  0% { scale: 1; }
+  50% { scale: 1.25; }
+  100% { scale: 1; }
+}
+@keyframes sb-hit-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sun) 70%, transparent); }
+  60% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--sun) 70%, transparent); }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+
+@media (max-width: 560px) {
+  .fx-star { --size: 64px; }
+  .fx-star-pill { height: 28px; }
+  .fx-star.fx-star--still { --size: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-star,
+  .fx-star-y,
+  .fx-star-svg,
+  .sb-cell.is-hit .sb-avatar { animation: none; }
+  .fx-star.fx-star--still { animation: fx-star-still 200ms ease-out both; }
+}

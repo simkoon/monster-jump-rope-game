@@ -6,6 +6,9 @@
 // replays when the count changes. Names render as JSX text only (T-06-08).
 // During gameOver (the win beat) GameStage passes currentId null and the engine winners as crownIds,
 // so no cell is current and the 👑 goes to exactly the characters the 3D win crowns (D-14a).
+// Phase 8 (08-07, FX-02): each cell carries its participant id as a data attribute (the DOM star
+// flight finds its avatar by comparing dataset values) and `hitId` (useStarHit) adds is-hit for the
+// 240 ms arrival flash.
 import type { CSSProperties } from 'react';
 import type { AnimalId } from '../../engine/animals';
 import { rankByStars } from '../../engine/scoring';
@@ -23,18 +26,22 @@ interface ScoreboardProps {
   entries: readonly ScoreEntry[];
   currentId: string | null;
   crownIds?: readonly string[];
+  hitId?: string | null;
 }
 
-export default function Scoreboard({ entries, currentId, crownIds }: ScoreboardProps) {
+export default function Scoreboard({ entries, currentId, crownIds, hitId = null }: ScoreboardProps) {
   const cols = Math.max(1, Math.min(entries.length, 4));
   return (
     <ol className="sb" aria-label="별 순위" style={{ '--sb-cols': String(cols) } as CSSProperties}>
       {rankByStars(entries).map(({ item, rank }) => {
         const crowned = crownIds ? crownIds.includes(item.id) : rank === 1 && item.stars >= 1;
-        const cls = ['sb-cell', crowned && 'is-leader', item.id === currentId && 'is-current'].filter(Boolean).join(' ');
+        const cls = ['sb-cell', crowned && 'is-leader', item.id === currentId && 'is-current', item.id === hitId && 'is-hit']
+          .filter(Boolean)
+          .join(' ');
         return (
           <li
             key={item.id}
+            data-pid={item.id}
             className={cls}
             style={{ '--pc': ANIMAL_COLOR[item.animal] } as CSSProperties}
             aria-label={scoreAria(rank, item.animal, item.name, item.stars, crowned)}

@@ -18,6 +18,10 @@
 // 250 ms input lock, which `guard` honors, so the skip tap cannot leak onto the new 다음 ➡️.
 // 지금 끝내기 and the dialogs carry data-skip-ignore.
 //
+// Star flight (Phase 8 FX-02, D-05): StarFlight (next to the Banner) portals the big +N star from
+// the judged character's head to its scoreboard cell; useStarHit gives the Scoreboard the arrival
+// flash. Both read the beat queue and never end a beat.
+//
 // 3D chunk (D-06, STAB-04): only the loader and the props type come from the scene — never three.
 // Each attempt gets a fresh React.lazy (a rejected lazy stays rejected), inside an error boundary
 // keyed by the same canvasKey. Recovery (D-27): webglcontextlost, a thrown chunk / WebGL creation
@@ -47,6 +51,8 @@ import Scoreboard from './hud/Scoreboard';
 import ControlsBar, { type NextKind } from './hud/ControlsBar';
 import StatusChips from './hud/StatusChips';
 import Banner from './hud/Banner';
+import StarFlight from './hud/StarFlight';
+import { useStarHit } from './hud/useStarHit';
 import ContextLostOverlay from './hud/ContextLostOverlay';
 import MissionOverlay from './hud/MissionOverlay';
 import { useInputLock } from './useInputLock';
@@ -102,6 +108,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   const visible = usePageVisible();
   const hasGame = game !== null;
   useSkipOnTap();
+  const hitId = useStarHit();
 
   // A fresh lazy component per attempt (RESEARCH Pitfall 6).
   const LazyCanvas = useMemo(() => lazy(loadGameCanvas), [canvasKey]);
@@ -202,6 +209,12 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
         )}
 
         <Banner />
+        <StarFlight
+          tiles={game.board}
+          order={participants.map((p) => p.id)}
+          currentId={cur.id}
+          canvasOk={ready && failure === null}
+        />
 
         {(!ready || failure) && <ContextLostOverlay mode={failure ?? 'loading'} onRedraw={redraw} />}
       </div>
@@ -221,6 +234,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           entries={entries}
           currentId={over ? null : cur.id}
           crownIds={over ? game.winners : undefined}
+          hitId={hitId}
         />
       </div>
     </div>
