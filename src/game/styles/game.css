@@ -621,3 +621,331 @@
   }
   .animal-pick { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ============================================================
+   Phase 6 — HUD (06-04)
+   Turn bar v2 · star scoreboard v2 · status chips · beat banner ·
+   board loading / recovery overlay · big 🎲 button (UI-SPEC S3–S7).
+   Tokens + color-mix only (no new colors). The participant color comes
+   in as the inline --pc variable; --sb-cols and --beat-ms are inline too.
+   ============================================================ */
+
+/* ---- turn bar v2 (S3) ---- */
+.turn-dot {
+  flex: none;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--pc, var(--panel));
+  border: 2px solid var(--ink);
+  box-sizing: border-box;
+}
+.game-turn-pill { border: 3px solid var(--sky); min-width: 0; }
+.turn-pill-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+  min-width: 0;
+  animation: hud6-turn-in 160ms ease-out;
+}
+.turn-pill-content .game-turn-member { flex-basis: 100%; }
+@keyframes hud6-turn-in {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.game-round {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+.game-round .label { flex-basis: 100%; text-align: center; }
+.round-dots { display: inline-flex; align-items: center; gap: 4px; }
+.round-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--panel);
+  box-sizing: border-box;
+}
+.round-dot.is-filled { background: var(--ink); border-color: var(--ink); }
+.round-dot.is-now { width: 12px; height: 12px; }
+.game-round.is-final {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 3px solid var(--sun-deep);
+  background: color-mix(in srgb, var(--sun) 22%, var(--panel));
+}
+.game-round.is-final .label { color: var(--ink); font-weight: 900; }
+.game-round.is-final .round-dot.is-now { background: var(--sun-deep); border-color: var(--sun-deep); }
+
+.turn-next { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.turn-next .label { font-size: var(--game-caption); font-weight: 800; color: var(--ink-soft); }
+.turn-next-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.turn-next .value {
+  font-size: var(--game-body);
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .app--playing .game-topbar .turn-next {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+  .app--playing .game-topbar .turn-next .label,
+  .app--playing .game-topbar .turn-next .value {
+    font-size: var(--game-caption);
+    font-weight: 800;
+    color: var(--ink-soft);
+  }
+  .app--playing .game-topbar .turn-next .label::after { content: ': '; white-space: pre; }
+  .app--playing .game-topbar .game-round .label { display: none; }
+  .app--playing .game-topbar .game-round.is-final { padding: 2px 8px; }
+}
+
+/* ---- star scoreboard v2 (S4) ---- */
+.sb {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--sb-cols, 4), minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  overflow-x: hidden;
+}
+.sb-cell {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--panel);
+  border: 2px solid var(--toy-edge);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+.sb-cell.is-leader { border: 3px solid var(--sun); }
+.sb-cell.is-current { border: 3px solid var(--sky); } /* declared after is-leader: sky wins */
+.sb-body {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  animation: hud6-sb-pop 240ms ease-out;
+}
+@keyframes hud6-sb-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.sb-avatar {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--pc, var(--panel));
+  border: 2px solid var(--ink);
+  box-sizing: border-box;
+  font-size: var(--game-body);
+  line-height: 1;
+  margin: 4px 0 0 4px; /* room for the overlapping rank badge */
+}
+.sb-rank {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  transform: translate(-25%, -25%);
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 2px solid var(--toy-edge);
+  box-sizing: border-box;
+  font-size: var(--game-caption);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sb-cell.is-leader .sb-rank { background: var(--sun); }
+.sb-text { display: flex; flex-direction: column; min-width: 0; }
+.sb-stars { font-size: var(--game-body); font-weight: 900; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.sb-name {
+  font-size: var(--game-caption);
+  font-weight: 800;
+  color: var(--ink-soft);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- status chips over the canvas (S6a) ---- */
+.status-chips {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--toy-edge);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font-size: var(--game-body);
+  font-weight: 900;
+  line-height: 1.35;
+}
+.status-chip--dice { font-size: var(--game-heading); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.status-chip--sun { background: var(--sun); color: var(--ink); }
+.status-chip--grass { color: var(--grass); }
+.status-chip--coral { color: var(--coral); }
+.status-chip--grape { color: var(--grape); }
+
+/* ---- beat banner (S6b) ---- */
+.beat-banner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90%, 480px);
+  box-sizing: border-box;
+  padding: 24px 32px;
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--panel);
+  border: 3px solid var(--toy-edge);
+  animation:
+    hud6-banner-in 160ms ease-out,
+    hud6-banner-out 160ms ease-in calc(var(--beat-ms, 1000ms) - 160ms) forwards;
+}
+.beat-banner--sun { background: color-mix(in srgb, var(--sun) 22%, var(--panel)); border-color: var(--sun); }
+.beat-banner--grass { background: color-mix(in srgb, var(--grass) 18%, var(--panel)); border-color: var(--grass); }
+.beat-banner--coral { background: color-mix(in srgb, var(--coral) 18%, var(--panel)); border-color: var(--coral); }
+.beat-banner--grape { background: color-mix(in srgb, var(--grape) 18%, var(--panel)); border-color: var(--grape); }
+.beat-banner--final {
+  background: linear-gradient(180deg, var(--sun), var(--sun-deep));
+  border-color: var(--toy-edge);
+  color: var(--ink);
+}
+.beat-banner-top {
+  margin: 0;
+  font-size: var(--game-heading);
+  font-weight: 900;
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* only the event name may wrap to two lines */
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+.beat-banner-big { margin: 0; font-size: var(--game-display); font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.beat-banner-sub { margin: 0; font-size: var(--game-body); font-weight: 800; line-height: 1.35; }
+@keyframes hud6-banner-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes hud6-banner-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ---- board loading / recovery overlay (S7) ---- */
+.ctx-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+}
+.ctx-overlay--loading {
+  background: transparent;
+  pointer-events: none;
+  align-content: center;
+  gap: 8px;
+}
+.ctx-dice {
+  display: inline-block;
+  font-size: var(--game-display);
+  line-height: 1;
+  animation: hud6-ctx-bounce 800ms ease-in-out infinite;
+}
+@keyframes hud6-ctx-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.ctx-loading { margin: 0; font-size: var(--game-caption); font-weight: 800; color: var(--ink-soft); }
+.ctx-card {
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.ctx-icon { font-size: var(--game-display); line-height: 1.1; }
+.ctx-title { margin: 0; font-size: var(--game-heading); font-weight: 900; line-height: 1.2; }
+.ctx-body { margin: 0; font-size: var(--game-body); font-weight: 800; line-height: 1.35; color: var(--ink-soft); }
+.ctx-btn { width: 100%; }
+
+/* ---- controls v2 (S5) ---- */
+.game-btn-emoji { font-size: var(--game-display); line-height: 1; }
+.game-controls { animation: hud6-controls-in 160ms ease-out; }
+.game-controls .game-judge-result { flex-basis: 100%; }
+@keyframes hud6-controls-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- reduced motion: no scale / fade / bounce (banner durations come from beat data) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .turn-pill-content,
+  .sb-body,
+  .beat-banner,
+  .ctx-dice,
+  .game-controls { animation: none; }
+}
