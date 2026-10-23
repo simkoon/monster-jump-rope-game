@@ -3,7 +3,7 @@ status: testing
 phase: 08-success-fx-awards
 source: [08-UI-SPEC.md, 08-CONTEXT.md D-24, 07-UAT.md]
 started: 2026-10-23T18:56:27Z
-updated: 2026-10-23T18:56:27Z
+updated: 2026-10-23T19:39:20Z
 ---
 
 ## Current Test
@@ -160,12 +160,18 @@ device: iPhone Safari · iPad Safari · 노트북 Chrome
 expected: 06-VERIFICATION에 적힌 대로
 result: [pending]
 
+### 25. (결정) STAB-01 5판 기준 문구 변경 승인 — 08-VERIFICATION suggested_overrides
+device: — (결정 항목, U5·#23 결과를 보고 판단)
+covers: D-22 ②, STAB-01
+expected: 다음 중 하나를 고른다. ① 승인 — 기준을 "같은 판 되풀이(`&seed=7`)에서 2판부터 geometries 증가 없음 + 무작위 판 증가는 얼굴 캐시 상한(1판 대비 +72) 이내"로 바꾼다(아래 자동 기록 B: 무작위 126→142, 되풀이 129 고정, textures·programs·드로우콜·heap·오디오 노드는 그대로). ② 거절 — 캔버스 시작 때 얼굴 72개를 GPU에 미리 올리고 soak.html을 다시 돌린다. U5·#23에서 첫 표정 끊김이 보이면 ②가 낫다.
+result: [pending]
+
 ## Summary
 
-total: 24
+total: 25
 passed: 0
 issues: 0
-pending: 24
+pending: 25
 skipped: 0
 blocked: 0
 
