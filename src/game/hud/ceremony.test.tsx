@@ -1,7 +1,7 @@
 // src/game/hud/ceremony.test.tsx — the ceremony parts (Phase 8 08-10; END-01, END-02, END-03,
 // D-11 ~ D-16, UI-SPEC F7): CeremonyHead, CeremonyPanel (winner line, 모두의 별 cards, praise badge
 // chips, 🔁 다시 하기 / 처음으로), the DOM podium fallback and the intro state hook. These replace the
-// temporary ResultView tests (RESEARCH Pitfall 1). jsdom; finished games are built with the testkit
+// temporary result screen tests (RESEARCH Pitfall 1). jsdom; finished games are built with the testkit
 // + engine transitions and placed into useGameStore.
 import { StrictMode } from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';

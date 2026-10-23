@@ -70,7 +70,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(container.querySelector('.game-stage')).not.toBeNull();
   });
 
-  it('plays one full game from 게임 시작 to the result screen, then 🔁 다시 하기 (Phase 5 goal)', async () => {
+  it('plays one full game from 게임 시작 to the ceremony, then 🔁 다시 하기 (Phase 5 goal, Phase 8 D-11)', async () => {
     useSettings.setState({ defaultRounds: 1, boardSize: 16, failRule: 'noStar' });
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
@@ -103,9 +103,15 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
     expect(screen.getByText('1라운드를 모두 마쳤어요!')).toBeInTheDocument();
     expect(screen.getByText(/^🏆 (공동 )?우승! /)).toBeInTheDocument();
+    // The ceremony is a mode of the same stage on the same canvas (Phase 8 D-11).
+    expect(container.querySelector('.game-stage.stage')).toHaveClass('stage--ceremony');
+    expect(screen.getByRole('list', { name: '모두의 별' })).toBeInTheDocument();
+    expect(fakeCanvas.mounts).toBe(1);
 
     fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
+    expect(container.querySelector('.stage--ceremony')).toBeNull();
     expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
+    expect(fakeCanvas.mounts).toBe(1);
     expect(useGameStore.getState().game!.board.length).toBe(16);
   });
 

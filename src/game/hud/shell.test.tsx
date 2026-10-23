@@ -1,20 +1,15 @@
 // src/game/hud/shell.test.tsx — the Phase 5 start screen (S2: animals, rounds, estimate, rules
-// summary, missing-content notices, start guard) and the temporary result screen (S4: reason,
-// single/co-winners, star standings, restart paths). Inputs come from useStore / useSettings;
-// result states are built with the testkit + engine transitions.
+// summary, missing-content notices, start guard). Inputs come from useStore / useSettings.
+// (The temporary result screen's tests moved to the Phase 8 ceremony tests — see the end of file.)
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import SetupView from './SetupView';
-import ResultView from './ResultView';
-import GameApp from '../GameApp';
 import { useStore } from '../../store';
 import { useSettings, DEFAULT_SETTINGS } from '../../settings';
 import { useGameStore } from '../../harness/useGameStore';
 import { useSetupDraft } from '../useSetupDraft';
-import { endGame, advanceTurn } from '../../engine/game';
-import { makeGame, mission, event, player, patchParticipant } from '../../engine/testkit';
+import { mission, event } from '../../engine/testkit';
 import type { Event, Mission } from '../../schema';
-import type { GameState } from '../../engine/state';
 
 const ALL_DIFFS: Mission[] = [mission('e', 'easy'), mission('n', 'normal'), mission('h', 'hard')];
 const SOME_EVENTS: Event[] = [event('f', 'forward', 2, 1)];
@@ -244,78 +239,5 @@ describe('SetupView — start (SETUP-07/08)', () => {
   });
 });
 
-// ---------- ResultView (S4) ----------
-
-function over(g: GameState): GameState {
-  return endGame(g, 'manual');
-}
-
-function setGame(g: GameState) {
-  useGameStore.setState({ game: g, startBlockedReason: null });
-}
-
-const three = () => [player('p1', '하늘', 'bear'), player('p2', '바다', 'cat'), player('p3', '숲', 'fox')];
-
-function withStars(g: GameState, stars: number[]): GameState {
-  return stars.reduce((s, n, i) => patchParticipant(s, i, { stars: n }), g);
-}
-
-describe('ResultView (D-27, ROUND-03)', () => {
-  beforeEach(resetAll);
-
-  it('manual end, single winner, ranked standings, no radios', () => {
-    setGame(over(withStars(makeGame({ participants: three() }), [2, 5, 1])));
-    const { container } = render(<ResultView />);
-    expect(screen.getByRole('heading', { name: '게임 끝!' })).toBeInTheDocument();
-    expect(screen.getByText('게임을 일찍 마쳤어요!')).toBeInTheDocument();
-    expect(screen.getByText('🏆 우승! 🐱 바다')).toHaveClass('game-result-winner');
-    const rows = Array.from(container.querySelectorAll('ol.game-result-standings li'));
-    expect(rows.map((r) => r.textContent)).toEqual(['1등 🐱 바다 ⭐5', '2등 🐻 하늘 ⭐2', '3등 🦊 숲 ⭐1']);
-    expect(rows[0]).toHaveClass('is-winner');
-    expect(rows[1]).not.toHaveClass('is-winner');
-    expect(container.querySelector('input[type="radio"]')).toBeNull();
-  });
-
-  it('co-winners share rank 1 and the next rank is 3', () => {
-    setGame(over(withStars(makeGame({ participants: three() }), [4, 4, 1])));
-    const { container } = render(<ResultView />);
-    expect(screen.getByText('🏆 공동 우승! 🐻 하늘, 🐱 바다')).toBeInTheDocument();
-    const rows = Array.from(container.querySelectorAll('ol.game-result-standings li'));
-    expect(rows.map((r) => r.textContent)).toEqual(['1등 🐻 하늘 ⭐4', '1등 🐱 바다 ⭐4', '3등 🦊 숲 ⭐1']);
-    expect(rows.filter((r) => r.classList.contains('is-winner'))).toHaveLength(2);
-  });
-
-  it('rounds-complete reason names the round count', () => {
-    let g = makeGame({ rules: { rounds: 1 }, patch: (s) => ({ ...s, phase: 'turnResolved' }) });
-    g = advanceTurn(g); // P1 → P2
-    g = { ...g, phase: 'turnResolved' };
-    g = advanceTurn(g); // last turn of the last round → rounds-complete
-    expect(g.endReason).toBe('rounds-complete');
-    setGame(g);
-    render(<ResultView />);
-    expect(screen.getByText('1라운드를 모두 마쳤어요!')).toHaveClass('game-result-reason');
-  });
-
-  it('🔁 다시 하기 restarts with the same participants, animals and rounds', () => {
-    setGame(over(withStars(makeGame({ participants: three(), rules: { rounds: 4 } }), [2, 5, 1])));
-    render(<ResultView />);
-    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
-    const g = useGameStore.getState().game!;
-    expect(g.phase).toBe('awaitingRoll');
-    expect(g.config.rules.rounds).toBe(4);
-    expect(g.config.participants.map((p) => [p.id, p.animal])).toEqual([
-      ['p1', 'bear'],
-      ['p2', 'cat'],
-      ['p3', 'fox'],
-    ]);
-    expect(g.config.participants.every((p) => p.stars === 0)).toBe(true);
-  });
-
-  it('처음으로 returns to the start screen', () => {
-    setGame(over(makeGame()));
-    render(<GameApp />);
-    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
-    expect(useGameStore.getState().game).toBeNull();
-    expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
-  });
-});
+// The temporary result screen (S4) became the Phase 8 ceremony: its tests moved to
+// hud/ceremony.test.tsx (parts) and stage.test.tsx (routing, same canvas) — 08-10, RESEARCH Pitfall 1.

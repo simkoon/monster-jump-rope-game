@@ -22,6 +22,22 @@
 // the judged character's head to its scoreboard cell; useStarHit gives the Scoreboard the arrival
 // flash. Both read the beat queue and never end a beat.
 //
+// Ceremony mode (Phase 8 D-11, END-01 ~ END-03, UI-SPEC F7, RESEARCH Pattern 6): once the game is
+// over and its beats have ended (`phase === 'gameOver' && !busy` — after the 1500 ms win beat, at
+// once after 지금 끝내기, or right after a tapped-away win beat) this same stage becomes the ceremony:
+// `.stage--ceremony`, CeremonyHead in place of the turn bar, CeremonyPanel (winner line, 모두의 별
+// cards, 🔁 다시 하기 / 처음으로) in place of the bottom area, and `canvasProps.ceremony` turns the SAME
+// canvas into the 3D podium. The stage always has exactly three child slots — (1) turn bar | head,
+// (2) the canvas cell, (3) bottom area | panel — so the canvas cell never changes type or position
+// and the canvas is never remounted across play → ceremony → 다시 하기 × n (RESEARCH Pitfall 2,
+// one WebGL context, STAB-01). In the ceremony StatusChips and the quest card are not rendered, and a
+// missing 3D podium (loading, lost, failed) shows DomPodium instead of the recovery card — no error
+// copy for the children. useCeremonyIntro owns the intro (fanfare once per game, tap to end).
+//
+// Sound toggle (Phase 8 D-20, UI-SPEC F8): the 🔊/🔇 toggle lives in the canvas cell's top-right
+// corner in both modes, outside ControlsBar (which hides during beats), so it can always be tapped;
+// it is skip-ignored, so tapping it never ends a beat or the intro.
+//
 // 3D chunk (D-06, STAB-04): only the loader and the props type come from the scene — never three.
 // Each attempt gets a fresh React.lazy (a rejected lazy stays rejected), inside an error boundary
 // keyed by the same canvasKey. Recovery (D-27): webglcontextlost, a thrown chunk / WebGL creation
@@ -55,9 +71,13 @@ import StarFlight from './hud/StarFlight';
 import { useStarHit } from './hud/useStarHit';
 import ContextLostOverlay from './hud/ContextLostOverlay';
 import MissionOverlay from './hud/MissionOverlay';
+import SoundToggle from './hud/SoundToggle';
+import DomPodium from './hud/DomPodium';
+import { CeremonyHead, CeremonyPanel } from './hud/CeremonyView';
+import { useCeremonyIntro } from './hud/useCeremonyIntro';
 import { useInputLock } from './useInputLock';
 import { useSkipOnTap } from './useSkipOnTap';
-import { boardAria, nextUpView } from './labels';
+import { boardAria, nextUpView, podiumAria } from './labels';
 
 // UI-SPEC S7: a canvas that is not ready within 8 s shows the recovery overlay.
 export const READY_TIMEOUT_MS = 8000;
@@ -109,6 +129,8 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   const hasGame = game !== null;
   useSkipOnTap();
   const hitId = useStarHit();
+  // D-16: the ceremony intro run, keyed on the board (new on every 🔁 다시 하기).
+  const intro = useCeremonyIntro(game?.phase === 'gameOver' && !busy, game?.board);
 
   // A fresh lazy component per attempt (RESEARCH Pitfall 6).
   const LazyCanvas = useMemo(() => lazy(loadGameCanvas), [canvasKey]);
@@ -143,6 +165,8 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   const cur = currentParticipant(game);
   // D-14a: during the win beat the DOM HUD shows the finished game, like the 3D scene does.
   const over = phase === 'gameOver';
+  // D-11: the ceremony starts once the win / end beats are over.
+  const ceremony = over && !busy;
   const participants = config.participants;
   const nextKind: NextKind = turn.extraGranted ? 'extra' : willEndOnAdvance(game) ? 'result' : 'next';
   const controlsVisible = !busy && consumedLog === game.log && ready && failure === null;
@@ -158,10 +182,14 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
     visible,
     onReady: handleReady,
     onLost: handleLost,
+    ceremony: ceremony ? { winners: game.winners, introId: intro.introId, introActive: intro.introActive } : null,
   };
+  const canvasAria = ceremony
+    ? podiumAria(participants.filter((p) => game.winners.includes(p.id)).map((p) => p.name))
+    : boardAria(game.board.length, cur.name, over);
 
   // UI-SPEC C7e: at gameOver (the win beat) the engine's endGame is a no-op, so 지금 끝내기 skips
-  // the beats instead and the result screen shows at once (T-07-03).
+  // the beats instead and the ceremony shows at once (T-07-03).
   function endNow() {
     if (useGameStore.getState().game?.phase === 'gameOver') usePresentation.getState().skipAll();
     else useGameStore.getState().endNow();
@@ -173,22 +201,26 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   }
 
   return (
-    <div className="game-stage stage">
-      <TurnHud
-        animal={cur.animal}
-        name={cur.name}
-        isTeam={config.mode === 'team'}
-        activeMember={activeMember(game)}
-        isExtra={turn.isExtra}
-        round={game.round}
-        totalRounds={config.rules.rounds}
-        next={nextUpView(game)}
-        onEndNow={endNow}
-        over={over}
-      />
+    <div className={ceremony ? 'game-stage stage stage--ceremony' : 'game-stage stage'}>
+      {ceremony ? (
+        <CeremonyHead game={game} />
+      ) : (
+        <TurnHud
+          animal={cur.animal}
+          name={cur.name}
+          isTeam={config.mode === 'team'}
+          activeMember={activeMember(game)}
+          isExtra={turn.isExtra}
+          round={game.round}
+          totalRounds={config.rules.rounds}
+          next={nextUpView(game)}
+          onEndNow={endNow}
+          over={over}
+        />
+      )}
 
       <div className="stage-canvas-cell">
-        <div className="stage-canvas" role="img" aria-label={boardAria(game.board.length, cur.name, over)}>
+        <div className="stage-canvas" role="img" aria-label={canvasAria}>
           <CanvasErrorBoundary key={canvasKey} onError={handleError}>
             <Suspense fallback={null}>
               <LazyCanvas {...canvasProps} />
@@ -196,9 +228,9 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           </CanvasErrorBoundary>
         </div>
 
-        <StatusChips move={lastMove} pending={pendingKinds(current, queue)} />
+        {!ceremony && <StatusChips move={lastMove} pending={pendingKinds(current, queue)} />}
 
-        {controlsVisible && phase === 'awaitingJudgement' && card && (
+        {!ceremony && controlsVisible && phase === 'awaitingJudgement' && card && (
           <MissionOverlay
             mission={card.mission}
             diff={card.diff}
@@ -215,28 +247,38 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           currentId={cur.id}
           canvasOk={ready && failure === null}
         />
+        <SoundToggle />
 
-        {(!ready || failure) && <ContextLostOverlay mode={failure ?? 'loading'} onRedraw={redraw} />}
+        {(!ready || failure) &&
+          (ceremony ? (
+            <DomPodium game={game} onRedraw={redraw} />
+          ) : (
+            <ContextLostOverlay mode={failure ?? 'loading'} onRedraw={redraw} />
+          ))}
       </div>
 
-      <div className="stage-bottom">
-        <ControlsBar
-          phase={phase}
-          hidden={!controlsVisible}
-          canUndo={canUndo(game)}
-          nextKind={nextKind}
-          judgement={phase === 'turnResolved' ? lastJudgement : null}
-          onRoll={() => guard(() => useGameStore.getState().roll())}
-          onNext={() => guard(() => useGameStore.getState().next())}
-          onUndo={() => guard(handleUndo)}
-        />
-        <Scoreboard
-          entries={entries}
-          currentId={over ? null : cur.id}
-          crownIds={over ? game.winners : undefined}
-          hitId={hitId}
-        />
-      </div>
+      {ceremony ? (
+        <CeremonyPanel game={game} introActive={intro.introActive} />
+      ) : (
+        <div className="stage-bottom">
+          <ControlsBar
+            phase={phase}
+            hidden={!controlsVisible}
+            canUndo={canUndo(game)}
+            nextKind={nextKind}
+            judgement={phase === 'turnResolved' ? lastJudgement : null}
+            onRoll={() => guard(() => useGameStore.getState().roll())}
+            onNext={() => guard(() => useGameStore.getState().next())}
+            onUndo={() => guard(handleUndo)}
+          />
+          <Scoreboard
+            entries={entries}
+            currentId={over ? null : cur.id}
+            crownIds={over ? game.winners : undefined}
+            hitId={hitId}
+          />
+        </div>
+      )}
     </div>
   );
 }
