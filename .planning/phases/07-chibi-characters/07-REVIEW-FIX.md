@@ -1,8 +1,8 @@
 ---
 phase: 07-chibi-characters
-fixed_at: 2026-10-23T11:30:22Z
+fixed_at: 2026-10-23T14:09:25Z
 review_path: .planning/phases/07-chibi-characters/07-VERIFICATION.md
-iteration: 3
+iteration: 4
 findings_in_scope: 1
 fixed: 1
 skipped: 0
@@ -11,193 +11,128 @@ status: all_fixed
 
 # Phase 7: Code Review Fix Report
 
-**Fixed at:** 2026-10-23T11:30:22Z
-**Source review:** .planning/phases/07-chibi-characters/07-VERIFICATION.md (the frontmatter `gaps:` entry)
-**Iteration:** 3. Iteration 1 fixed WR-04. Iteration 2 fixed CR-01 (D-17b). This iteration fixes the remaining verification gap.
+**Fixed at:** 2026-10-23T14:09:25Z
+**Source review:** .planning/phases/07-chibi-characters/07-VERIFICATION.md (the frontmatter `gaps:` entry, re-verification 2)
+**Iteration:** 4. Iteration 1 fixed WR-04, iteration 2 fixed CR-01 (D-17b), and iteration 3 fixed single-tile SC4 for every animal order. This iteration fixes the last gap: D-17b(4), two adjacent crowded tiles.
 
 **Summary:**
-- Findings in scope: 1 (ROADMAP SC4 / BOARD-05: whether a face is hidden depended on the animal order, up to 63 % at an 8-player game start)
+- Findings in scope: 1 (D-17b(4) / D-17 / BOARD-05: 20 two-tile states went over 30 % for some animal order, up to 41.7 %)
 - Fixed: 1
 - Skipped: 0
+- All 20 states are now ≤ 30 %: the 6 iteration-3 regressions (A) and the 14 pre-existing states (B). Slot moves alone were enough. No crowns are hidden and no ears are trimmed.
 
 ## Fixed Issues
 
-### SC4 / BOARD-05: Face occlusion depends on the animal order
+### D-17b(4): two adjacent crowded tiles, every animal order
 
-**Files modified:** `src/game/scene/occlusionKit.tsx` (new), `src/game/scene/faceOcclusion.test.tsx`, `src/game/scene/faceOrders.{start,bottomTop,leftRight,corners,bottomEnds,topEnds,pairs}.test.tsx` (new), `src/game/layout/pawnSlots.ts`, `src/game/scene/chibiSpecies.ts`, `.planning/phases/07-chibi-characters/07-UI-SPEC.md`
+**Files modified:** `src/game/layout/pawnSlots.ts`, `src/game/scene/occlusionKit.tsx`, `src/game/scene/faceOrders.start.test.tsx` (header comment only), `src/game/scene/faceOrders.{crowdSides,crowdTop,crowdCorners,crowdStart,crowdStates}.test.tsx` (new), `.planning/phases/07-chibi-characters/07-UI-SPEC.md`
 
 **Commits:**
 
 | Commit | What |
 |--------|------|
-| 85fb675 | fix: narrower dog ears; new START n4/n7/n8, preStart n6/n7 and far n4/n6 tables |
-| 1ff23c8 | test: the shared harness, the order sweeps and the control |
-| 2746aac | test: the order sweeps also cover n = 1 |
-| 57c48c8 | docs: UI-SPEC §C2 / §C5 |
-| bb476c9 | fix: bottom / top side (`z`) table, n 3/4/7/8, for the tiles next to the corners |
-| 6aa2a74 | test: order sweeps on those tiles; UI-SPEC test list and numbers |
+| 0ca4fe7 | fix: 4 slots move (far n6, x n5, preStart n4, preStart n6) |
+| 8c0718b | test: `sweepPairCurrents` and the 5 new `faceOrders.crowd*` files |
+| 33d2e6e | docs: UI-SPEC §C5 tables, test list and measured numbers |
 
-**Status:** fixed: requires human verification. This is new slot geometry and a visible change to the dog's ears. See the captures and the notes below.
+**Status:** fixed: requires human verification. These are slot geometry changes. The automated proof is complete (see below), but how the crowds look is still part of the deferred human check (D-24 item 5).
 
-#### 1. The check no longer depends on animal order (verification "missing" item 1)
+#### 1. Re-tune (`pawnSlots.ts`, UI-SPEC §C5)
 
-**The harness.** `occlusionKit.tsx` holds the harness that used to live in `faceOcclusion.test.tsx`:
-- the real `SceneContents` with the real gate, ears, crowns and stars;
-- rays from the real `fitCamera` camera;
-- `LIMIT 0.3`, `SAMPLES 24`, `MIN_SAMPLES 12`, and the same views, sizes and tiles.
+Every move stays within D-17b: along the ring ≤ 0.45, spread only across the ring, on the board base. Sizes are unchanged and in band. The current is still front-center at full size, and slot 0 is still the frontmost (largest z) on every table.
 
-The existing single-tile and two-tile matrices are unchanged: casts, record counts 432 / 3024 / 2160, and both positive controls.
+| Table | Slot | Before → after | Fixes |
+|-------|------|----------------|-------|
+| far n6 | 0 | (0, 0.399) → (0, **0.33**) | (A) all 6 regressions: L16 t7+t8, L20 t9+t10, L24 t11+t12 2+6 and L16 t12+t13, L20 t15+t16, L24 t18+t19 6+2. The full-size current on the side tile in front no longer covers this face with its ears and crown. z 0.279 (the 6aaa8f5 value) brings back other 2+6 / 6+2 fails (37.5 %), and moving the slot sideways is worse (up to 54 %). 0.33 is the value that clears both |
+| x n5 | 2 | (0.5, 0.2) → (**0.58**, 0.2) | (B) L24 t10+t11 2+5 and t19+t20 5+2 (current on either tile or away, 6 states). The face is no longer in line with the rabbit ears on the neighbor's x n2 back slot (0.54, −0.02). Same x as the x n6 slot 2 |
+| preStart n4 | 0 | (0.55, 0.34) → (**0.62**, 0.34) | (B) L20 t19+t0 and L24 t23+t0 4+3, current on L − 1. The face moves clear of the start tile's back-row ears and crown. Safe band measured: x 0.58–0.64 at z 0.34. At z < 0.33 slot 0 would stop being the frontmost (pawnSlots.test) |
+| preStart n6 | 2 | (−0.03, −0.42) → (**0.2**, −0.42) | (B) L16/20/24 L − 2 + L − 1 1+6, current on L − 1 or away (6 states). Its crown no longer covers the lone face on L − 2 at (0, 0.4) |
 
-**How `sweepOrders` works:**
-1. It mounts 8 rotated casts. In cast r, participant k is `ANIMALS[(k + r) % 8]`, so every slot holds every animal once.
-2. It keeps a frozen copy of every pawn's meshes.
-3. For every pair of (slot, animal) it computes a 24-bit hit mask: which face samples of one are hidden by the other.
-4. Per face and view, it takes the worst of **all distinct animal orders**. This is a depth-first search over the other slots, pruned by the union of what can still be added.
-
-**Why this is exact.** A sample counts as hidden when anything lies on its ray. So the hidden set of a face is exactly `scene ∪ ⋃ pawn(j, animal_j)`, and the search finds the true worst order. Two checks back this up:
-- In scratch, every reported worst order was mounted directly and gave the same number, with 0 mismatches.
-- The new control test re-mounts the 3 worst orders of START n8 at 16 tiles, plus the verifier's cast, and checks them against the sweep. When the check was deliberately broken, the control failed.
-
-**What the sweeps cover** (all with `LIMIT 0.3`, 6 views, 16/20/24 tiles, and record counts asserted):
-
-| Area | n | Current turn | Records |
-|------|---|--------------|---------|
-| Start tile, tile L − 1, the 7 regular matrix tiles, and the first and last tile of the bottom and top sides | 1–8 | on the tile or away (n 8: always on the tile) | 3072 per tile |
-| The 5 matrix pairs × 6 splits | as split | on the first tile | 1728 per pair |
-
-**Open eyes.** Faces are now measured with open eyes. The mount advances 2 frames of 0.1 s instead of 0.05 s. Before, seed 0 (p0) was always caught in its first blink (t < 0.12 s).
-
-**Runtime, each file run alone:**
-
-| File | Time |
-|------|------|
-| faceOcclusion | 8.3 s |
-| start | 13.3 s |
-| bottomTop | 9.9 s |
-| leftRight | 10.1 s |
-| corners | 15.4 s |
-| bottomEnds | 9.8 s |
-| topEnds | 10.9 s |
-| pairs | 15.4 s |
-
-The full suite now has 59 files and 1157 tests. Wall time is about 37 s on 8 cores. About 205 s of CPU is spread over the workers.
-
-#### 2. Re-tune (verification "missing" item 2)
-
-**Dog ears** (`chibiSpecies.ts`, UI-SPEC §C2):
-- Before: r 0.11 × (0.6, 1.3, 0.45) at x 0.29, tilt 0.35.
-- After: r 0.10 × (0.5, 1.4, 0.45) at x 0.27, y 0.05, tilt 0.25.
-- They are narrower and longer. They still hang well below the head center, so the chibi.test D-02 check passes.
-- Measured on the failing slot pairs, the old ear hid the face behind it 2–4 × as much as any other animal's ears (for example, dog 12 of 24 samples against 4 for the others). After the change the dog is in line with the bear and the panda.
-- Gallery comparison (old, then two narrower variants; the third is shipped): `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/fix3/cap/dog-cmp3.png`.
-- The bear's ears were not trimmed, and crowns were not hidden. Neither lever was needed.
-
-**START n8.** Measured on the start tile, a 0.65 face stays clear whatever animal stands in front, when that character is either:
-- ≥ 0.55 nearer the camera, or
-- ≥ 0.4 to the side.
-
-The 8 slots now stand in three such rows 0.55 apart:
-- front: (−0.55, 0.50), the current turn at (0.15, 0.52), and (0.57, 0.50);
-- middle: (−0.59, −0.03), (−0.29, −0.03);
-- back: (−0.56, −0.57), (−0.24, −0.58), (0.06, −0.58).
-
-The back two rows are seen through the arch. The layout was found by a surrogate packing search over measured pair and gate maps, then confirmed exactly. All start-tile constraints still hold: block ≤ 0.72, pillar clearance ≥ 0.03, head clearing the pillars, head spacing, D-19 discs, and slot 0 frontmost.
-
-**Other tables.** All within D-17b (along the ring ≤ 0.45, on the board base) and the size bands:
-
-| Table | Change |
-|-------|--------|
-| START n4 | slot 3 z −0.55 → −0.34 |
-| START n7 | 4 slots moved |
-| preStart n6 | 2 slots moved |
-| preStart n7 | 3 slots moved |
-| far n4 | s 0.85 → 0.86, 2 slots moved |
-| far n6 | 3 slots moved |
-| `z` n3, n4, n7, n8 | small back-row moves for the tiles next to the corners |
-
-UI-SPEC §C5 has the shipped numbers.
+One tried fix was rejected: moving the x n2 front slot from z 0.28 to 0.4 fixes (A), but it breaks L − 2 + L − 1 2+6 (up to 45.8 %).
 
 **Constraints checked:**
-- Gate unchanged.
-- `src/engine/*`, `store.ts`, `schema.ts`, `lib/io.ts` and `settings.ts` unchanged (`git diff --stat 6aaa8f5` is empty for them).
+- `src/engine/*`, `store.ts`, `schema.ts`, `lib/io.ts`, `settings.ts` and `StartGate.tsx` are unchanged (`git diff --stat b8007d8` is empty for them).
 - three is imported only in `src/game/scene/*` (sourceGuard green).
 - Draw-call budget test (actors) green.
-- `npx tsc -b`, `npx vitest run` and `npm run build` all pass at every commit.
+- `npm run build` passes. The main chunk has 0 `WebGLRenderer`, and no kit or test strings are in dist.
+- `npx tsc -b && npx vitest run` passes at every commit: 64 files, 1175 tests.
 
-#### 3. Measured worst face over all animal orders
+#### 2. Tests: wider pinned two-tile coverage
 
-These numbers come from a scratch sweep of **every** tile 0..L − 1, for 16/20/24 tiles, n 1–8, current on the tile or away. That is wider than the test matrix.
+**New kit function.** `occlusionKit.sweepPairCurrents(L, a, b)` uses the existing exact `sweepOrders` (every distinct animal order). It covers:
+- the splits `CROWD_SPLITS` = 2+6, 6+2, 1+6, 4+3, 2+5, 5+2;
+- the current on the first tile, on the second tile, or on neither (8 on two tiles always include the current);
+- 5568 records per pair.
 
-| n | start | preStart | z (bottom/top) | x (left/right) | near corner | far corners |
-|---|-------|----------|----------------|----------------|-------------|-------------|
-| 1 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| 2 | 0.0 | 0.0 | 8.3 | 0.0 | 8.3 | 4.2 |
-| 3 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| 4 | 8.3 | 4.2 | 12.5 | 16.7 | 0.0 | 0.0 |
-| 5 | 0.0 | 20.8 | 4.2 | 0.0 | 0.0 | 0.0 |
-| 6 | 20.8 | 8.3 | 20.8 | 0.0 | 12.5 | 0.0 |
-| 7 | 12.5 | 20.8 | 8.3 | 12.5 | 12.5 | 16.7 |
-| 8 | 12.5 | 4.2 | 12.5 | 12.5 | 12.5 | **25.0** |
+**Kept as is:** `LIMIT 0.3`, `SAMPLES 24`, `MIN_SAMPLES 12`, the 6 views, 16/20/24 tiles, and every existing file and record count (`faceOrders.pairs` still covers CROSS_PAIRS × SPLITS).
 
-All values are percent. The worst single face is 25.0 %, far corner n 8 at 588×290: a pig in slot 4, order [bear, cat, rabbit, dog, pig, panda, fox, chick].
+| File | Pairs (16/20/24 tiles) | Worst | Alone | In the full suite |
+|------|------------------------|-------|-------|-------------------|
+| `faceOrders.crowdSides` | middle of the left and right sides | 29.2 % (L16 t6+t7 2+6) | 18.5 s | 30 s |
+| `faceOrders.crowdTop` | middle of the top side | 16.7 % | 9.7 s | 15 s |
+| `faceOrders.crowdCorners` | last left tile + top-left corner, top-right corner + first right tile (also checks the shapes are `far` + `x`) | 25.0 % | 19.5 s | 30 s |
+| `faceOrders.crowdStart` | L − 2 + L − 1, L − 1 + start (also checks the shapes) | 25.0 % | 20.5 s | 33 s |
+| `faceOrders.crowdStates` | the 20 failing states of `out-pairfail.txt` / `hs.txt`, pinned exactly (state, split, current), in 4 groups | 25.0 % | 9.9 s | 7 s |
 
-**Every adjacent pair**, all 6 splits, current on the first tile:
+- "Alone" is wall time including about 1 s of startup. The full-suite time is higher because 8 workers share the CPU (the existing faceOrders files also take 18–28 s there).
+- Each `it` (one ring size) takes about 6 s alone, well under its 60 s timeout.
+- Full suite: 54 s wall, about 320 s of CPU (before: 37–42 s, about 205 s).
+- On 16 tiles, L − 2 + L − 1 is also the right side's middle pair, so it is swept twice. That costs about 3 s.
 
-| Split | Worst | Where |
-|-------|-------|-------|
-| 1+1 | 0.0 % | |
-| 2+3 | 8.3 % | |
-| 3+2 | 0.0 % | |
-| 1+7 | 20.8 % | |
-| 4+4 | 20.8 % | tile L − 1 + start |
-| 7+1 | **29.2 %** | near corner 7 + first left-side tile 1, the lone pig; 16/20/24 tiles |
+**Negative control.** With the iteration-3 tables restored (`git show b8007d8:src/game/layout/pawnSlots.ts`), 11 of the 16 new sweep tests fail (the 2 shape checks still pass):
+- crowdCorners: all 3 ring sizes;
+- crowdStart: all 3;
+- crowdStates: all 4 groups;
+- crowdSides: 16 tiles.
 
-The 7+1 near-corner pair is **the tightest margin anywhere**. It is not in the asserted matrix. Inside the asserted matrix the worst is 25.0 %.
+#### 3. Verifier's full pair sweep, re-run at the final HEAD
 
-**Before → after, all orders** (same method, worst over 16/20/24 tiles):
+- Tool: the verifier's own driver, `reverify2/{A,B}*.test.mjs` with `sweepcore.mjs`.
+- Setup: `RV_P` points at the fix worktree (HEAD 33d2e6e, same code as 8c0718b); `RV_TAG=fix4-`.
 
-| Case | Before | After |
-|------|--------|-------|
-| START n8 | 62.5–66.7 % | 12.5 % |
-| START n7 | 41.7–45.8 % | 12.5 % |
-| preStart n7 | 45.8 % | 20.8 % |
-| far n4 / n6 | 37.5 % | 0.0 % |
-| L − 1 + start pairs | up to 45.8 % | ≤ 20.8 % |
-| Top-side end tiles, 24 tiles | 33.3 % | 20.8 % |
+| Sweep | Sweeps / records | Over 30 % | Worst |
+|-------|------------------|-----------|-------|
+| Every tile, n 1–8, current here or away (L16/20/24) | 900 / 184,320 | **0** | 25.0 % (far corner n8, and L24 t18 n6, a pig) |
+| Every adjacent pair, all 28 splits na + nb ≤ 8, current on the first or second tile or away (L16/20/24) | 4,620 / 1,290,240 | **0** (was 92 records in 20 states) | **29.2 %** (near corner 7+1, unchanged; L16 t6+t7 2+6; L16 t13+t14 6+2) |
 
-The fixed-cast matrices in `faceOcclusion.test.tsx` now peak at 12.5 % (start, regular and pairs).
+**Thin faces:** 0.
 
-#### 4. After-captures of the verifier's worst case
+**Record counts.** These are the same counts the verifier's B files print (4 parts × 308 / 385 / 462 sweeps). The verification text's "13,860 sweeps / 1,333,248 records" does not match its own DONE lines.
 
-- Setup: START n8 with [pig, fox, dog, chick, bear, panda, cat, rabbit]. Everyone is crowned, the pig is the current turn, reduced motion is on.
-- Rendered on the real gallery board (24 tiles) through a scratch-only `&order=` patch. It used a detached temporary worktree and a dev server on :5194. Both are stopped and removed.
+**Direct mounts of the verifier's 13 casts** (`pairfail.test.mjs` copied to `fix4pf.test.mjs`):
 
-| View | Full box | Zoom |
-|------|----------|------|
-| Portrait 374×594 | `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/cap-fix3/verifier-start8-portrait.png` | `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/cap-fix3/verifier-start8-portrait-zoom.png` |
-| Landscape 588×290 | `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/cap-fix3/verifier-start8-landscape.png` | `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/cap-fix3/verifier-start8-landscape-zoom.png` |
+| Case | 24 samples | Full density | Before (24 samples / full density) |
+|------|------------|--------------|------------------------------------|
+| far 2+6 / 6+2 (5 casts) | ≤ 20.8 % | ≤ 21.3 % | 33–42 % / up to 39.4 % |
+| L − 2 + L − 1 1+6 | 4.2 % | ≤ 1.4 % | 33.3 % / 35.7–36.0 % |
+| L − 1 + start 4+3 | 12.5 % | ≤ 9.9 % | 33–38 % / 27–29 % |
+| L24 side 2+5 / 5+2 | 0.0 % | 2.4 % | 33.3 % / 35.1–35.5 % |
+| near-corner 7+1 controls (unchanged tables) | 29.2 % | 21.8 % | 29.2 % / 21.8 % |
 
-What they show: all 8 faces are visible in both views.
-- Front row: the pig (current) with the fox at its right and the dog at the front-left.
-- Middle row: the chick and the bear.
-- Back row, through the arch: the panda, the cat and the rabbit.
-- Before, the bear behind the dog showed only its ears and crown (verifier's `rv-cap/dogthird-portrait-zoom.png`).
+**Output files**, all under `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/reverify2/`:
+- `out-fix4-A{16,20,24}.txt`
+- `out-fix4-B{16,20,24}-{0..3}.txt`
+- `out-fix4-pairfail.txt`
+- `fix4-sweeps.log`
 
-**Notes for the human check:**
-- The dog's ears are slimmer than the 07-05 look. Judge whether they still read as floppy ears at phone size (gallery grid; D-24 item 2).
-- At an 8-player start the crowd now stands in three rows, and the back two rows show through the arch. Judge whether that reads well.
+The verifier's original outputs were not overwritten.
 
-**Scratch tooling** (not in the repo), all under `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/fix3/`:
+**Remaining (B) states that could not be fixed:** none. No override is needed.
 
-| Item | Path |
-|------|------|
-| Exact all-order tuner, plus coordinate-descent / annealing optimizers | `scripts/zz3/tune.tsx`, `t3.test.tsx` |
-| Every-tile sweep | `scripts/zz3/all{16,20,24}.test.tsx`, results in `all{16,20,24}.tsv` |
-| Packing search on the pair and gate maps | `py/pack.py`, maps in `map1.txt`, `map-full.txt`, `gate065.txt` |
-| Baseline sweep of the old tables | `base/b{16,20,24}.txt` |
+**Notes for the human check (D-24 item 5):**
+- Crowd 6 on the tile before the start: one back-row character now stands a little right of center, (0.2, −0.42) instead of (−0.03, −0.42).
+- Crowd 4 there: the current stands slightly further out toward the board edge (x 0.62).
+- On a far corner, the front face of a 6-crowd stands a little further back (z 0.33).
+- On a side tile with 5, slot 2 is 0.08 further out.
+- Judge whether each crowd still reads as its own tile. The VERIFICATION human item 5 no longer needs its "known automated fail" note.
+
+**Scratch tooling** (not in the repo), under `/private/tmp/claude-501/-Users-simkoon-workplace-jump-island/8790a882-ef62-4030-8d1a-b93015f3835e/scratchpad/fix4/`:
+- `aff.mjs` / `run.sh` / `sh{0..7}.test.mjs`: affected-set sweeps (every tile and pair state touching the given tables) with in-process table overrides, sharded over 8 forks.
+- `res/*.all`: one line per state.
+- `res/full1.all`: the full tiles + pairs sweep with the candidate tables before they were committed.
 
 ---
 
-_Fixed: 2026-10-23T11:30:22Z_
+_Fixed: 2026-10-23T14:09:25Z_
 _Fixer: Claude (gsd-code-fixer)_
-_Iteration: 3_
+_Iteration: 4_
