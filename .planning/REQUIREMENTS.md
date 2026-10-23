@@ -77,8 +77,8 @@
 ### 시상식 (END)
 
 - [x] **END-01**: 게임이 끝나면 시상대에 우승자(공동 우승 포함)가 서고 모든 플레이어/팀의 별 개수가 표시되며, 꼴찌는 강조하지 않는다
-- [ ] **END-02**: 시상식에서 승패와 별개인 칭찬 배지(예: 도전왕, 끈기왕, 여행왕)를 준다
-- [ ] **END-03**: 사용자는 시상식에서 "다시 하기" 또는 "처음으로"를 고를 수 있다
+- [x] **END-02**: 시상식에서 승패와 별개인 칭찬 배지(예: 도전왕, 끈기왕, 여행왕)를 준다
+- [x] **END-03**: 사용자는 시상식에서 "다시 하기" 또는 "처음으로"를 고를 수 있다
 
 ### 사운드 (AUDIO)
 
@@ -171,8 +171,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FX-05 | Phase 8 | Complete |
 | FX-06 | Phase 8 | Complete |
 | END-01 | Phase 8 | Complete |
-| END-02 | Phase 8 | Pending |
-| END-03 | Phase 8 | Pending |
+| END-02 | Phase 8 | Complete |
+| END-03 | Phase 8 | Complete |
 | AUDIO-01 | Phase 8 | Complete |
 | AUDIO-02 | Phase 8 | Complete |
 | STAB-01 | Phase 8 | Pending |

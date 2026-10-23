@@ -148,7 +148,7 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans:** 9/11 plans executed
+**Plans:** 10/11 plans executed
 
 Plans:
 **Wave 1**
@@ -171,7 +171,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 08-10-PLAN.md — 시상식 화면: GameStage 시상식 모드(같은 캔버스) + 모두의 별 카드·칭찬 배지·다시 하기/처음으로 + DOM 대체 시상대 + 소리 토글 배치 + ResultView 삭제·테스트 이전 (wave 4)
+- [x] 08-10-PLAN.md — 시상식 화면: GameStage 시상식 모드(같은 캔버스) + 모두의 별 카드·칭찬 배지·다시 하기/처음으로 + DOM 대체 시상대 + 소리 토글 배치 + ResultView 삭제·테스트 이전 (wave 4)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -189,4 +189,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 9/11 | In Progress|  |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 10/11 | In Progress|  |

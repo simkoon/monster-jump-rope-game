@@ -6,14 +6,14 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T17:55:21.433Z"
+last_updated: "2026-10-23T18:14:08.092Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 28
+  completed_plans: 29
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 10 of 11
+Plan: 11 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -91,6 +91,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P07 | 12 min | 2 tasks | 10 files |
 | Phase 08 P08 | 6min | 2 tasks | 5 files |
 | Phase 08 P09 | 20 min | 3 tasks | 11 files |
+| Phase 08 P10 | 14min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -183,6 +184,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-09: the ceremony is a prop of the same scene (board-set group + ContactShadows group only turn invisible; Podium and FX pools always mounted; pid-keyed Characters snap to podiumLayout stands)
 - [Phase 08]: 08-09: a lone non-winner uses scale 1.0 (2–4 band); 1.15 is reserved for a single winner
 - [Phase 08]: 08-09: ceremony loop clock is offset by the intro (winners 0.8 s, others 0.4 s) and switches blend the pose gap, so intro → loop has no seam
+- [Phase 08]: 08-10: ceremony intro keyed on game.board — fanfare once per game, same game never replays; leaving the ceremony fades the fanfare group
+- [Phase 08]: 08-10: in the ceremony DomPodium replaces every not-ready overlay (loading/lost/failed) with no error copy; role=img on an inner figure so the 🔄 button stays a control
 
 ### Pending Todos
 
@@ -226,6 +229,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T17:55:07.074Z
+Last session: 2026-10-23T18:13:58.627Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None
