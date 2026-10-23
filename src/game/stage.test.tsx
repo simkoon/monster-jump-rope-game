@@ -1,5 +1,7 @@
 // src/game/stage.test.tsx — GameStage / GameApp integration (06-06 Task 1; D-01, D-22, D-23, D-25,
-// D-27, HUD-01/02/03, ROUND-02, STAB-02; Phase 7 07-01: miss / win beats, D-12~D-14, UI-SPEC C7).
+// D-27, HUD-01/02/03, ROUND-02, STAB-02; Phase 7 07-01: miss / win beats, D-12~D-14, UI-SPEC C7;
+// Phase 8 08-10: the ceremony as a GameStage mode on the same canvas, DomPodium, SoundToggle — D-11,
+// D-16, D-20, END-01, END-03, AUDIO-02).
 // The lazy 3D chunk is swapped for the fake canvas (jsdom has no WebGL — RESEARCH Pitfall 2/3).
 // The fake never completes 3D beats, so dice / preview / hop beats end only through the store
 // watchdog or settle(). Mounts run on real timers (the lazy import resolves asynchronously);
@@ -20,6 +22,9 @@ import { boardWith, dice, eventTile, makeGame, mission, questTile } from '../eng
 import type { GameState } from '../engine/state';
 import { fakeCanvas, settle, waitForCanvas } from '../test/fakeGameCanvas';
 import { INPUT_LOCK_MS, resetSharedInputLock, SKIP_LOCK_MS } from './useInputLock';
+import { useSettings } from '../settings';
+import { __resetSfxForTests } from './sfx/sfx';
+import { installFakeAudio } from '../test/fakeAudio';
 
 vi.mock('./scene/GameCanvas', () => import('../test/fakeGameCanvas'));
 
@@ -219,8 +224,8 @@ describe('GameStage — miss beat (07-01, D-13, HUD-03)', () => {
 });
 
 describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7f)', () => {
-  it('🏆 결과 보기 keeps the stage for the 🏆 우승! banner, then the result screen after 1500 ms', async () => {
-    await mountApp(atLastTurn(true));
+  it('🏆 결과 보기 keeps the stage for the 🏆 우승! banner, then the ceremony on the same canvas after 1500 ms', async () => {
+    const { container } = await mountApp(atLastTurn(true));
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
     expect(engine().phase).toBe('gameOver');
@@ -239,10 +244,17 @@ describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7
       vi.advanceTimersByTime(BEAT_MS.win - 1);
     });
     expect(screen.queryByText('게임 끝!')).toBeNull();
+    expect(container.querySelector('.stage--ceremony')).toBeNull();
     act(() => {
       vi.advanceTimersByTime(1);
     });
+    // Phase 8 D-11 / END-01: the ceremony is a GameStage mode — same stage, same canvas node.
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    expect(container.querySelector('.game-stage.stage')).toHaveClass('stage--ceremony');
+    expect(screen.getByText('🏆 우승! 🐰 P2')).toHaveAttribute('role', 'status');
+    expect(screen.getByRole('list', { name: '모두의 별' })).toBeInTheDocument();
+    expect(fakeCanvas.mounts).toBe(1);
+    expect(fakeCanvas.lastProps!.ceremony).toEqual({ winners: engine().winners, introId: 1, introActive: true });
   });
 
   it('two zero-star players → 🏆 공동 우승! with both animals in participant order', async () => {
@@ -259,7 +271,7 @@ describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7
     expect(crownedAvatars().sort()).toEqual(['🐰', '🐻'].sort());
   });
 
-  it('지금 끝내기 → 게임 끝내기 during the win banner shows the result screen at once (C7e)', async () => {
+  it('지금 끝내기 → 게임 끝내기 during the win banner shows the ceremony at once (C7e)', async () => {
     await mountApp(atLastTurn(true));
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
@@ -375,7 +387,7 @@ describe('GameStage — tab visibility (D-27)', () => {
 });
 
 describe('GameStage — 지금 끝내기 during beats (Pitfall 11)', () => {
-  it('shows the result screen at once', async () => {
+  it('shows the ceremony at once', async () => {
     await mountApp(baseGame());
     pinDie(3);
     fireEvent.click(rollBtn()!);
@@ -482,7 +494,7 @@ describe('GameStage — tap to skip (FX-03, D-07, Pitfall 3 / 4)', () => {
     expect(P().current).toBe(die);
   });
 
-  it('a tap during the win beat shows the result screen at once', async () => {
+  it('a tap during the win beat shows the ceremony at once; that same tap does not end the intro', async () => {
     await mountApp(atLastTurn(true));
     vi.useFakeTimers();
     fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
@@ -491,6 +503,9 @@ describe('GameStage — tap to skip (FX-03, D-07, Pitfall 3 / 4)', () => {
     fireEvent.click(document.body);
     expect(P().busy).toBe(false);
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: true });
+    fireEvent.click(document.body); // a second tap ends the intro at once (D-16)
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: false });
   });
 
   it('2.5 s budget end to end: STARS_MS[3] after ✅ the 다음 ➡️ button is visible and works', async () => {
@@ -505,5 +520,152 @@ describe('GameStage — tap to skip (FX-03, D-07, Pitfall 3 / 4)', () => {
     const seq = engine().log.seq;
     fireEvent.click(nextBtn()!);
     expect(engine().log.seq).toBe(seq + 1);
+  });
+});
+
+// ---------- Phase 8 ceremony mode (08-10; D-11, D-16, D-20, END-01, END-03, AUDIO-02) ----------
+
+const restartBtn = () => screen.getByRole('button', { name: '🔁 다시 하기' });
+
+// 지금 끝내기 → 게임 끝내기: the quickest way into the ceremony (no beats to wait for).
+function endViaButton() {
+  fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+  fireEvent.click(screen.getByRole('button', { name: '게임 끝내기' }));
+}
+
+describe('GameStage — ceremony mode on the same canvas (D-11, END-01, END-03)', () => {
+  beforeEach(() => {
+    installFakeAudio();
+    useSettings.setState({ soundOn: true });
+  });
+  afterEach(() => {
+    cleanup();
+    __resetSfxForTests();
+    vi.unstubAllGlobals();
+  });
+
+  it('play-only HUD is gone; the canvas cell reads as the podium', async () => {
+    const { container } = await mountApp(baseGame());
+    endViaButton();
+    expect(container.querySelector('.game-stage.stage')).toHaveClass('stage--ceremony');
+    expect(container.querySelector('.game-topbar')).toBeNull();
+    expect(container.querySelector('.game-controls')).toBeNull();
+    expect(container.querySelector('.stage-bottom')).toBeNull();
+    expect(screen.queryByRole('list', { name: '별 순위' })).toBeNull();
+    expect(container.querySelector('.status-chips')).toBeNull();
+    expect(questCard()).toBeNull();
+    expect(container.querySelector('.stage-canvas')).toHaveAttribute('aria-label', '시상대, 우승: P1, P2');
+    // DOM order: head → canvas cell → panel → actions (UI-SPEC F7).
+    const kids = Array.from(container.querySelector('.game-stage.stage')!.children).map((el) => el.className);
+    expect(kids).toEqual(['ceremony-head', 'stage-canvas-cell', 'ceremony-panel is-intro', 'ceremony-actions']);
+  });
+
+  it('🔁 다시 하기 during the intro → the play stage with a new board and zeroed stats on the same canvas', async () => {
+    const { container } = await mountApp(baseGame());
+    endViaButton();
+    const ended = engine();
+    expect(fakeCanvas.lastProps!.ceremony!.introActive).toBe(true);
+    fireEvent.click(restartBtn());
+    expect(container.querySelector('.stage--ceremony')).toBeNull();
+    expect(engine().board).not.toBe(ended.board);
+    expect(Object.values(engine().stats).every((st) => Object.values(st).every((v) => v === 0))).toBe(true);
+    expect(fakeCanvas.lastProps!.ceremony).toBeNull();
+    settle(); // the fresh game's own beats (마지막 라운드 banner for a 1-round setting)
+    expect(rollBtn()).toBeInTheDocument();
+    expect(fakeCanvas.mounts).toBe(1);
+  });
+
+  it('play → ceremony → 🔁 다시 하기 three times keeps one canvas (T-08-24)', async () => {
+    await mountApp(baseGame());
+    for (let k = 1; k <= 3; k++) {
+      settle();
+      endViaButton();
+      expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+      expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: k, introActive: true });
+      fireEvent.click(restartBtn());
+      expect(screen.queryByText('게임 끝!')).toBeNull();
+    }
+    expect(fakeCanvas.mounts).toBe(1);
+  });
+
+  it('처음으로 goes back to the start screen', async () => {
+    await mountApp(baseGame());
+    endViaButton();
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    expect(useGameStore.getState().game).toBeNull();
+    expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
+  });
+
+  it('a lost context in the ceremony shows the DOM podium (no error copy); 🔄 brings the 3D podium back', async () => {
+    const { container } = await mountApp(baseGame());
+    endViaButton();
+    act(() => {
+      fakeCanvas.lastProps!.onLost();
+    });
+    const cell = container.querySelector('.stage-canvas-cell')!;
+    expect(cell.querySelector('.dom-podium')).not.toBeNull();
+    expect(screen.queryByText('화면이 잠깐 꺼졌어요')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    // The rest of the ceremony stays.
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    expect(restartBtn()).toBeInTheDocument();
+    fireEvent.click(within(cell as HTMLElement).getByRole('button', { name: '🔄 화면 다시 그리기' }));
+    await waitForCanvas(2);
+    expect(fakeCanvas.mounts).toBe(2);
+    expect(cell.querySelector('.dom-podium')).toBeNull();
+    expect(fakeCanvas.lastProps!.ceremony).not.toBeNull();
+  });
+
+  it('a canvas that throws in the ceremony also falls back to the DOM podium', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = await mountApp(baseGame());
+    endViaButton();
+    fakeCanvas.throwOnRender = true;
+    fireEvent.click(document.body); // ends the intro → re-render → the canvas throws
+    expect(container.querySelector('.stage-canvas-cell .dom-podium')).not.toBeNull();
+    expect(screen.queryByText('판을 그리지 못했어요')).toBeNull();
+    fakeCanvas.throwOnRender = false;
+    fireEvent.click(screen.getByRole('button', { name: '🔄 화면 다시 그리기' }));
+    await waitForCanvas(1);
+    await waitFor(() => expect(container.querySelector('.dom-podium')).toBeNull());
+  });
+});
+
+describe('GameStage — sound toggle placement (D-20, AUDIO-02)', () => {
+  beforeEach(() => {
+    installFakeAudio();
+    useSettings.setState({ soundOn: true });
+  });
+  afterEach(() => {
+    cleanup();
+    useSettings.setState({ soundOn: true });
+    __resetSfxForTests();
+    vi.unstubAllGlobals();
+  });
+
+  it('sits in the canvas cell during a stars beat (controls hidden); a tap flips soundOn, never skips', async () => {
+    const { container } = await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    const stars = P().current!;
+    expect(stars.kind).toBe('stars');
+    expect(screen.queryByRole('button', { name: '다음 ➡️' })).toBeNull();
+    const toggle = container.querySelector<HTMLButtonElement>('.stage-canvas-cell > .sound-toggle')!;
+    expect(toggle).toHaveAccessibleName('효과음 끄기');
+    fireEvent.click(toggle);
+    expect(useSettings.getState().soundOn).toBe(false);
+    expect(P().current).toBe(stars);
+    expect(container.querySelectorAll('.sound-toggle')).toHaveLength(1);
+  });
+
+  it('stays in the same place in the ceremony', async () => {
+    const { container } = await mountApp(baseGame());
+    endViaButton();
+    const toggle = container.querySelector<HTMLButtonElement>('.stage-canvas-cell > .sound-toggle')!;
+    expect(toggle).not.toBeNull();
+    fireEvent.click(toggle);
+    expect(useSettings.getState().soundOn).toBe(false);
+    // The toggle tap is skip-ignored: the intro keeps running.
+    expect(fakeCanvas.lastProps!.ceremony!.introActive).toBe(true);
   });
 });
