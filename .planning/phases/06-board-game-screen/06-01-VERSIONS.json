@@ -1,0 +1,8 @@
+{
+  "set": "d05",
+  "three": "0.186.1",
+  "@react-three/fiber": "9.8.2",
+  "@react-three/drei": "10.7.9",
+  "@types/three": "0.186.0",
+  "@react-three/test-renderer": "9.1.1"
+}
