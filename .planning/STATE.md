@@ -6,14 +6,14 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T17:03:21.148Z"
+last_updated: "2026-10-23T17:16:11.707Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 24
+  completed_plans: 25
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 6 of 11
+Plan: 7 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -87,6 +87,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P03 | 10 min | 2 tasks | 8 files |
 | Phase 08 P04 | 15min | 3 tasks | 9 files |
 | Phase 08 P05 | 12 min | 2 tasks | 7 files |
+| Phase 08 P06 | 10 min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -168,6 +169,9 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-04: 3-star shake offsets world x/y on both camera and lookAt target inside CameraRig; restore writes the exact fit values
 - [Phase 08]: 08-05: successBeatPose reuses the Phase 7 jump at u = 0.75·t/landMs (height × jumpHeight/0.55); after touchdown a 120 ms squash, arms-up joy hold with a 0.04 vertical bob, 250 ms ease to REST
 - [Phase 08]: 08-05: Character caches successPlan(rx.stars, rx.ms, false) per beat id in a ref; reduced motion still holds REST (faces only)
+- [Phase 08]: 08-06: sfx engine does not import settings — enabled defaults true; 08-08 useSfx syncs soundOn via setEnabled()
+- [Phase 08]: 08-06: sfx.play returns 0 unless the AudioContext is running (no backlog burst on resume); iOS ladder per gesture = suspend+resume, then close+recreate (max 3)
+- [Phase 08]: 08-06: FakeAudioContext ends sources on a manual clock (advance) so stopGroup / fade / cleanup are testable
 
 ### Pending Todos
 
@@ -211,6 +215,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T17:03:10.439Z
+Last session: 2026-10-23T17:15:48.539Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None

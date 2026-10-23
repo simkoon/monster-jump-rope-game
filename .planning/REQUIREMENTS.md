@@ -82,8 +82,8 @@
 
 ### 사운드 (AUDIO)
 
-- [ ] **AUDIO-01**: 주사위·이동·퀘스트 성공·별 획득·시상식에 효과음이 나온다 (CC0 소리만 사용)
-- [ ] **AUDIO-02**: 사용자는 효과음을 켜고 끌 수 있다
+- [x] **AUDIO-01**: 주사위·이동·퀘스트 성공·별 획득·시상식에 효과음이 나온다 (CC0 소리만 사용)
+- [x] **AUDIO-02**: 사용자는 효과음을 켜고 끌 수 있다
 
 ### 안정성 (STAB)
 
@@ -173,8 +173,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | END-01 | Phase 8 | Pending |
 | END-02 | Phase 8 | Pending |
 | END-03 | Phase 8 | Pending |
-| AUDIO-01 | Phase 8 | Pending |
-| AUDIO-02 | Phase 8 | Pending |
+| AUDIO-01 | Phase 8 | Complete |
+| AUDIO-02 | Phase 8 | Complete |
 | STAB-01 | Phase 8 | Pending |
 | STAB-02 | Phase 6 | Complete |
 | STAB-03 | Phase 8 | Pending |
