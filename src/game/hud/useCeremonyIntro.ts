@@ -13,7 +13,9 @@
 // run; the same key never replays. The run is derived during render (React's "adjust state when a
 // prop changes" pattern), so StrictMode's double effects cannot start or play twice; the fanfare
 // effect is additionally guarded by the run id it has already played.
-// Leaving the ceremony (restart / reset while the intro runs) ends the run and fades the fanfare.
+// Leaving the ceremony (restart / reset while the intro runs) ends the run and fades the fanfare:
+// 🔁 다시 하기 flips `active` while the hook stays mounted; 처음으로 sets game = null, GameApp
+// unmounts GameStage, and the unmount cleanup fades the group instead (WR-03).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import sfx from '../sfx/sfx';
 import { CEREMONY_INTRO_MS } from '../layout/podiumLayout';
@@ -60,6 +62,24 @@ export function useCeremonyIntro(active: boolean, gameKey: unknown): CeremonyInt
     if (wasActive.current && !active && playedRef.current > 0) sfx.stopGroup(groupOf(playedRef.current));
     wasActive.current = active;
   }, [active]);
+
+  // Unmounted while the fanfare may still ring (처음으로): fade it too. Deferred by one microtask so
+  // StrictMode's simulated unmount (cleanup, then the setup again in the same commit) cancels the
+  // stop instead of cutting the fanfare it has just started.
+  const unmountStop = useRef<{ cancelled: boolean } | null>(null);
+  useEffect(() => {
+    if (unmountStop.current) unmountStop.current.cancelled = true;
+    unmountStop.current = null;
+    return () => {
+      const id = playedRef.current;
+      if (id === 0) return;
+      const pending = { cancelled: false };
+      unmountStop.current = pending;
+      queueMicrotask(() => {
+        if (!pending.cancelled) sfx.stopGroup(groupOf(id));
+      });
+    };
+  }, []);
 
   const finish = useCallback(() => {
     setRun((r) => (r && r.active ? { ...r, active: false } : r));

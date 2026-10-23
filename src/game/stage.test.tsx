@@ -23,7 +23,7 @@ import type { GameState } from '../engine/state';
 import { fakeCanvas, settle, waitForCanvas } from '../test/fakeGameCanvas';
 import { INPUT_LOCK_MS, resetSharedInputLock, SKIP_LOCK_MS } from './useInputLock';
 import { useSettings } from '../settings';
-import { __resetSfxForTests } from './sfx/sfx';
+import sfx, { __resetSfxForTests } from './sfx/sfx';
 import { installFakeAudio } from '../test/fakeAudio';
 
 vi.mock('./scene/GameCanvas', () => import('../test/fakeGameCanvas'));
@@ -638,6 +638,17 @@ describe('GameStage — ceremony mode on the same canvas (D-11, END-01, END-03)'
     fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
     expect(useGameStore.getState().game).toBeNull();
     expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
+  });
+
+  it('처음으로 during the intro fades the fanfare after GameStage unmounts (WR-03)', async () => {
+    await mountApp(baseGame());
+    endViaButton();
+    expect(fakeCanvas.lastProps!.ceremony!.introActive).toBe(true);
+    const stopGroup = vi.spyOn(sfx, 'stopGroup');
+    fireEvent.click(screen.getByRole('button', { name: '처음으로' }));
+    expect(document.querySelector('.game-stage')).toBeNull();
+    await Promise.resolve();
+    expect(stopGroup).toHaveBeenCalledWith('ceremony-intro-1');
   });
 
   it('a lost context in the ceremony shows the DOM podium (no error copy); 🔄 brings the 3D podium back', async () => {

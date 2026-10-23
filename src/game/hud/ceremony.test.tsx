@@ -441,6 +441,34 @@ describe('useCeremonyIntro (D-16)', () => {
     expect(fanfares()).toBe(1);
   });
 
+  it('unmounting during the intro (처음으로 unmounts GameStage) stops the ceremony-intro-N group (WR-03)', async () => {
+    const { unmount } = render(<IntroHost active gameKey="g1" />);
+    const group = playSpy.mock.calls[0][1]!.group!;
+    expect(group).toBe('ceremony-intro-1');
+    expect(stopSpy).not.toHaveBeenCalled();
+    unmount();
+    await Promise.resolve();
+    expect(stopSpy).toHaveBeenCalledWith(group);
+  });
+
+  it('StrictMode\'s simulated unmount does not cut the fanfare it just started (WR-03)', async () => {
+    render(
+      <StrictMode>
+        <IntroHost active gameKey="g1" />
+      </StrictMode>,
+    );
+    await Promise.resolve();
+    expect(fanfares()).toBe(1);
+    expect(stopSpy).not.toHaveBeenCalled();
+  });
+
+  it('unmounting before any intro stops nothing', async () => {
+    const { unmount } = render(<IntroHost active={false} gameKey="g1" />);
+    unmount();
+    await Promise.resolve();
+    expect(stopSpy).not.toHaveBeenCalled();
+  });
+
   it('Escape ends it too', () => {
     render(<IntroHost active gameKey="g1" />);
     fireEvent.keyDown(document.body, { key: 'Escape' });
