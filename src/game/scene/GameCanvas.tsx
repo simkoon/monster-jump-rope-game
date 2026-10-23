@@ -15,6 +15,9 @@
 // onReady once; the watcher is removed on unmount. three already prevents default on the lost
 // event and R3F disposes the renderer on unmount; GameStage remounts only from the user's
 // "화면 다시 그리기" button. A DEV-only window.__loseContext() triggers a loss for desktop testing.
+// Soak metrics (Phase 8 D-22, STAB-01): a DEV-only window.__pjRenderInfo() returns renderer.info
+// (geometries / textures / programs / last frame's draw calls) for the dev soak page (soak.html);
+// both DEV hooks are stripped from the production build and deleted on unmount.
 import { useCallback, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { Canvas, type RootState } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
@@ -30,9 +33,17 @@ export type GameCanvasProps = SceneProps & {
   onLost: () => void;
 };
 
+export interface PjRenderInfo {
+  geometries: number;
+  textures: number;
+  programs: number;
+  calls: number; // draw calls of the last rendered frame (render.calls resets every frame)
+}
+
 declare global {
   interface Window {
     __loseContext?: () => void;
+    __pjRenderInfo?: () => PjRenderInfo;
   }
 }
 
@@ -64,6 +75,12 @@ export default function GameCanvas({ visible, onReady, onLost, ...scene }: GameC
     unwatch.current = watchContextLoss(gl.domElement, () => lostRef.current());
     if (import.meta.env.DEV) {
       window.__loseContext = () => gl.forceContextLoss();
+      window.__pjRenderInfo = () => ({
+        geometries: gl.info.memory.geometries,
+        textures: gl.info.memory.textures,
+        programs: gl.info.programs?.length ?? 0,
+        calls: gl.info.render.calls,
+      });
     }
     readyRef.current();
   }, []);
@@ -72,7 +89,10 @@ export default function GameCanvas({ visible, onReady, onLost, ...scene }: GameC
     () => () => {
       unwatch.current?.();
       unwatch.current = null;
-      if (import.meta.env.DEV) delete window.__loseContext;
+      if (import.meta.env.DEV) {
+        delete window.__loseContext;
+        delete window.__pjRenderInfo;
+      }
     },
     [],
   );

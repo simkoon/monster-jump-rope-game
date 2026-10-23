@@ -9,7 +9,9 @@
 //   (e) no physics or post-processing package,
 //   (f) no shadow maps (no cast/receive props in the scene, no `shadows` on the Canvas),
 //   (g) the dev-only character gallery stays out of the app (D-23, T-07-14): only the gallery entry
-//       src/gallery.tsx imports it, and the app entry / root never mention it.
+//       src/gallery.tsx imports it, and the app entry / root never mention it. The same holds for the
+//       dev-only soak entry src/soak.tsx (Phase 8 D-22, T-08-27): no module imports it, and the app
+//       entry / root never mention it.
 import { describe, it, expect } from 'vitest';
 
 const SOURCES = import.meta.glob(['/src/**/*.{ts,tsx}', '!/src/**/*.test.{ts,tsx}'], {
@@ -62,6 +64,7 @@ describe('source guard (D-02, D-03, D-04, STAB-04)', () => {
     expect(Object.keys(SOURCES)).toContain('/src/game/scene/Board.tsx');
     expect(Object.keys(SOURCES)).toContain('/src/game/scene/Character.tsx');
     expect(Object.keys(SOURCES)).toContain('/src/game/scene/CharacterGallery.tsx');
+    expect(Object.keys(SOURCES)).toContain('/src/soak.tsx');
     expect(Object.keys(SOURCES).some((f) => f.includes('.test.'))).toBe(false);
   });
 
@@ -165,6 +168,22 @@ describe('source guard (D-02, D-03, D-04, STAB-04)', () => {
       expect(SOURCES[entry], entry).toBeDefined();
       expect(SOURCES[entry], entry).not.toMatch(/gallery/i);
     }
+  });
+
+  it('(g) keeps the dev soak page out of the app', () => {
+    const bad: string[] = [];
+    for (const [file, src] of files) {
+      for (const { spec } of importsOf(src)) {
+        // Basename match, as for the gallery: any path ending in soak counts.
+        if (/(^|\/)soak(\.tsx?)?$/.test(spec)) bad.push(`${file}: ${spec}`);
+      }
+    }
+    expect(bad).toEqual([]);
+    for (const entry of ['/src/main.tsx', '/src/App.tsx']) {
+      expect(SOURCES[entry], entry).not.toMatch(/soak/i);
+    }
+    // The soak entry itself imports no 3D package (rule (d) covers it too; stated here for clarity).
+    expect(importsOf(SOURCES['/src/soak.tsx']).filter(({ spec }) => is3dPackage(spec))).toEqual([]);
   });
 
   it('the Canvas-tag rule sees through arrow functions', () => {
