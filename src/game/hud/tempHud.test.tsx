@@ -1,9 +1,8 @@
 // src/game/hud/tempHud.test.tsx — Phase 5 temporary display parts (D-24 AnimalPicker, D-26
-// Scoreboard + RingStrip). Props-only components: no store, no WebGL.
+// RingStrip; the Scoreboard tests moved to hud6.test.tsx in 06-04). Props-only components: no store, no WebGL.
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import AnimalPicker from './AnimalPicker';
-import Scoreboard, { type ScoreEntry } from './Scoreboard';
 import RingStrip, { type RingToken } from './RingStrip';
 import { ANIMALS } from '../../engine/animals';
 import type { Tile } from '../../engine/board';
@@ -63,42 +62,6 @@ describe('AnimalPicker (D-24)', () => {
     render(<AnimalPicker groupLabel="g" value="bear" taken={['rabbit']} onChange={onChange} />);
     fireEvent.click(screen.getByRole('button', { name: '병아리' }));
     expect(onChange).toHaveBeenCalledWith('chick');
-  });
-});
-
-describe('Scoreboard (D-26, ROUND-03)', () => {
-  const entries: ScoreEntry[] = [
-    { id: 'p1', name: '민수', animal: 'bear', stars: 2 },
-    { id: 'p2', name: '지아', animal: 'rabbit', stars: 5 },
-    { id: 'p3', name: '하준', animal: 'cat', stars: 5 },
-  ];
-
-  it('renders an ordered list labelled 별 순위, sorted by stars with shared ranks 1,1,3', () => {
-    render(<Scoreboard entries={entries} currentId="p1" />);
-    const list = screen.getByRole('list', { name: '별 순위' });
-    expect(list.tagName).toBe('OL');
-    const items = within(list).getAllByRole('listitem');
-    expect(items).toHaveLength(3);
-    expect(items.map((li) => li.querySelector('.rank')?.textContent)).toEqual(['1등', '1등', '3등']);
-    expect(items.map((li) => li.querySelector('.name')?.textContent)).toEqual(['지아', '하준', '민수']);
-    expect(items.map((li) => li.querySelector('.animal')?.textContent)).toEqual(['🐰', '🐱', '🐻']);
-    expect(items.map((li) => li.querySelector('.stars')?.textContent)).toEqual(['⭐5', '⭐5', '⭐2']);
-  });
-
-  it('marks the current participant pill with is-current', () => {
-    render(<Scoreboard entries={entries} currentId="p3" />);
-    const items = screen.getAllByRole('listitem');
-    const current = items.filter((li) => li.classList.contains('is-current'));
-    expect(current).toHaveLength(1);
-    expect(current[0].querySelector('.name')?.textContent).toBe('하준');
-  });
-
-  it('renders names as text (no HTML injection)', () => {
-    const { container } = render(
-      <Scoreboard entries={[{ id: 'x', name: '<b>x</b>', animal: 'pig', stars: 0 }]} currentId="x" />,
-    );
-    expect(screen.getByText('<b>x</b>')).toBeInTheDocument();
-    expect(container.querySelector('b')).toBeNull();
   });
 });
 

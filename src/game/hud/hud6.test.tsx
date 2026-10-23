@@ -2,15 +2,20 @@
 // Props-only parts render directly; the Banner reads the beat queue store, so both stores are reset
 // before every test and the Banner tests run on fake timers (beat length = banner time).
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import StatusChips from './StatusChips';
 import Banner from './Banner';
 import ContextLostOverlay from './ContextLostOverlay';
+import Scoreboard, { type ScoreEntry } from './Scoreboard';
+import TurnHud from './TurnHud';
+import ControlsBar from './ControlsBar';
+import { ANIMAL_COLOR } from '../palette';
+import type { NextUpView } from '../labels';
 import { usePresentation } from '../usePresentation';
 import { useGameStore } from '../../harness/useGameStore';
 import { EMPTY_DISPLAYED } from '../director/displayed';
 import type { BeatSpec } from '../director/timeline';
-import type { MoveResult } from '../../engine/state';
+import type { JudgementResult, MoveResult } from '../../engine/state';
 import type { Event } from '../../schema';
 
 const ev = (eff: Event['eff'], steps: number, name: string, label: Event['label'] = ''): Event => ({
@@ -170,5 +175,229 @@ describe('ContextLostOverlay (D-27, STAB-02, UI-SPEC S7)', () => {
     const dialog = screen.getByRole('alertdialog', { name: '판을 그리지 못했어요' });
     expect(dialog).toHaveAccessibleDescription('게임은 그대로예요. 버튼을 눌러 다시 시도해 주세요.');
     expect(screen.getByRole('button', { name: '🔄 화면 다시 그리기' })).toHaveFocus();
+  });
+});
+
+describe('Scoreboard v2 (HUD-01, D-22, UI-SPEC S4)', () => {
+  const entries: ScoreEntry[] = [
+    { id: 'p1', name: '민수', animal: 'bear', stars: 2 },
+    { id: 'p2', name: '지아', animal: 'rabbit', stars: 5 },
+    { id: 'p3', name: '하준', animal: 'cat', stars: 5 },
+  ];
+  const cells = () => within(screen.getByRole('list', { name: '별 순위' })).getAllByRole('listitem');
+
+  it('sorts by stars with shared ranks; crown badges for rank 1 with stars', () => {
+    const { container } = render(<Scoreboard entries={entries} currentId="p1" />);
+    const list = screen.getByRole('list', { name: '별 순위' });
+    expect(list.tagName).toBe('OL');
+    expect(list).toHaveClass('sb');
+    expect(list.style.getPropertyValue('--sb-cols')).toBe('3');
+    const items = cells();
+    expect(items.every((li) => li.classList.contains('sb-cell'))).toBe(true);
+    expect(items.map((li) => li.querySelector('.sb-name')?.textContent)).toEqual(['지아', '하준', '민수']);
+    expect(items.map((li) => li.querySelector('.sb-rank')?.textContent)).toEqual(['👑', '👑', '3']);
+    expect(items.map((li) => li.querySelector('.sb-stars')?.textContent)).toEqual(['⭐5', '⭐5', '⭐2']);
+    expect(items.map((li) => li.classList.contains('is-leader'))).toEqual([true, true, false]);
+    expect(container.querySelector('.sb-avatar')).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.sb-avatar')!.textContent).toContain('🐰');
+  });
+
+  it('uses the pawn color (ANIMAL_COLOR) as --pc and an aria-label per cell', () => {
+    render(<Scoreboard entries={entries} currentId="p1" />);
+    const items = cells();
+    expect(items[0].style.getPropertyValue('--pc')).toBe(ANIMAL_COLOR.rabbit);
+    expect(items[2].style.getPropertyValue('--pc')).toBe(ANIMAL_COLOR.bear);
+    expect(items[0]).toHaveAttribute('aria-label', '1등 왕관, 1등 토끼 지아 별 5개');
+    expect(items[2]).toHaveAttribute('aria-label', '3등 곰 민수 별 2개');
+  });
+
+  it('marks the current participant with is-current', () => {
+    render(<Scoreboard entries={entries} currentId="p3" />);
+    const current = cells().filter((li) => li.classList.contains('is-current'));
+    expect(current).toHaveLength(1);
+    expect(current[0].querySelector('.sb-name')?.textContent).toBe('하준');
+  });
+
+  it('all-zero stars: numeric badges 1,1,1, no crown, no leader', () => {
+    const zero = entries.map((e) => ({ ...e, stars: 0 }));
+    render(<Scoreboard entries={zero} currentId="p1" />);
+    const items = cells();
+    expect(items.map((li) => li.querySelector('.sb-rank')?.textContent)).toEqual(['1', '1', '1']);
+    expect(items.some((li) => li.classList.contains('is-leader'))).toBe(false);
+  });
+
+  it('caps the grid at 4 columns', () => {
+    const many: ScoreEntry[] = (['bear', 'rabbit', 'cat', 'dog', 'panda', 'fox'] as const).map((a, i) => ({
+      id: `p${i}`,
+      name: `P${i}`,
+      animal: a,
+      stars: i,
+    }));
+    render(<Scoreboard entries={many} currentId="p0" />);
+    expect(screen.getByRole('list', { name: '별 순위' }).style.getPropertyValue('--sb-cols')).toBe('4');
+  });
+
+  it('renders names as text (no HTML injection)', () => {
+    const { container } = render(
+      <Scoreboard entries={[{ id: 'x', name: '<b>x</b>', animal: 'pig', stars: 0 }]} currentId="x" />,
+    );
+    expect(screen.getByText('<b>x</b>')).toBeInTheDocument();
+    expect(container.querySelector('b')).toBeNull();
+  });
+});
+
+describe('TurnHud v2 (HUD-02, ROUND-02, D-22, D-24, UI-SPEC S3)', () => {
+  const sky: NextUpView = { animal: 'bear', name: '하늘', member: null, sameAgain: false };
+  const base = {
+    animal: 'cat' as const,
+    name: '가',
+    isTeam: false,
+    activeMember: '가',
+    isExtra: false,
+    round: 2,
+    totalRounds: 5,
+    next: sky,
+    onEndNow: () => {},
+  };
+
+  it('turn pill: color dot before the name; text stays emoji + name + 차례', () => {
+    const { container } = render(<TurnHud {...base} />);
+    const pill = container.querySelector('.game-turn-pill')!;
+    expect(pill).toHaveAttribute('aria-live', 'polite');
+    const dot = pill.querySelector('.turn-dot') as HTMLElement;
+    expect(dot).toHaveAttribute('aria-hidden', 'true');
+    expect(dot.style.getPropertyValue('--pc')).toBe(ANIMAL_COLOR.cat);
+    expect(container.querySelector('.game-turn-name')!.textContent).toBe('🐱 가 차례');
+  });
+
+  it('round block: r/R with R dots (filled 1..r, r-th is-now), role group + aria', () => {
+    const { container } = render(<TurnHud {...base} />);
+    const round = screen.getByRole('group', { name: '라운드 5개 중 2번째' });
+    expect(round).toHaveClass('game-round');
+    expect(round).not.toHaveClass('is-final');
+    expect(round.textContent).toBe('라운드2/5');
+    const dots = [...container.querySelectorAll('.round-dot')];
+    expect(dots).toHaveLength(5);
+    expect(dots.map((d) => d.classList.contains('is-filled'))).toEqual([true, true, false, false, false]);
+    expect(dots.map((d) => d.classList.contains('is-now'))).toEqual([false, true, false, false, false]);
+    expect(container.querySelector('.round-dots')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('more than 10 rounds: numbers only; last round: 마지막 라운드 + is-final', () => {
+    const { container, rerender } = render(<TurnHud {...base} round={3} totalRounds={12} />);
+    expect(container.querySelectorAll('.round-dot')).toHaveLength(0);
+    expect(container.querySelector('.game-round')!.textContent).toBe('라운드3/12');
+    rerender(<TurnHud {...base} round={5} totalRounds={5} />);
+    const round = container.querySelector('.game-round')!;
+    expect(round).toHaveClass('is-final');
+    expect(round.textContent).toBe('마지막 라운드5/5');
+  });
+
+  it('next block: 다음 + dot + next name; team member; sameAgain; last turn', () => {
+    const { container, rerender } = render(<TurnHud {...base} />);
+    const nextBlock = () => container.querySelector('.turn-next')!;
+    expect(nextBlock().querySelector('.label')!.textContent).toBe('다음');
+    expect(nextBlock().querySelector('.value')!.textContent).toBe('🐻 하늘');
+    expect((nextBlock().querySelector('.turn-dot') as HTMLElement).style.getPropertyValue('--pc')).toBe(
+      ANIMAL_COLOR.bear,
+    );
+    rerender(<TurnHud {...base} next={{ animal: 'fox', name: 'A팀', member: '민수', sameAgain: false }} />);
+    expect(nextBlock().querySelector('.value')!.textContent).toBe('🦊 A팀 · 민수');
+    rerender(<TurnHud {...base} next={{ ...sky, sameAgain: true }} />);
+    expect(nextBlock().querySelector('.value')!.textContent).toBe('🔁 한 번 더: 🐻 하늘');
+    rerender(<TurnHud {...base} next={null} />);
+    expect(nextBlock().querySelector('.value')!.textContent).toBe('🏁 이번이 마지막 차례!');
+    expect(nextBlock().querySelector('.turn-dot')).toBeNull();
+  });
+
+  it('team member line and the extra badge', () => {
+    const { container } = render(<TurnHud {...base} isTeam activeMember="민수" isExtra />);
+    expect(container.querySelector('.game-turn-member')!.textContent).toBe('이번엔 민수 님이 도전!');
+    expect(screen.getByText('🔁 한 번 더')).toHaveClass('game-event-chip', 'extra');
+  });
+
+  it('names render as text', () => {
+    const { container } = render(
+      <TurnHud {...base} name="<b>x</b>" next={{ animal: 'pig', name: '<i>y</i>', member: null, sameAgain: false }} />,
+    );
+    expect(container.querySelector('b')).toBeNull();
+    expect(container.querySelector('i')).toBeNull();
+    expect(container.querySelector('.turn-next .value')!.textContent).toBe('🐷 <i>y</i>');
+  });
+
+  it('지금 끝내기 calls onEndNow only on confirm', () => {
+    const onEndNow = vi.fn();
+    render(<TurnHud {...base} onEndNow={onEndNow} />);
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    expect(onEndNow).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '게임 끝내기' }));
+    expect(onEndNow).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ControlsBar v2 (HUD-03, HUD-04, D-21, D-25, UI-SPEC S5)', () => {
+  const noop = () => {};
+  const props = {
+    canUndo: false,
+    nextKind: 'next' as const,
+    judgement: null as JudgementResult | null,
+    onRoll: noop,
+    onNext: noop,
+    onUndo: noop,
+  };
+
+  it('renders nothing while hidden (never disabled) or at gameOver', () => {
+    const { container, rerender } = render(<ControlsBar {...props} phase="awaitingRoll" hidden canUndo />);
+    expect(container.innerHTML).toBe('');
+    rerender(<ControlsBar {...props} phase="gameOver" canUndo />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('awaitingRoll: one big 🎲 button with the die in span.game-btn-emoji', () => {
+    const onRoll = vi.fn();
+    render(<ControlsBar {...props} phase="awaitingRoll" onRoll={onRoll} />);
+    const btn = screen.getByRole('button', { name: '🎲 주사위 굴리기' });
+    expect(btn).toHaveClass('game-btn');
+    expect(btn).not.toBeDisabled();
+    expect(btn.querySelector('.game-btn-emoji')!.textContent).toBe('🎲');
+    fireEvent.click(btn);
+    expect(onRoll).toHaveBeenCalledTimes(1);
+  });
+
+  it('awaitingJudgement has no primary button; undo only when canUndo', () => {
+    const { container, rerender } = render(<ControlsBar {...props} phase="awaitingJudgement" />);
+    expect(container.querySelectorAll('button')).toHaveLength(0);
+    rerender(<ControlsBar {...props} phase="awaitingJudgement" canUndo />);
+    expect(screen.getByRole('button', { name: '↩️ 판정 되돌리기' })).toHaveClass('game-btn--sm');
+    expect(container.querySelectorAll('button')).toHaveLength(1);
+  });
+
+  it('turnResolved labels per nextKind and calls onNext', () => {
+    const onNext = vi.fn();
+    const { rerender } = render(<ControlsBar {...props} phase="turnResolved" onNext={onNext} />);
+    fireEvent.click(screen.getByRole('button', { name: '다음 ➡️' }));
+    expect(onNext).toHaveBeenCalledTimes(1);
+    rerender(<ControlsBar {...props} phase="turnResolved" nextKind="extra" />);
+    expect(screen.getByRole('button', { name: '🔁 한 번 더 하기' })).toHaveClass('game-btn');
+    rerender(<ControlsBar {...props} phase="turnResolved" nextKind="result" />);
+    expect(screen.getByRole('button', { name: '🏆 결과 보기' })).toHaveClass('game-btn');
+  });
+
+  it('turnResolved result line above the next button; none without a judgement', () => {
+    const ok: JudgementResult = { success: true, starsAwarded: 3, retry: false };
+    const miss: JudgementResult = { success: false, starsAwarded: 0, retry: false };
+    const { container, rerender } = render(<ControlsBar {...props} phase="turnResolved" judgement={ok} />);
+    const line = screen.getByText('🎉 성공! ⭐+3');
+    expect(line).toHaveClass('game-judge-result', 'ok');
+    const root = container.querySelector('.game-controls')!;
+    expect(root.firstElementChild).toBe(line);
+    rerender(<ControlsBar {...props} phase="turnResolved" judgement={miss} />);
+    expect(screen.getByText('아쉬워요! 이번엔 별 없이 다음 차례')).toHaveClass('game-judge-result', 'miss');
+    rerender(<ControlsBar {...props} phase="turnResolved" judgement={{ ...miss, retry: true }} />);
+    expect(container.querySelector('.game-judge-result')).toBeNull();
+    rerender(<ControlsBar {...props} phase="turnResolved" judgement={null} />);
+    expect(container.querySelector('.game-judge-result')).toBeNull();
+    rerender(<ControlsBar {...props} phase="turnResolved" judgement={ok} hidden />);
+    expect(container.innerHTML).toBe('');
   });
 });

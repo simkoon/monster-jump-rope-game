@@ -67,7 +67,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
     expect(container.querySelector('.game-stage.temp-play')).not.toBeNull();
-    expect(container.querySelector('.game-round')!.textContent).toBe('라운드1/1');
+    expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
 
     const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
     let clicks = 0;
@@ -90,7 +90,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(screen.getByText(/^🏆 (공동 )?우승! /)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
-    expect(container.querySelector('.game-round')!.textContent).toBe('라운드1/1');
+    expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
     expect(useGameStore.getState().game!.board.length).toBe(16);
   });
 

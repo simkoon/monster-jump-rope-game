@@ -8,8 +8,6 @@ import PlayView from '../PlayView';
 import { INPUT_LOCK_MS } from '../useInputLock';
 import { useGameStore } from '../../harness/useGameStore';
 import Toast, { useToastStore } from '../../components/Toast';
-import TurnHud from './TurnHud';
-import ControlsBar from './ControlsBar';
 import DiceResultPanel from './DiceResultPanel';
 import { rollDice, judge, advanceTurn } from '../../engine/game';
 import { makeGame, boardWith, questTile, eventTile, dice, mission, player } from '../../engine/testkit';
@@ -320,28 +318,6 @@ describe('TurnHud (TURN-01, D-21, D-22)', () => {
     expect(g.phase).toBe('gameOver');
     expect(g.endReason).toBe('manual');
   });
-
-  it('standalone props: the extra badge and onEndNow only on confirm', () => {
-    const onEndNow = vi.fn();
-    render(
-      <TurnHud
-        animal="cat"
-        name="가"
-        isTeam={false}
-        activeMember="가"
-        isExtra
-        round={2}
-        totalRounds={5}
-        onEndNow={onEndNow}
-      />,
-    );
-    expect(screen.getByText('🔁 한 번 더')).toBeInTheDocument();
-    expect(screen.getByText('2/5')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
-    expect(onEndNow).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: '게임 끝내기' }));
-    expect(onEndNow).toHaveBeenCalledTimes(1);
-  });
 });
 
 const ev = (eff: Event['eff'], steps: number, name: string, label: Event['label'] = ''): Event => ({
@@ -405,46 +381,6 @@ describe('DiceResultPanel copy (UI-SPEC S3)', () => {
     expect(screen.getByText('🎁 보너스')).toHaveClass('game-event-chip', 'bonus');
     rerender(<DiceResultPanel move={move({ event: ev('backward', 2, '구덩이', '함정') })} />);
     expect(screen.getByText('🕳️ 함정')).toHaveClass('game-event-chip', 'trap');
-  });
-});
-
-describe('ControlsBar (phase table)', () => {
-  const noop = () => {};
-  const props = { canUndo: false, nextKind: 'next' as const, onRoll: noop, onNext: noop, onUndo: noop };
-
-  it('renders nothing while busy or at gameOver', () => {
-    const { container, rerender } = render(<ControlsBar {...props} phase="awaitingRoll" busy />);
-    expect(container.innerHTML).toBe('');
-    rerender(<ControlsBar {...props} phase="gameOver" canUndo />);
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('awaitingJudgement has no primary button; undo only when canUndo', () => {
-    const { container, rerender } = render(<ControlsBar {...props} phase="awaitingJudgement" />);
-    expect(container.querySelectorAll('button')).toHaveLength(0);
-    rerender(<ControlsBar {...props} phase="awaitingJudgement" canUndo />);
-    expect(screen.getByRole('button', { name: '↩️ 판정 되돌리기' })).toHaveClass('game-btn--sm');
-    expect(container.querySelectorAll('button')).toHaveLength(1);
-  });
-
-  it('turnResolved labels per nextKind and calls onNext', () => {
-    const onNext = vi.fn();
-    const { rerender } = render(<ControlsBar {...props} phase="turnResolved" onNext={onNext} />);
-    fireEvent.click(screen.getByRole('button', { name: '다음 ➡️' }));
-    expect(onNext).toHaveBeenCalledTimes(1);
-    rerender(<ControlsBar {...props} phase="turnResolved" nextKind="extra" />);
-    expect(screen.getByRole('button', { name: '🔁 한 번 더 하기' })).toHaveClass('game-btn');
-    rerender(<ControlsBar {...props} phase="turnResolved" nextKind="result" />);
-    expect(screen.getByRole('button', { name: '🏆 결과 보기' })).toHaveClass('game-btn');
-  });
-
-  it('awaitingRoll calls onRoll', () => {
-    const onRoll = vi.fn();
-    render(<ControlsBar {...props} phase="awaitingRoll" onRoll={onRoll} />);
-    const btn = screen.getByRole('button', { name: '🎲 주사위 굴리기' });
-    expect(btn).toHaveClass('game-btn');
-    fireEvent.click(btn);
-    expect(onRoll).toHaveBeenCalledTimes(1);
   });
 });
 
