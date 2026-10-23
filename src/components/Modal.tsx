@@ -22,7 +22,8 @@ function focusables(root: HTMLElement): HTMLElement[] {
 // Accessible, focus-trapped modal shell (UI-SPEC §Component Inventory Modal,
 // §Accessibility). role=dialog + aria-modal, Esc + backdrop close, focus moved
 // into the dialog on open and restored to the trigger on close. Reused by the
-// mission/event editors and by ConfirmDialog.
+// mission/event editors and by ConfirmDialog. The overlay root carries data-skip-ignore, so a
+// tap or Escape inside a dialog never skips a game celebration (Phase 8 D-07).
 export default function Modal({ open, onClose, title, children, initialFocusRef }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
@@ -72,6 +73,8 @@ export default function Modal({ open, onClose, title, children, initialFocusRef 
     <div
       className="overlay show"
       data-testid="modal-overlay"
+      // Phase 8 D-07: taps and Escape inside any dialog (ConfirmDialog included) never skip a beat.
+      data-skip-ignore
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

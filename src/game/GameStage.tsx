@@ -13,6 +13,11 @@
 // and the next controls appear in the same place only after the last beat. The 400 ms input lock
 // stays on every action (T-06-18).
 //
+// Tap to skip (Phase 8 FX-03, D-07): useSkipOnTap ends the current stars / win beat on a page tap
+// or Escape (document capture click, so the starting ✅ tap never skips) and takes the shared
+// 250 ms input lock, which `guard` honors, so the skip tap cannot leak onto the new 다음 ➡️.
+// 지금 끝내기 and the dialogs carry data-skip-ignore.
+//
 // 3D chunk (D-06, STAB-04): only the loader and the props type come from the scene — never three.
 // Each attempt gets a fresh React.lazy (a rejected lazy stays rejected), inside an error boundary
 // keyed by the same canvasKey. Recovery (D-27): webglcontextlost, a thrown chunk / WebGL creation
@@ -45,6 +50,7 @@ import Banner from './hud/Banner';
 import ContextLostOverlay from './hud/ContextLostOverlay';
 import MissionOverlay from './hud/MissionOverlay';
 import { useInputLock } from './useInputLock';
+import { useSkipOnTap } from './useSkipOnTap';
 import { boardAria, nextUpView } from './labels';
 
 // UI-SPEC S7: a canvas that is not ready within 8 s shows the recovery overlay.
@@ -95,6 +101,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   const [failure, setFailure] = useState<Failure | null>(null);
   const visible = usePageVisible();
   const hasGame = game !== null;
+  useSkipOnTap();
 
   // A fresh lazy component per attempt (RESEARCH Pitfall 6).
   const LazyCanvas = useMemo(() => lazy(loadGameCanvas), [canvasKey]);
