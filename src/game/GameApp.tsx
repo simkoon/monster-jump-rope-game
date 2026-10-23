@@ -1,23 +1,31 @@
 // src/game/GameApp.tsx — the real game root (replaces the throwaway GameHarness).
-// Routes on the store: no game → SetupView; gameOver → ResultView; otherwise → PlayView.
-// The setup/result screens are the child-facing re-skins (03-02) reusing ALL Phase 2 logic
-// via the useGameStore bridge; the play screen is the 3D slice with the play HUD.
+// Mounts the presentation director for the whole game view, then routes on the store:
+// no game → SetupView; gameOver (once the beats have ended) → ResultView; otherwise → GameStage,
+// the 3D ring board screen that replaced the Phase 5 temporary play screen.
 //
-// gameOver is held behind the ANIM_DONE `busy` flag so a winning roll's token hop finishes
-// animating in PlayView BEFORE the result screen takes over (D-07) — otherwise the Canvas
-// would unmount mid-move. The watchdog guarantees busy always clears, so the result screen
-// can never be blocked.
+// The director (useDirector) subscribes to the engine store synchronously, so every engine change
+// and its beats (busy = true) land in one store update and the stage never renders a frame of the
+// next phase's controls before its beats (HUD-03, RESEARCH Pattern 3). It lives here, above the
+// router, so it keeps listening across setup → stage → result (a fresh game's own log still plays
+// its "마지막 라운드!" banner).
+//
+// gameOver is held behind the `busy` flag so a winning move's beats finish on the board BEFORE the
+// result screen takes over (D-07) — otherwise the canvas would unmount mid-move. The per-beat
+// watchdogs guarantee busy always clears, and "지금 끝내기" skips the beats (gameEnded → skipAll),
+// so the result screen can never be blocked.
 import { useGameStore } from '../harness/useGameStore';
 import { usePresentation } from './usePresentation';
+import { useDirector } from './director/useDirector';
 import SetupView from './hud/SetupView';
 import ResultView from './hud/ResultView';
-import PlayView from './PlayView';
+import GameStage from './GameStage';
 
 export default function GameApp() {
+  useDirector();
   const game = useGameStore((s) => s.game);
   const busy = usePresentation((s) => s.busy);
 
   if (!game) return <SetupView />;
   if (game.phase === 'gameOver' && !busy) return <ResultView />;
-  return <PlayView />;
+  return <GameStage />;
 }

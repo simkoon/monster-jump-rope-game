@@ -113,7 +113,8 @@ describe('source guard (D-02, D-03, D-04, STAB-04)', () => {
     for (const [file, src] of files) {
       if (file.startsWith('/src/game/scene/')) continue;
       for (const { clause, spec } of importsOf(src)) {
-        if (/GameCanvas$/.test(spec) && clause !== 'import()' && !isTypeOnly(clause)) bad.push(file);
+        // Basename match: './scene/loadGameCanvas' (the sanctioned loader) must not count.
+        if (/(^|\/)GameCanvas$/.test(spec) && clause !== 'import()' && !isTypeOnly(clause)) bad.push(file);
       }
     }
     expect(bad).toEqual([]);
