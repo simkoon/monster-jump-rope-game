@@ -14,7 +14,8 @@ import { SceneContents } from './SceneContents';
 import { FACE_UP_EULER, diceSize, type DieFace } from '../layout/diceFaces';
 import { usePresentation } from '../usePresentation';
 import { EMPTY_DISPLAYED } from '../director/displayed';
-import type { BeatSpec } from '../director/timeline';
+import { STARS_MS, type BeatSpec } from '../director/timeline';
+import { successPlan } from '../director/successPlan';
 import { useGameStore } from '../../harness/useGameStore';
 import { boardWith, eventTile, makeGame, patchParticipant, player, questTile } from '../../engine/testkit';
 import { standPoints } from '../layout/pawnSlots';
@@ -587,6 +588,41 @@ describe('SceneContents — the WebGL-free scene graph (D-28)', () => {
     expect(named(r, 'crown')).toHaveLength(8);
     expect(named(r, 'turn-ring')).toHaveLength(0);
     expect(countDraws(r)).toBeLessThanOrEqual(100);
+  });
+
+  // Phase 8 (08-04, D-06): the four effect pools are always mounted and count toward the budget.
+  const visibleDraws = (r: Renderer) => {
+    let n = 0;
+    r.scene.children.forEach((c) =>
+      (c.instance as Object3D).traverseVisible((o) => {
+        if (o instanceof InstancedMesh ? o.count > 0 : o instanceof Mesh) n++;
+      }),
+    );
+    return n;
+  };
+
+  it('includes the four always-mounted effect pools and still stays within 100 draws (D-06)', async () => {
+    usePresentation.getState().reset({ positions: allOn(0), stars: allOn(1) }, null);
+    const r = await mount(<SceneContents tiles={tiles24} participants={eight} currentId="p3" restFace={6} />);
+    for (const name of ['fx-confetti', 'fx-burst', 'fx-ring', 'fx-puff']) one(r, name);
+    expect(countDraws(r)).toBeLessThanOrEqual(100);
+  });
+
+  it('keeps the visible meshes ≤ 104 during a ⭐3 effect with 8 characters (D-06)', async () => {
+    usePresentation.getState().reset({ positions: allOn(0), stars: allOn(1) }, null);
+    const r = await mount(<SceneContents tiles={tiles24} participants={eight} currentId="p3" restFace={6} />);
+    await play([{ kind: 'stars', pid: 'p3', stars: 3, ms: STARS_MS[3] }]);
+    const land = successPlan(3, STARS_MS[3], false).landMs;
+    let peak = 0;
+    let active = 0;
+    for (let t = 0; t < STARS_MS[3]; t += 50) {
+      await frames(r, 1, 0.05);
+      peak = Math.max(peak, visibleDraws(r));
+      if ((named(r, 'fx-confetti')[0] as InstancedMesh).count > 0) active++;
+    }
+    expect(active).toBeGreaterThan(0);
+    expect(peak).toBeLessThanOrEqual(104);
+    expect(land).toBeGreaterThan(0);
   });
 
   it('win beat: every co-winner (0 stars) cheers with the winner face and a crown; no turn ring (D-14)', async () => {
