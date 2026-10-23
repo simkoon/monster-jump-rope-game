@@ -6,14 +6,14 @@ current_phase: 6
 current_phase_name: 3D 순환판 & 게임 화면
 status: executing
 stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-10-23T01:44:57.611Z"
+last_updated: "2026-10-23T01:56:48.708Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 25
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 6 (3D 순환판 & 게임 화면) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-10-22 — Phase 6 execution started
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P01 | 7min | 3 tasks | 17 files |
 | Phase 06 P03 | 7min | 2 tasks | 7 files |
 | Phase 06 P04 | 8min | 3 tasks | 14 files |
+| Phase 06 P05 | 11min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-03: chevron instance k = gap k; the second start-gap chevron is instance n
 - [Phase 06]: 06-04: ControlsBar uses hidden (never disabled) and owns the judgement result line; PlayView passes judgement only at turnResolved
 - [Phase 06]: 06-04: Banner completes banner beats by id after beat.ms; dice/preview/hop are left to their consumer or the store watchdog
+- [Phase 06]: 06-05: beat consumers read usePresentation.getState() inside useFrame (not a render-time beat) so a beat started/ended between renders is never missed; completion guarded by startedId/doneId refs
+- [Phase 06]: 06-05: GameCanvas reached only via loadGameCanvas() dynamic import; source guard enforces no forbidden drei, no URLs in src/game, no scene text, no 3D value imports outside src/game/scene
 
 ### Pending Todos
 
@@ -164,6 +167,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T01:44:53.690Z
+Last session: 2026-10-23T01:56:44.946Z
 Stopped at: Completed 06-01-PLAN.md
 Resume file: None

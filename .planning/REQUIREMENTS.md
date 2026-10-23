@@ -90,7 +90,7 @@
 - [ ] **STAB-01**: 새로고침 없이 여러 판(5판)을 연속으로 해도 느려지거나 멈추지 않는다
 - [x] **STAB-02**: 다른 앱에 다녀와 3D 화면이 꺼지면 "화면 다시 그리기"로 진행 상황을 그대로 유지한 채 복구할 수 있다
 - [ ] **STAB-03**: iPhone·iPad Safari와 노트북 Chrome에서 원활하게 동작한다 (실기기로 확인)
-- [ ] **STAB-04**: 인터넷 연결이 없어도 모든 글자와 화면이 정상 표시된다 (외부 CDN 요청 없음)
+- [x] **STAB-04**: 인터넷 연결이 없어도 모든 글자와 화면이 정상 표시된다 (외부 CDN 요청 없음)
 
 ## Future Requirements
 
@@ -178,7 +178,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STAB-01 | Phase 8 | Pending |
 | STAB-02 | Phase 6 | Complete |
 | STAB-03 | Phase 8 | Pending |
-| STAB-04 | Phase 6 | Pending |
+| STAB-04 | Phase 6 | Complete |
 
 **Coverage:**
 
