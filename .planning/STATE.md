@@ -5,16 +5,16 @@ milestone_name: 3D 블루마블 재구축
 current_phase: 7
 current_phase_name: 치비 동물 캐릭터 & 표정
 status: executing
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-10-23T07:17:36.597Z"
+stopped_at: Completed 07-06-PLAN.md
+last_updated: "2026-10-23T07:24:56.715Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 16
-  completed_plans: 16
-  percent: 75
+  completed_phases: 2
+  total_plans: 19
+  completed_plans: 17
+  percent: 50
 ---
 
 # Project State
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
-Plan: 5 of 5
+Plan: 7 of 8 (gap closure: 07-06 done, next 07-07)
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 7 execution started
 
@@ -79,6 +79,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P03 | 14min | 3 tasks | 7 files |
 | Phase 07 P04 | 12min | 3 tasks | 10 files |
 | Phase 07 P05 | 14min | 3 tasks | 9 files |
+| Phase 07 P06 | 9min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-04: CHAR-01..03 / BOARD-05 stay Pending until the 07-05 gallery + UAT
 - [Phase 07]: 07-05: dev gallery is an extra root HTML served only by the Vite dev server; vite.config.ts keeps no input list and source guard (g) blocks app imports
 - [Phase 07]: 07-05: stars on occupied quest tiles rise to top + 1.20 at 0.75x, eased per tile; in-bound tuning dog ears r 0.11 / x 0.29, start n5 slot 1 +0.10 z
+- [Phase 07]: 07-06: faces prebuilt per participating animal in render via faceSet (frozen per-animal record); frame loop only swaps references (D-08a)
+- [Phase 07]: 07-06: STAR_LIFT_UP 1.35; quest-tile stars hide during their character's stars/win beat and on tiles with 2+ characters (D-12a, D-17a(4)); act hide off under reduced motion
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T05:35:53.840Z
-Stopped at: Completed 07-04-PLAN.md
+Last session: 2026-10-23T07:24:56.709Z
+Stopped at: Completed 07-06-PLAN.md
 Resume file: None
