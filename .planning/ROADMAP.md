@@ -107,7 +107,7 @@ Plans:
   3. 캐릭터가 기다리는 동안 살짝 움직이고(대기), 칸을 지날 때마다 점프하며, 성공하면 점프·회전, 실패하면 아쉬워하고, 우승하면 환호한다
   4. 한 칸에 말이 최대 8개 모여도 모든 캐릭터가 서로 가리지 않고 하나하나 구분된다
 
-**Plans:** 5/5 plans complete
+**Plans:** 5/8 plans complete (3 gap-closure plans added)
 
 Plans:
 **Wave 1**
@@ -126,6 +126,12 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 07-05-PLAN.md — dev 전용 캐릭터 갤러리 + 사람이 선 칸 별 들어올리기 + 헤드리스 귀여움 자체 점검 + 단계 끝 UAT 13항목 (wave 4)
+
+**Gap closure (07-VERIFICATION 갭 1·2 + 07-REVIEW WR-01~03)**
+
+- [ ] 07-06-PLAN.md — 얼굴 9종 렌더 중 사전 생성(D-08a) + 칸 위 별 1.35·성공/환호 중 숨김·2마리 이상 칸 숨김 기하 테스트(D-12a) + IN-03/IN-05 정리 (gap wave 1)
+- [ ] 07-07-PLAN.md — 우승 비트 동안 DOM HUD 게임 끝 표시: 차례 바 `🏁 게임 끝`, 점수판 지금 차례 없음·왕관 = 우승자 전원(D-14a) + 우승 배너 이모지 항목(IN-01) (gap wave 1)
+- [ ] 07-08-PLAN.md — 게이트·귀·왕관·별을 포함한 실제 장면 얼굴 가림 테스트(D-17a(4)) + 출발 칸·일반 칸 슬롯 재배치 + 토끼 귀 단축(D-17a(1)(3)), 게이트 유지 + 전후 캡처 (gap wave 2, after 07-06·07-07)
 
 **UI hint**: yes
 
