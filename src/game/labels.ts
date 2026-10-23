@@ -8,7 +8,7 @@ import type { ContentAnalysis } from '../engine/setup';
 import type { GameState, MoveResult } from '../engine/state';
 import type { Difficulty, Event } from '../schema';
 import type { FailRule, Settings } from '../settings';
-import type { BeatKind, BeatSpec } from './director/timeline';
+import { starTier, type BeatKind, type BeatSpec, type StarTier } from './director/timeline';
 import { nextUp } from './turnOrder';
 
 export const ANIMAL_EMOJI: Record<AnimalId, string> = {
@@ -194,10 +194,15 @@ export function chipItems(move: MoveResult | null, pending: readonly BeatKind[])
   return out;
 }
 
-// D-23 / D-24 / UI-SPEC S6(b): banner copy per banner beat; null for dice / preview / hop and
-// for the copy-less miss beat (Phase 7 D-13). The win beat (D-14, UI-SPEC C7d) shows only animal
-// emojis and fixed animal names — never a participant name (T-07-02).
-export type BannerTone = 'sun' | 'grass' | 'coral' | 'grape' | 'final';
+// D-23 / D-24 / UI-SPEC S6(b): banner copy per banner beat; null for dice / preview / hop. The win
+// beat (D-14, UI-SPEC C7d) shows only animal emojis and fixed animal names — never a participant
+// name (T-07-02). Phase 8: the stars beat reads "퀘스트 성공!" over "⭐+N" with its star tier (FX-02,
+// UI-SPEC F4), and the miss beat — copy-less in Phase 7 D-13 — now shows one gentle soft line
+// (D-09, UI-SPEC F6a): never coral, never an X mark, never a scolding word.
+export type BannerTone = 'sun' | 'grass' | 'coral' | 'grape' | 'final' | 'soft';
+
+// D-09: the soft miss line — a retry quest follows / no retry left.
+export const MISS_COPY = { retry: '괜찮아! 다시 해 보자 💪', last: '다음엔 꼭! 💪' } as const;
 
 export interface BannerCopy {
   top: string | null; // Heading line (event name for event beats)
@@ -210,6 +215,7 @@ export interface BannerCopy {
   // Win banner only: one fixed animal emoji per winner, in participant order, so the row gets one
   // flex item per animal (IN-01). Never a participant name (T-07-02).
   bigItems?: readonly string[];
+  tier?: StarTier; // stars banner only: width / border / pop per tier (D-04)
 }
 
 export function bannerCopy(beat: BeatSpec): BannerCopy | null {
@@ -229,7 +235,9 @@ export function bannerCopy(beat: BeatSpec): BannerCopy | null {
       return { top: beat.name, big: '🔁 한 번 더!', sub: null, tone: 'grape', label: beat.label };
     }
     case 'stars':
-      return { top: '🎉 성공!', big: `⭐+${beat.stars}`, sub: null, tone: 'grass', label: '' };
+      return { top: '퀘스트 성공!', big: `⭐+${beat.stars}`, sub: null, tone: 'grass', label: '', tier: starTier(beat.stars) };
+    case 'miss':
+      return { top: beat.retry ? MISS_COPY.retry : MISS_COPY.last, big: null, sub: null, tone: 'soft', label: '' };
     case 'finalRound':
       return { top: null, big: '🔔 마지막 라운드!', sub: '이번 라운드가 마지막이에요', tone: 'final', label: '' };
     case 'win':
