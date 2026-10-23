@@ -265,6 +265,24 @@ describe('sfx play / schedule / cleanup (D-23)', () => {
   });
 });
 
+describe('sfx hidden page (D-23, WR-04)', () => {
+  afterEach(() => {
+    delete (document as unknown as { visibilityState?: string }).visibilityState; // back to the jsdom getter
+  });
+
+  it('play() is a no-op while the page is hidden, and plays again once visible', () => {
+    const { audio } = setup();
+    let state: DocumentVisibilityState = 'hidden';
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
+    expect(play('fanfare', { group: 'ceremony-intro-1' })).toBe(0);
+    expect(play('hop')).toBe(0);
+    expect(activeVoiceCount()).toBe(0);
+    expect(audio.liveNodes()).toBe(MASTER_CHAIN_NODES);
+    state = 'visible';
+    expect(play('hop')).toBe(1);
+  });
+});
+
 describe('sfx setEnabled (D-20)', () => {
   it('off: master ramps to 0, everything stops, later play creates no nodes; on: back to MASTER_GAIN', () => {
     const { ctx, master, audio } = setup();

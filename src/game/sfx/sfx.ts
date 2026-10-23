@@ -289,11 +289,14 @@ function buildNoise(c: AudioContext, out: AudioNode, v: NoiseVoice, t: number, g
 }
 
 // Schedule one sound. Returns the number of voices started (0 = silent: no context, not running,
-// disabled, or an unknown name).
+// disabled, a hidden page, or an unknown name). D-23 hidden page: useSfx stops every voice when the
+// page hides, and desktop browsers keep the context running in a background tab, so nothing new may
+// start while hidden either (WR-04).
 export function play(name: SfxName, opts: PlayOptions = {}): number {
   const c = ctx;
   const out = master;
   if (!c || !out || !enabled || String(c.state) !== 'running') return 0;
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return 0;
   const recipe: readonly Voice[] | undefined = SFX_RECIPES[name];
   if (!recipe) return 0;
   const t0 = c.currentTime + Math.max(0, opts.delaySec ?? 0);

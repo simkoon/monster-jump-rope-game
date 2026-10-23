@@ -640,6 +640,33 @@ describe('GameStage — ceremony mode on the same canvas (D-11, END-01, END-03)'
     expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
   });
 
+  it('a ceremony reached while the page is hidden starts its intro and fanfare only once visible (WR-04)', async () => {
+    await mountApp(baseGame());
+    const play = vi.spyOn(sfx, 'play');
+    setVisibility('hidden');
+    endViaButton();
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 0, introActive: false });
+    expect(play.mock.calls.filter((c) => c[0] === 'fanfare')).toHaveLength(0);
+    setVisibility('visible');
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: true });
+    expect(play.mock.calls.filter((c) => c[0] === 'fanfare')).toHaveLength(1);
+  });
+
+  it('hiding the page mid-intro ends the intro and fades the fanfare; it does not replay (WR-04)', async () => {
+    await mountApp(baseGame());
+    const play = vi.spyOn(sfx, 'play');
+    const stopGroup = vi.spyOn(sfx, 'stopGroup');
+    endViaButton();
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: true });
+    setVisibility('hidden');
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: false });
+    expect(stopGroup).toHaveBeenCalledWith('ceremony-intro-1');
+    setVisibility('visible');
+    expect(fakeCanvas.lastProps!.ceremony).toMatchObject({ introId: 1, introActive: false });
+    expect(play.mock.calls.filter((c) => c[0] === 'fanfare')).toHaveLength(1);
+  });
+
   it('처음으로 during the intro fades the fanfare after GameStage unmounts (WR-03)', async () => {
     await mountApp(baseGame());
     endViaButton();

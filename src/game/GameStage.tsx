@@ -129,8 +129,10 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   const hasGame = game !== null;
   useSkipOnTap();
   const hitId = useStarHit();
-  // D-16: the ceremony intro run, keyed on the board (new on every 🔁 다시 하기).
-  const intro = useCeremonyIntro(game?.phase === 'gameOver' && !busy, game?.board);
+  // D-16: the ceremony intro run, keyed on the board (new on every 🔁 다시 하기). Only while the
+  // page is visible (WR-04): a ceremony reached in a hidden tab starts its intro and fanfare once
+  // the page is shown, and hiding the page mid-intro ends it like leaving the ceremony does.
+  const intro = useCeremonyIntro(game?.phase === 'gameOver' && !busy && visible, game?.board);
 
   // A fresh lazy component per attempt (RESEARCH Pitfall 6).
   const LazyCanvas = useMemo(() => lazy(loadGameCanvas), [canvasKey]);
