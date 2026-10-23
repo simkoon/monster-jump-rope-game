@@ -1022,8 +1022,10 @@
    The gold .beat-banner--final look plus a narrower box that stays inside
    the board yard so the cheering winners on the ring stay visible
    (UI-SPEC C7d, §Spacing: xs 4 between emojis, base 16 / xl 24 padding).
-   The emoji row wraps to at most two rows for eight co-winners. Tokens
-   only; the reduced-motion rule for .beat-banner already drops the fade.
+   The emoji row holds one flex item per animal, so gap and wrap apply;
+   5+ winners use the heading size so eight fit in two rows of the
+   min(60%, 320px) banner. Tokens only; the reduced-motion rule for
+   .beat-banner already drops the fade.
    ============================================================ */
 .beat-banner--win {
   width: min(60%, 320px);
@@ -1034,4 +1036,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 4px;
+}
+.beat-banner-emoji.is-many {
+  font-size: var(--game-heading);
 }

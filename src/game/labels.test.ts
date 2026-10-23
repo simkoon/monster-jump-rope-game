@@ -330,13 +330,20 @@ describe('bannerCopy (D-23, D-24, UI-SPEC S6b)', () => {
       label: '',
       variant: 'win',
       bigLabel: '곰',
+      bigItems: ['🐻'],
     });
   });
 
   it('win: co-winners → 🏆 공동 우승! with the emojis in participant order', () => {
     expect(
       bannerCopy({ kind: 'win', winners: ['p1', 'p2'], animals: ['bear', 'rabbit'], ms: 1500 }),
-    ).toMatchObject({ top: '🏆 공동 우승!', big: '🐻 🐰', bigLabel: '곰, 토끼', variant: 'win' });
+    ).toMatchObject({
+      top: '🏆 공동 우승!',
+      big: '🐻 🐰',
+      bigItems: ['🐻', '🐰'],
+      bigLabel: '곰, 토끼',
+      variant: 'win',
+    });
   });
 
   it('banner beats carry no win variant', () => {

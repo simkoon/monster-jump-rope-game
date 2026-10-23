@@ -162,6 +162,9 @@ export function roundAria(round: number, total: number): string {
   return `라운드 ${total}개 중 ${round}번째`;
 }
 
+// D-14a: turn pill text while the engine is gameOver (the win beat) — no one is current any more.
+export const GAME_OVER_PILL = '🏁 게임 끝';
+
 // D-23 / UI-SPEC S6(a): per-turn status chips. A chip shows only when its source exists in the
 // move AND its beat is no longer pending (dice ↔ dice, bonus ↔ startBonus, event ↔ event,
 // start tile ↔ hop). Event names never appear in chips (the banner shows them).
@@ -204,6 +207,9 @@ export interface BannerCopy {
   label: Event['label']; // 보너스 / 함정 chip, '' for none
   variant?: 'win'; // extra banner class (win banner only)
   bigLabel?: string; // accessible name of an emoji-only big line (win banner only)
+  // Win banner only: one fixed animal emoji per winner, in participant order, so the row gets one
+  // flex item per animal (IN-01). Never a participant name (T-07-02).
+  bigItems?: readonly string[];
 }
 
 export function bannerCopy(beat: BeatSpec): BannerCopy | null {
@@ -235,6 +241,7 @@ export function bannerCopy(beat: BeatSpec): BannerCopy | null {
         label: '',
         variant: 'win',
         bigLabel: beat.animals.map((a) => ANIMAL_NAME[a]).join(', '),
+        bigItems: beat.animals.map((a) => ANIMAL_EMOJI[a]),
       };
     default:
       return null;

@@ -10,6 +10,7 @@ import Scoreboard, { type ScoreEntry } from './Scoreboard';
 import TurnHud from './TurnHud';
 import ControlsBar from './ControlsBar';
 import { ANIMAL_COLOR } from '../palette';
+import { ANIMALS } from '../../engine/animals';
 import type { NextUpView } from '../labels';
 import { usePresentation } from '../usePresentation';
 import { useGameStore } from '../../harness/useGameStore';
@@ -168,6 +169,22 @@ describe('Banner (D-23, D-24, D-25, UI-SPEC S6b)', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('win banner emoji row (07-07, IN-01): one flex item per animal; 5+ winners switch to is-many', () => {
+    vi.useFakeTimers();
+    render(<Banner />);
+    play([{ kind: 'win', winners: ['p1', 'p2'], animals: ['bear', 'rabbit'], ms: 1500 }]);
+    const row = within(screen.getByRole('status')).getByRole('img', { name: '곰, 토끼' });
+    const items = row.querySelectorAll('.beat-banner-emoji-item');
+    expect([...items].map((i) => i.textContent)).toEqual(['🐻', '🐰']);
+    expect(row).not.toHaveClass('is-many');
+    expect(row).toHaveTextContent('🐻 🐰');
+    tick(1500);
+    play([{ kind: 'win', winners: ANIMALS.map((_, i) => `p${i}`), animals: [...ANIMALS], ms: 1500 }]);
+    const many = within(screen.getByRole('status')).getByRole('img');
+    expect(many.querySelectorAll('.beat-banner-emoji-item')).toHaveLength(8);
+    expect(many).toHaveClass('beat-banner-emoji', 'is-many');
+  });
+
   it('a one-winner win banner says 🏆 우승!', () => {
     vi.useFakeTimers();
     render(<Banner />);
@@ -261,6 +278,30 @@ describe('Scoreboard v2 (HUD-01, D-22, UI-SPEC S4)', () => {
     const items = cells();
     expect(items.map((li) => li.querySelector('.sb-rank')?.textContent)).toEqual(['1', '1', '1']);
     expect(items.some((li) => li.classList.contains('is-leader'))).toBe(false);
+  });
+
+  it('game over (07-07, D-14a): currentId null marks no cell is-current', () => {
+    render(<Scoreboard entries={entries} currentId={null} />);
+    expect(cells().some((li) => li.classList.contains('is-current'))).toBe(false);
+  });
+
+  it('crownIds crowns exactly the engine winners, all-zero co-winners included (D-14a)', () => {
+    const zero = entries.map((e) => ({ ...e, stars: 0 }));
+    const { rerender } = render(<Scoreboard entries={zero} currentId={null} crownIds={['p1', 'p2']} />);
+    const byName = (n: string) => cells().find((li) => li.querySelector('.sb-name')?.textContent === n)!;
+    for (const n of ['민수', '지아']) {
+      expect(byName(n)).toHaveClass('is-leader');
+      expect(byName(n).querySelector('.sb-rank')?.textContent).toBe('👑');
+      expect(byName(n).getAttribute('aria-label')).toMatch(/^1등 왕관, /);
+    }
+    expect(byName('하준')).not.toHaveClass('is-leader');
+    expect(byName('하준').querySelector('.sb-rank')?.textContent).toBe('1');
+    rerender(<Scoreboard entries={entries} currentId={null} crownIds={['p2']} />);
+    expect(byName('지아')).toHaveClass('is-leader');
+    expect(byName('지아').querySelector('.sb-rank')?.textContent).toBe('👑');
+    expect(byName('하준')).not.toHaveClass('is-leader');
+    expect(byName('하준').querySelector('.sb-rank')?.textContent).toBe('1');
+    expect(byName('하준')).toHaveAttribute('aria-label', '1등 고양이 하준 별 5개');
   });
 
   it('caps the grid at 4 columns', () => {
@@ -360,6 +401,23 @@ describe('TurnHud v2 (HUD-02, ROUND-02, D-22, D-24, UI-SPEC S3)', () => {
     expect(container.querySelector('b')).toBeNull();
     expect(container.querySelector('i')).toBeNull();
     expect(container.querySelector('.turn-next .value')!.textContent).toBe('🐷 <i>y</i>');
+  });
+
+  it('game over (07-07, D-14a): 🏁 게임 끝 pill, no next block; round and 지금 끝내기 stay', () => {
+    const onEndNow = vi.fn();
+    const { container } = render(<TurnHud {...base} isTeam activeMember="민수" isExtra over onEndNow={onEndNow} />);
+    const pill = container.querySelector('.game-turn-pill')!;
+    expect(pill).toHaveAttribute('aria-live', 'polite');
+    expect(pill.textContent).toBe('🏁 게임 끝');
+    expect(pill.querySelector('.turn-dot')).toBeNull();
+    expect(pill.querySelector('.suffix')).toBeNull();
+    expect(pill.querySelector('.game-turn-member')).toBeNull();
+    expect(screen.queryByText('🔁 한 번 더')).toBeNull();
+    expect(container.querySelector('.turn-next')).toBeNull();
+    expect(screen.getByRole('group', { name: '라운드 5개 중 2번째' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    fireEvent.click(screen.getByRole('button', { name: '게임 끝내기' }));
+    expect(onEndNow).toHaveBeenCalledTimes(1);
   });
 
   it('지금 끝내기 calls onEndNow only on confirm', () => {

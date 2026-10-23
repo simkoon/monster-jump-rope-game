@@ -6,10 +6,20 @@
 // `마지막 라운드` + is-final from the last round on). Then the next-turn block (`다음` + dot + name).
 // Right: `지금 끝내기`, which always goes through the reused ConfirmDialog (cancel focused by
 // default) so a stray tap never ends a game (T-05-18). No clock (D-01). Names render as JSX text only.
+// `over` (the engine's gameOver, i.e. the win beat, D-14a): the pill says `🏁 게임 끝` with no dot,
+// badge or member line, and the next block is gone; the round block and `지금 끝내기` stay (C7e).
 import { useState, type CSSProperties } from 'react';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import type { AnimalId } from '../../engine/animals';
-import { ANIMAL_EMOJI, ROUND_DOTS_MAX, nextUpText, roundAria, roundLabel, type NextUpView } from '../labels';
+import {
+  ANIMAL_EMOJI,
+  GAME_OVER_PILL,
+  ROUND_DOTS_MAX,
+  nextUpText,
+  roundAria,
+  roundLabel,
+  type NextUpView,
+} from '../labels';
 import { ANIMAL_COLOR } from '../palette';
 
 interface TurnHudProps {
@@ -22,6 +32,7 @@ interface TurnHudProps {
   totalRounds: number;
   next: NextUpView | null;
   onEndNow: () => void;
+  over?: boolean;
 }
 
 const dotStyle = (animal: AnimalId) => ({ '--pc': ANIMAL_COLOR[animal] }) as CSSProperties;
@@ -36,6 +47,7 @@ export default function TurnHud({
   totalRounds,
   next,
   onEndNow,
+  over = false,
 }: TurnHudProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isFinal = round >= totalRounds;
@@ -45,15 +57,21 @@ export default function TurnHud({
     <header className="game-topbar">
       {/* Turn change is announced to assistive tech. */}
       <div className="game-turn-pill" aria-live="polite">
-        <span key={`${animal}-${name}-${round}-${isExtra}`} className="turn-pill-content">
-          <span className="turn-dot" style={dotStyle(animal)} aria-hidden="true" />
-          <span className="game-turn-name">
-            {ANIMAL_EMOJI[animal]} {name}
-            <span className="suffix"> 차례</span>
+        {over ? (
+          <span key="over" className="turn-pill-content">
+            <span className="game-turn-name">{GAME_OVER_PILL}</span>
           </span>
-          {isExtra && <span className="game-event-chip extra">🔁 한 번 더</span>}
-          {isTeam && <span className="game-turn-member">이번엔 {activeMember} 님이 도전!</span>}
-        </span>
+        ) : (
+          <span key={`${animal}-${name}-${round}-${isExtra}`} className="turn-pill-content">
+            <span className="turn-dot" style={dotStyle(animal)} aria-hidden="true" />
+            <span className="game-turn-name">
+              {ANIMAL_EMOJI[animal]} {name}
+              <span className="suffix"> 차례</span>
+            </span>
+            {isExtra && <span className="game-event-chip extra">🔁 한 번 더</span>}
+            {isTeam && <span className="game-turn-member">이번엔 {activeMember} 님이 도전!</span>}
+          </span>
+        )}
       </div>
 
       <div
@@ -74,13 +92,15 @@ export default function TurnHud({
         <span className="value">{`${round}/${totalRounds}`}</span>
       </div>
 
-      <div className="turn-next">
-        <span className="label">다음</span>
-        <span className="turn-next-row">
-          {next && <span className="turn-dot" style={dotStyle(next.animal)} aria-hidden="true" />}
-          <span className="value">{nextUpText(next)}</span>
-        </span>
-      </div>
+      {!over && (
+        <div className="turn-next">
+          <span className="label">다음</span>
+          <span className="turn-next-row">
+            {next && <span className="turn-dot" style={dotStyle(next.animal)} aria-hidden="true" />}
+            <span className="value">{nextUpText(next)}</span>
+          </span>
+        </div>
+      )}
 
       <span className="spacer" />
 

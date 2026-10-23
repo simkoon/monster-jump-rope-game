@@ -8,8 +8,9 @@
 // completes them.
 // Reduced motion keeps the same duration (the beat data decides it); only CSS animation is dropped.
 // The event name renders as JSX text only (T-06-08); the win banner holds only animal emojis and
-// fixed animal names (T-07-02).
-import { useEffect, type CSSProperties } from 'react';
+// fixed animal names (T-07-02). Its emoji row holds one item per animal so the flex gap and wrap
+// apply (IN-01); more than 4 winners add is-many for the smaller size.
+import { Fragment, useEffect, type CSSProperties } from 'react';
 import { usePresentation } from '../usePresentation';
 import { isTimedBeat } from '../director/timeline';
 import { bannerCopy } from '../labels';
@@ -40,8 +41,19 @@ export default function Banner() {
       {copy.top && <p className="beat-banner-top">{copy.top}</p>}
       {copy.big &&
         (copy.bigLabel ? (
-          <p className="beat-banner-big beat-banner-emoji" role="img" aria-label={copy.bigLabel}>
-            {copy.big}
+          <p
+            className={`beat-banner-big beat-banner-emoji${(copy.bigItems?.length ?? 0) > 4 ? ' is-many' : ''}`}
+            role="img"
+            aria-label={copy.bigLabel}
+          >
+            {copy.bigItems
+              ? copy.bigItems.map((item, i) => (
+                  <Fragment key={i}>
+                    {i > 0 && ' '}
+                    <span className="beat-banner-emoji-item">{item}</span>
+                  </Fragment>
+                ))
+              : copy.big}
           </p>
         ) : (
           <p className="beat-banner-big">{copy.big}</p>
