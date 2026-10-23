@@ -1,7 +1,11 @@
 // src/game/scene/SceneContents.tsx — the whole 3D scene graph without a <Canvas> (D-01, D-03, D-17, D-28).
 // GameCanvas renders it inside the one lazy Canvas; tests mount it directly with
 // @react-three/test-renderer (no WebGL). It draws the `displayed` state from usePresentation,
-// never the engine directly, so pawns do not teleport and crowns follow the shown stars.
+// never the engine directly, so characters do not teleport and crowns follow the shown stars.
+// Phase 7 (07-04): every participant is a chibi Character (seed = participant index). During the
+// win beat the crowns go to the winners (co-winners too, even with 0 stars) and the turn ring is
+// hidden — nobody is "current" while the winners cheer (UI-SPEC C6). Slots keep using currentId,
+// so nobody slides during the win beat.
 // Lights are code-only (D-03): hemisphere + key + rim from palette LIGHTS — no environment map,
 // no shadow maps, no post-processing (D-04). The ground shadow lives in GameCanvas.
 import { useMemo } from 'react';
@@ -13,8 +17,8 @@ import { LIGHTS } from '../palette';
 import { usePresentation } from '../usePresentation';
 import Board from './Board';
 import CameraRig from './CameraRig';
+import Character from './Character';
 import Dice from './Dice';
-import Pawn from './Pawn';
 import PathPreview from './PathPreview';
 
 export interface SceneProps {
@@ -31,10 +35,11 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
   const points = useMemo(() => standPoints(tiles), [tiles]);
   const positions = usePresentation((s) => s.displayed.positions);
   const stars = usePresentation((s) => s.displayed.stars);
+  const winBeat = usePresentation((s) => (s.current?.kind === 'win' ? s.current : null));
 
   const order = useMemo(() => participants.map((p) => p.id), [participants]);
   const slots = useMemo(() => pawnSlots(order, positions, currentId), [order, positions, currentId]);
-  const crowned = useMemo(() => new Set(leaders(stars)), [stars]);
+  const crowned = useMemo(() => new Set(winBeat ? winBeat.winners : leaders(stars)), [winBeat, stars]);
 
   return (
     <>
@@ -43,14 +48,15 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
       <directionalLight color={LIGHTS.rim.color} intensity={LIGHTS.rim.intensity} position={[...LIGHTS.rim.position]} />
       <CameraRig layout={layout} />
       <Board tiles={tiles} />
-      {participants.map((p) => (
-        <Pawn
+      {participants.map((p, index) => (
+        <Character
           key={p.id}
           pid={p.id}
           animal={p.animal}
+          seed={index}
           points={points}
           slot={slots[p.id] ?? CENTER}
-          isCurrent={p.id === currentId}
+          isCurrent={p.id === currentId && !winBeat}
           isLeader={crowned.has(p.id)}
         />
       ))}

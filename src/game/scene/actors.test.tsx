@@ -1,12 +1,13 @@
 // @vitest-environment node
-// src/game/scene/actors.test.tsx — the moving 3D actors as beat consumers (D-16..D-20, D-25, HUD-03).
+// src/game/scene/actors.test.tsx — the moving 3D actors as beat consumers (D-16..D-20, D-25, HUD-03;
+// Phase 7 07-04: chibi Character reactions, reduced motion and the 8-character draw budget).
 // Runs in node with @react-three/test-renderer (no WebGL). Every store change is wrapped in
 // ReactThreeTestRenderer.act (RESEARCH Pitfall 1); advanceFrames drives useFrame with a fixed delta.
 import type { ReactElement } from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { Group, InstancedMesh, Mesh, type Object3D } from 'three';
-import Pawn from './Pawn';
+import Character, { type CharacterProps } from './Character';
 import PathPreview from './PathPreview';
 import Dice from './Dice';
 import { SceneContents } from './SceneContents';
@@ -17,6 +18,13 @@ import type { BeatSpec } from '../director/timeline';
 import { useGameStore } from '../../harness/useGameStore';
 import { boardWith, eventTile, makeGame, patchParticipant, player, questTile } from '../../engine/testkit';
 import { standPoints } from '../layout/pawnSlots';
+import { ARM_REST, FACE_KEYS, HEAD_TILT, type FaceKey } from '../layout/chibiDims';
+import type { AnimalId } from '../../engine/animals';
+import { faceGeo } from './chibiFaces';
+
+// Character reads prefersReducedMotion once at mount; one describe turns it on.
+const rm = vi.hoisted(() => ({ reduced: false }));
+vi.mock('../reducedMotion', () => ({ prefersReducedMotion: () => rm.reduced }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,6 +42,7 @@ const one = (r: Renderer, name: string): Object3D => {
 const tiles20 = boardWith(20);
 const points = standPoints(tiles20);
 const CENTER = { dx: 0, dz: 0, scale: 1 };
+const TAU = 2 * Math.PI;
 
 const originalComplete = usePresentation.getState().completeBeat;
 let completeSpy: ReturnType<typeof vi.fn<(id: number) => void>>;
@@ -85,12 +94,42 @@ async function frames(r: Renderer, n: number, dt: number): Promise<void> {
 
 const hopSpec = (path: number[], ms: number): BeatSpec => ({ kind: 'hop', pid: 'a', path, by: 'dice', ms });
 
-describe('Pawn — hop beat consumer (D-19, D-25)', () => {
-  it('hops tile by tile and completes the beat exactly once after its ms', async () => {
+const char = (over: Partial<CharacterProps> = {}) => (
+  <Character pid="a" animal="bear" seed={0} points={points} slot={CENTER} isCurrent={false} isLeader={false} {...over} />
+);
+
+// A named node inside the ground group `pawn-{pid}`.
+const partOf = (r: Renderer, pid: string, name: string): Object3D => {
+  let found: Object3D | null = null;
+  one(r, `pawn-${pid}`).traverse((o) => {
+    if (o.name === name) found = o;
+  });
+  expect(found, `${pid} ${name}`).not.toBeNull();
+  return found!;
+};
+// The face key shown by a character (compared by name: a failing geometry diff would be huge).
+const faceOf = (r: Renderer, pid = 'a', animal: AnimalId = 'bear'): FaceKey | 'unknown' => {
+  const geo = (partOf(r, pid, 'chibi-face') as Mesh).geometry;
+  return FACE_KEYS.find((k) => faceGeo(animal, k) === geo) ?? 'unknown';
+};
+const angleOff = (a: number, b: number) => Math.abs(a - b - TAU * Math.round((a - b) / TAU));
+
+const starsSpec = (pid = 'a'): BeatSpec => ({ kind: 'stars', pid, stars: 1, ms: 900 });
+const eventSpec = (eff: 'forward' | 'backward' | 'extra', suppressed = false): BeatSpec => ({
+  kind: 'event',
+  pid: 'a',
+  eff,
+  steps: 2,
+  suppressed,
+  name: '',
+  label: '',
+  ms: 1000,
+});
+
+describe('Character — hop beat consumer and reactions (D-07..D-16, D-22, CHAR-01..03)', () => {
+  it('hops tile by tile and completes the hop beat exactly once after its ms', async () => {
     engineAt(3);
-    const r = await mount(
-      <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent={false} isLeader={false} />,
-    );
+    const r = await mount(char());
     await play([hopSpec([1, 2, 3], 750)]);
     const id = usePresentation.getState().current!.id;
 
@@ -113,15 +152,12 @@ describe('Pawn — hop beat consumer (D-19, D-25)', () => {
     expect(g.position.y).toBeCloseTo(points[3].y, 3);
   });
 
-  it('lifts the pawn into a parabolic arc mid-segment', async () => {
+  it('lifts the body into a parabolic arc mid-segment', async () => {
     engineAt(1);
-    const r = await mount(
-      <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent={false} isLeader={false} />,
-    );
+    const r = await mount(char());
     await play([hopSpec([1], 400)]);
     await r.advanceFrames(4, 0.05); // half way through the only segment
-    const body = one(r, 'pawn-body');
-    expect(body.position.y).toBeGreaterThan(0.4);
+    expect(one(r, 'pawn-body').position.y).toBeGreaterThan(0.3);
     const g = one(r, 'pawn-a');
     expect(g.position.x).toBeGreaterThan(Math.min(points[0].x, points[1].x));
     expect(g.position.x).toBeLessThan(Math.max(points[0].x, points[1].x));
@@ -130,7 +166,7 @@ describe('Pawn — hop beat consumer (D-19, D-25)', () => {
   it('when skipAll ends the hop first it never completes it and settles at the new rest point', async () => {
     engineAt(3);
     const slot = { dx: 0.2, dz: -0.2, scale: 1 };
-    const r = await mount(<Pawn pid="a" animal="bear" points={points} slot={slot} isCurrent={false} isLeader={false} />);
+    const r = await mount(char({ slot }));
     await play([hopSpec([1, 2, 3], 750)]);
     await r.advanceFrames(4, 0.05);
     await ReactThreeTestRenderer.act(async () => {
@@ -146,35 +182,28 @@ describe('Pawn — hop beat consumer (D-19, D-25)', () => {
   });
 
   it('ignores hop beats of another participant', async () => {
-    const r = await mount(
-      <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent={false} isLeader={false} />,
-    );
+    const r = await mount(char());
     await play([{ kind: 'hop', pid: 'b', path: [1, 2], by: 'dice', ms: 500 }]);
     await r.advanceFrames(20, 0.05);
     expect(completeSpy).not.toHaveBeenCalled();
     expect(one(r, 'pawn-a').position.x).toBeCloseTo(points[0].x, 6);
   });
 
-  it('only the current pawn wears the turn ring and only leaders wear a crown', async () => {
+  it('only the current character wears the turn ring and only leaders wear a crown', async () => {
     const r = await mount(
       <>
-        <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent isLeader={false} />
-        <Pawn pid="b" animal="cat" points={points} slot={CENTER} isCurrent={false} isLeader />
-        <Pawn pid="c" animal="dog" points={points} slot={CENTER} isCurrent={false} isLeader />
+        {char({ isCurrent: true })}
+        {char({ pid: 'b', animal: 'cat', seed: 1, isLeader: true })}
+        {char({ pid: 'c', animal: 'dog', seed: 2, isLeader: true })}
       </>,
     );
     expect(named(r, 'turn-ring')).toHaveLength(1);
     expect(named(r, 'crown')).toHaveLength(2);
-    const ringOwner = one(r, 'pawn-a');
-    let found = false;
-    ringOwner.traverse((o) => {
-      if (o.name === 'turn-ring') found = true;
-    });
-    expect(found).toBe(true);
+    partOf(r, 'a', 'turn-ring');
   });
 
-  it('the current pawn bounces and its ring breathes while idle', async () => {
-    const r = await mount(<Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent isLeader={false} />);
+  it('the current character bounces and its ring breathes while idle', async () => {
+    const r = await mount(char({ isCurrent: true }));
     let maxY = 0;
     let maxRing = 1;
     for (let k = 0; k < 16; k++) {
@@ -188,25 +217,164 @@ describe('Pawn — hop beat consumer (D-19, D-25)', () => {
     expect(maxRing).toBeLessThanOrEqual(1.08 + 1e-9);
   });
 
-  it('a pawn that is not current stays still while idle', async () => {
+  it('a character that is not current only breathes (≤ 2 %), out of phase with another seed', async () => {
     const r = await mount(
-      <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent={false} isLeader={false} />,
+      <>
+        {char()}
+        {char({ pid: 'b', animal: 'cat', seed: 3 })}
+      </>,
     );
-    await r.advanceFrames(16, 0.05);
-    expect(one(r, 'pawn-body').position.y).toBe(0);
+    let maxGap = 0;
+    for (let k = 0; k < 75; k++) {
+      await r.advanceFrames(1, 0.04); // 3 s
+      const a = partOf(r, 'a', 'pawn-body');
+      const b = partOf(r, 'b', 'pawn-body');
+      expect(a.position.y).toBe(0);
+      expect(a.scale.y).toBeGreaterThanOrEqual(0.985);
+      expect(a.scale.y).toBeLessThanOrEqual(1.015);
+      maxGap = Math.max(maxGap, Math.abs(a.scale.y - b.scale.y));
+    }
+    expect(maxGap).toBeGreaterThan(0.005);
   });
 
-  it('builds a pawn from shared parts (≤ 7 meshes without ring and crown)', async () => {
-    const r = await mount(
-      <Pawn pid="a" animal="bear" points={points} slot={CENTER} isCurrent={false} isLeader={false} />,
-    );
+  it('is exactly 7 meshes without ring and crown', async () => {
+    const r = await mount(char());
     const g = one(r, 'pawn-a');
     expect(g).toBeInstanceOf(Group);
     let meshes = 0;
     g.traverse((o) => {
       if (o instanceof Mesh) meshes++;
     });
-    expect(meshes).toBeLessThanOrEqual(7);
+    expect(meshes).toBe(7);
+  });
+
+  it('faces the travel direction while hopping and turns back to the camera after the move (D-11)', async () => {
+    engineAt(1);
+    const r = await mount(char({ isCurrent: true }));
+    await play([hopSpec([1], 1000)]);
+    await r.advanceFrames(10, 0.05); // 0.5 s into the hop
+    const target = Math.atan2(points[1].x - points[0].x, points[1].z - points[0].z);
+    expect(angleOff(one(r, 'pawn-body').rotation.y, target)).toBeLessThan(0.2);
+    await frames(r, 12, 0.05); // the hop completes at 1.0 s
+    expect(completeSpy).toHaveBeenCalledTimes(1);
+    await frames(r, 20, 0.05); // 1 s later
+    expect(angleOff(one(r, 'pawn-body').rotation.y, 0)).toBeLessThan(0.05);
+  });
+
+  it('stars: joy face from the first frame, crouch-jump-spin, never completed by the character (D-12, D-22)', async () => {
+    const r = await mount(char({ isCurrent: true }));
+    await play([starsSpec()]);
+    await frames(r, 1, 0.04);
+    expect(faceOf(r)).toBe('joy');
+    let nearPi = Infinity;
+    let maxY = 0;
+    for (let k = 0; k < 29; k++) {
+      await r.advanceFrames(1, 0.04); // 1.2 s in all
+      const body = one(r, 'pawn-body');
+      nearPi = Math.min(nearPi, Math.abs(body.rotation.y - Math.PI));
+      maxY = Math.max(maxY, body.position.y);
+      expect(faceOf(r)).toBe('joy');
+    }
+    expect(nearPi).toBeLessThan(0.5);
+    expect(maxY).toBeGreaterThanOrEqual(0.4);
+    expect(completeSpy).not.toHaveBeenCalled(); // the Banner (or the watchdog) owns this beat
+    expect(usePresentation.getState().current?.kind).toBe('stars');
+
+    await ReactThreeTestRenderer.act(async () => usePresentation.getState().skipAll());
+    await frames(r, 20, 0.04);
+    expect(faceOf(r)).toBe('excited');
+    expect(one(r, 'pawn-body').position.y).toBeLessThanOrEqual(0.08 + 1e-6); // back to the idle bounce
+    expect(completeSpy).not.toHaveBeenCalled();
+  });
+
+  it('miss: sad face, head down; events and the start bonus pick their faces (D-13, D-07)', async () => {
+    const r = await mount(char());
+    await play([{ kind: 'miss', pid: 'a', ms: 700 }]);
+    let pitch = -Infinity;
+    for (let k = 0; k < 8; k++) {
+      await r.advanceFrames(1, 0.04);
+      pitch = Math.max(pitch, partOf(r, 'a', 'chibi-head-pivot').rotation.x);
+    }
+    expect(faceOf(r)).toBe('sad');
+    expect(pitch).toBeGreaterThanOrEqual(-HEAD_TILT + 0.3);
+
+    const cases: [BeatSpec, FaceKey][] = [
+      [eventSpec('backward'), 'sad'],
+      [eventSpec('forward'), 'surprised'],
+      [eventSpec('extra'), 'joy'],
+      [eventSpec('extra', true), 'surprised'],
+      [{ kind: 'startBonus', pid: 'a', stars: 1, ms: 800 }, 'joy'],
+    ];
+    for (const [spec, key] of cases) {
+      await ReactThreeTestRenderer.act(async () => usePresentation.getState().skipAll());
+      await play([spec]);
+      await frames(r, 2, 0.04);
+      expect(faceOf(r)).toBe(key);
+    }
+    expect(completeSpy).not.toHaveBeenCalled();
+  });
+
+  it('re-rendering with isCurrent toggled during a stars beat keeps the joy face', async () => {
+    const r = await mount(char({ isCurrent: true }));
+    await play([starsSpec()]);
+    await frames(r, 2, 0.04);
+    expect(faceOf(r)).toBe('joy');
+    await ReactThreeTestRenderer.act(async () => {
+      await r.update(char({ isCurrent: false }));
+    });
+    expect(faceOf(r)).toBe('joy');
+    await frames(r, 2, 0.04);
+    expect(faceOf(r)).toBe('joy');
+  });
+
+  it('blinks: a short idleBlink now and then, idle most of the time', async () => {
+    const r = await mount(char());
+    let blink = 0;
+    let idle = 0;
+    for (let k = 0; k < 125; k++) {
+      await r.advanceFrames(1, 0.04); // 5 s
+      const key = faceOf(r);
+      if (key === 'idleBlink') blink++;
+      else if (key === 'idle') idle++;
+    }
+    expect(blink).toBeGreaterThanOrEqual(1);
+    expect(idle).toBeGreaterThan(100);
+    expect(blink + idle).toBe(125);
+  });
+});
+
+describe('Character — reduced motion (D-16): faces and blinks only', () => {
+  beforeEach(() => {
+    rm.reduced = true;
+  });
+  afterEach(() => {
+    rm.reduced = false;
+  });
+
+  it('a stars beat changes the face but not the body; the current character does not bounce', async () => {
+    const r = await mount(char({ isCurrent: true }));
+    await play([starsSpec()]);
+    for (let k = 0; k < 25; k++) {
+      await r.advanceFrames(1, 0.04);
+      const body = one(r, 'pawn-body');
+      expect(body.position.y).toBe(0);
+      expect(body.rotation.y).toBe(0);
+      expect(faceOf(r)).toBe('joy');
+    }
+    await ReactThreeTestRenderer.act(async () => usePresentation.getState().skipAll());
+    for (let k = 0; k < 20; k++) {
+      await r.advanceFrames(1, 0.04);
+      expect(one(r, 'pawn-body').position.y).toBe(0);
+      expect(one(r, 'turn-ring').scale.x).toBe(1);
+    }
+  });
+
+  it('a character that is not current does not breathe', async () => {
+    const r = await mount(char());
+    for (let k = 0; k < 40; k++) {
+      await r.advanceFrames(1, 0.05);
+      expect(one(r, 'pawn-body').scale.y).toBe(1);
+    }
   });
 });
 
@@ -365,7 +533,7 @@ describe('SceneContents — the WebGL-free scene graph (D-28)', () => {
     return n;
   };
 
-  it('renders the board, one pawn per participant, the die and one turn ring', async () => {
+  it('renders the board, one character per participant, the die and one turn ring', async () => {
     const participants = [
       { id: 'p1', animal: 'bear' as const },
       { id: 'p2', animal: 'cat' as const },
@@ -384,33 +552,66 @@ describe('SceneContents — the WebGL-free scene graph (D-28)', () => {
     });
     expect(ringOwner).toBe('pawn-p2');
     expect(named(r, 'crown')).toHaveLength(1); // p2 leads with 2 stars
-    // p1 and p2 share the start tile → two different grid slots.
+    // p1 and p2 share the start tile → two different slots.
     await r.advanceFrames(30, 0.05);
     const a = one(r, 'pawn-p1').position;
     const b = one(r, 'pawn-p2').position;
     expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(0.3);
   });
 
-  it('stays within 100 draw calls with 8 pawns on a 24-tile board', async () => {
-    const animals = ['bear', 'rabbit', 'cat', 'dog', 'panda', 'fox', 'pig', 'chick'] as const;
-    const participants = animals.map((animal, i) => ({ id: `p${i + 1}`, animal }));
-    const ids = participants.map((p) => p.id);
-    usePresentation
-      .getState()
-      .reset(
-        { positions: Object.fromEntries(ids.map((id) => [id, 0])), stars: Object.fromEntries(ids.map((id) => [id, 1])) },
-        null,
-      );
-    const tiles24 = boardWith(24, {
-      2: eventTile('forward', 3),
-      5: eventTile('backward', 2),
-      9: eventTile('extra', 0),
-      3: questTile('hard'),
-      4: questTile('normal'),
-    });
-    const r = await mount(<SceneContents tiles={tiles24} participants={participants} currentId="p3" restFace={6} />);
+  const animals = ['bear', 'rabbit', 'cat', 'dog', 'panda', 'fox', 'pig', 'chick'] as const;
+  const eight = animals.map((animal, i) => ({ id: `p${i + 1}`, animal }));
+  const ids = eight.map((p) => p.id);
+  const tiles24 = boardWith(24, {
+    2: eventTile('forward', 3),
+    5: eventTile('backward', 2),
+    9: eventTile('extra', 0),
+    3: questTile('hard'),
+    4: questTile('normal'),
+  });
+  const allOn = (v: number) => Object.fromEntries(ids.map((id) => [id, v]));
+
+  it('stays within 100 draw calls with 8 characters (all leaders) on a 24-tile board', async () => {
+    usePresentation.getState().reset({ positions: allOn(0), stars: allOn(1) }, null);
+    const r = await mount(<SceneContents tiles={tiles24} participants={eight} currentId="p3" restFace={6} />);
     expect(named(r, 'crown')).toHaveLength(8);
     expect(named(r, 'turn-ring')).toHaveLength(1);
     expect(countDraws(r)).toBeLessThanOrEqual(100);
+  });
+
+  it('stays within 100 draw calls during a win beat of all 8 (8 crowns, no ring)', async () => {
+    usePresentation.getState().reset({ positions: allOn(0), stars: allOn(0) }, null);
+    const r = await mount(<SceneContents tiles={tiles24} participants={eight} currentId="p3" restFace={6} />);
+    expect(named(r, 'crown')).toHaveLength(0);
+    await play([{ kind: 'win', winners: ids, animals: [...animals], ms: 1500 }]);
+    expect(named(r, 'crown')).toHaveLength(8);
+    expect(named(r, 'turn-ring')).toHaveLength(0);
+    expect(countDraws(r)).toBeLessThanOrEqual(100);
+  });
+
+  it('win beat: every co-winner (0 stars) cheers with the winner face and a crown; no turn ring (D-14)', async () => {
+    const participants = [
+      { id: 'a', animal: 'bear' as const },
+      { id: 'b', animal: 'cat' as const },
+      { id: 'c', animal: 'dog' as const },
+    ];
+    usePresentation.getState().reset({ positions: { a: 0, b: 0, c: 2 }, stars: { a: 0, b: 0, c: 0 } }, null);
+    const r = await mount(<SceneContents tiles={tiles20} participants={participants} currentId="a" restFace={null} />);
+    expect(named(r, 'turn-ring')).toHaveLength(1);
+    await play([{ kind: 'win', winners: ['a', 'b'], animals: ['bear', 'cat'], ms: 1500 }]);
+    expect(named(r, 'turn-ring')).toHaveLength(0);
+    expect(named(r, 'crown')).toHaveLength(2);
+    partOf(r, 'a', 'crown');
+    partOf(r, 'b', 'crown');
+    let arm = -Infinity;
+    for (let k = 0; k < 20; k++) {
+      await r.advanceFrames(1, 0.04);
+      arm = Math.max(arm, partOf(r, 'a', 'chibi-shoulder-r').rotation.z);
+    }
+    expect(arm).toBeGreaterThan(ARM_REST + 2.0);
+    expect(faceOf(r, 'a', 'bear')).toBe('winner');
+    expect(faceOf(r, 'b', 'cat')).toBe('winner');
+    expect(faceOf(r, 'c', 'dog')).toBe('idle');
+    expect(completeSpy).not.toHaveBeenCalled(); // the Banner owns the win beat
   });
 });
