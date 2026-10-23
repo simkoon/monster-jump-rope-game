@@ -4,7 +4,7 @@
 // temporary ResultView tests (RESEARCH Pitfall 1). jsdom; finished games are built with the testkit
 // + engine transitions and placed into useGameStore.
 import { StrictMode } from 'react';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { CeremonyHead, CeremonyPanel } from './CeremonyView';
 import DomPodium from './DomPodium';
@@ -36,13 +36,15 @@ function setGame(g: GameState) {
 function fourDone(): GameState {
   let g = makeGame({
     participants: [
-      player('a', '하늘', 'bear', { travel: 5 }),
-      player('b', '바다', 'cat', { travel: 3 }),
-      player('c', '숲', 'fox', { travel: 2 }),
-      player('d', '별이', 'pig', { travel: 12 }),
+      player('a', '하늘', 'bear'),
+      player('b', '바다', 'cat'),
+      player('c', '숲', 'fox'),
+      player('d', '별이', 'pig'),
     ],
   });
   g = withStars(g, [5, 3, 1, 0]);
+  // createGame starts everybody at travel 0; d went around the board the furthest.
+  g = [5, 3, 2, 12].reduce((s, travel, i) => patchParticipant(s, i, { travel }), g);
   g = {
     ...g,
     stats: {
@@ -313,9 +315,9 @@ function IntroHost({ active, gameKey }: { active: boolean; gameKey: unknown }) {
 const intro = () => screen.getByTestId('intro').textContent;
 
 describe('useCeremonyIntro (D-16)', () => {
-  let playSpy: ReturnType<typeof vi.spyOn>;
-  let stopSpy: ReturnType<typeof vi.spyOn>;
-  const fanfares = () => playSpy.mock.calls.filter((c: unknown[]) => c[0] === 'fanfare').length;
+  let playSpy: MockInstance<typeof sfx.play>;
+  let stopSpy: MockInstance<typeof sfx.stopGroup>;
+  const fanfares = () => playSpy.mock.calls.filter((c) => c[0] === 'fanfare').length;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -378,7 +380,7 @@ describe('useCeremonyIntro (D-16)', () => {
     expect(stopSpy).not.toHaveBeenCalled();
     fireEvent.click(document.body);
     expect(intro()).toBe('1:off');
-    const group = (playSpy.mock.calls[0][1] as { group: unknown }).group;
+    const group = playSpy.mock.calls[0][1]!.group!;
     expect(stopSpy).toHaveBeenCalledWith(group);
     // No input lock after the intro: a later tap does nothing special and nothing replays.
     fireEvent.click(document.body);

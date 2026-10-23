@@ -5,11 +5,12 @@ import type { AnimalId } from '../engine/animals';
 import { DIFF_ORDER, type Tile } from '../engine/board';
 import { starsFor } from '../engine/scoring';
 import type { ContentAnalysis } from '../engine/setup';
-import type { GameState, MoveResult } from '../engine/state';
+import type { EndReason, GameState, MoveResult } from '../engine/state';
 import type { Difficulty, Event } from '../schema';
 import type { FailRule, Settings } from '../settings';
 import { starTier, type BeatKind, type BeatSpec, type StarTier } from './director/timeline';
 import { nextUp } from './turnOrder';
+import type { BadgeId } from './awards';
 
 export const ANIMAL_EMOJI: Record<AnimalId, string> = {
   bear: '🐻',
@@ -300,3 +301,51 @@ export function soundToggleLabel(on: boolean): string {
 }
 
 export const SOUND_TOGGLE_EMOJI = { on: '🔊', off: '🔇' } as const;
+
+// ---- Phase 8 ceremony copy (END-01, END-02, D-12 ~ D-14, UI-SPEC F7 / Copywriting) ----
+// No rank numbers and no last-place wording anywhere in the ceremony (D-13): the winners get 🏆 and
+// everybody else is listed the same way. Names are returned verbatim for JSX text (T-08-23).
+export const CEREMONY_TITLE = '게임 끝!';
+export const CEREMONY_LIST_LABEL = '모두의 별';
+
+const END_REASON_COPY: Record<EndReason, (rounds: number) => string> = {
+  'rounds-complete': (rounds) => `${rounds}라운드를 모두 마쳤어요!`,
+  manual: () => '게임을 일찍 마쳤어요!',
+};
+
+export function endReasonCopy(reason: EndReason, rounds: number): string {
+  return END_REASON_COPY[reason](rounds);
+}
+
+// The winner line keeps the Phase 5 prefixes (`🏆 우승! ` / `🏆 공동 우승! `) for test compatibility.
+export function winnerLine(winners: readonly { animal: AnimalId; name: string }[]): string | null {
+  const who = winners.map((p) => `${ANIMAL_EMOJI[p.animal]} ${p.name}`);
+  if (who.length === 0) return null;
+  return who.length === 1 ? `🏆 우승! ${who[0]}` : `🏆 공동 우승! ${who.join(', ')}`;
+}
+
+// D-14: praise badge chips `{emoji} {name}`, with a one-line criterion as the mouse-over title.
+export const BADGE_COPY: Readonly<Record<BadgeId, { emoji: string; name: string; title: string }>> = Object.freeze({
+  challenger: { emoji: '🏃', name: '도전왕', title: '퀘스트에 가장 많이 도전했어요' },
+  persistent: { emoji: '💪', name: '끈기왕', title: '다시 도전해서 성공했어요' },
+  traveler: { emoji: '🌏', name: '여행왕', title: '판을 가장 멀리 돌았어요' },
+  master: { emoji: '🔥', name: '고수왕', title: '어려운 ⭐3 퀘스트를 가장 많이 성공했어요' },
+  lucky: { emoji: '🍀', name: '행운왕', title: '보너스를 가장 많이 받았어요' },
+  cheer: { emoji: '🎉', name: '응원왕', title: '끝까지 함께 응원했어요' },
+});
+
+// Star card accessible name: `[우승, ]{animal} {name}, 별 {n}개, 칭찬 배지 {names}`.
+export function ceremonyCardAria(
+  animal: AnimalId,
+  name: string,
+  stars: number,
+  badgeNames: readonly string[],
+  isWinner: boolean,
+): string {
+  return `${isWinner ? '우승, ' : ''}${ANIMAL_NAME[animal]} ${name}, 별 ${stars}개, 칭찬 배지 ${badgeNames.join(', ')}`;
+}
+
+// The podium cell / DOM podium fallback (role="img").
+export function podiumAria(names: readonly string[]): string {
+  return `시상대, 우승: ${names.join(', ')}`;
+}
