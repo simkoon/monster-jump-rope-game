@@ -19,7 +19,7 @@ afterEach(closeAll);
 
 describe('face occlusion, every animal order — 3 corners (SC4)', () => {
   for (const L of SIZES) {
-    it(`${L} tiles: no face over 30 % on 3 corners with 2-8 characters, current here or away, 6 views`, async () => {
+    it(`${L} tiles: no face over 30 % on 3 corners with 1-8 characters, current here or away, 6 views`, async () => {
       const records: FaceRecord[] = [];
       for (const tile of REGULAR_TILES(L).slice(4)) records.push(...(await sweepTile(L, tile, 'regular')));
       expectClean(records, 3 * TILE_SWEEP_RECORDS);

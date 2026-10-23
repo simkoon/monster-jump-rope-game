@@ -26,7 +26,7 @@ afterEach(closeAll);
 
 describe('face occlusion, every animal order — start tile and tile L − 1 (SC4)', () => {
   for (const L of SIZES) {
-    it(`${L} tiles: no face over 30 % with 2-8 characters, current here or away, 6 views`, async () => {
+    it(`${L} tiles: no face over 30 % with 1-8 characters, current here or away, 6 views`, async () => {
       const records = [...(await sweepTile(L, 0, 'start')), ...(await sweepTile(L, L - 1, 'preStart'))];
       expectClean(records, 2 * TILE_SWEEP_RECORDS);
     }, 60_000);

@@ -452,11 +452,11 @@ export async function sweepOrders(
   return out;
 }
 
-// One tile, n 2-8, with the current turn on it (k = 0, full size) and elsewhere (everyone at the
+// One tile, n 1-8, with the current turn on it (k = 0, full size) and elsewhere (everyone at the
 // table size). 8 on one tile always include the current turn, so n 8 runs only with it.
 export async function sweepTile(L: number, tile: number, kind: string): Promise<FaceRecord[]> {
   const out: FaceRecord[] = [];
-  for (let n = 2; n <= 8; n++) {
+  for (let n = 1; n <= 8; n++) {
     for (const cur of n < 8 ? ['p0', 'away'] : ['p0']) {
       const label = `${kind} L${L} t${tile} n${n} current ${cur === 'p0' ? 'here' : 'away'}`;
       out.push(...(await sweepOrders(L, [[tile, n]], label, cur)));
@@ -464,8 +464,8 @@ export async function sweepTile(L: number, tile: number, kind: string): Promise<
   }
   return out;
 }
-// Records per sweepTile: (2 + … + 7) · 2 + 8 slot sets × 8 animals × 6 views.
-export const TILE_SWEEP_RECORDS = 62 * 8 * VIEWS.length;
+// Records per sweepTile: (1 + … + 7) · 2 + 8 slot sets × 8 animals × 6 views.
+export const TILE_SWEEP_RECORDS = 64 * 8 * VIEWS.length;
 
 // Two adjacent tiles, every split of SPLITS, p0 (the current turn) on the first tile.
 export async function sweepPair(L: number, a: number, b: number): Promise<FaceRecord[]> {
