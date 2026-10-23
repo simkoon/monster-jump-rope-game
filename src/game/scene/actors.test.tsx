@@ -269,8 +269,10 @@ describe('Character — hop beat consumer and reactions (D-07..D-16, D-22, CHAR-
     expect(faceOf(r)).toBe('joy');
     let nearPi = Infinity;
     let maxY = 0;
-    for (let k = 0; k < 29; k++) {
-      await r.advanceFrames(1, 0.04); // 1.2 s in all
+    // Phase 8 (08-05): the jump runs on successPlan.landMs (315 ms of this 900 ms beat), so the
+    // spin is faster than in Phase 7: sample every 5 ms to see it pass through π.
+    for (let k = 0; k < 232; k++) {
+      await r.advanceFrames(1, 0.005); // 1.2 s in all
       const body = one(r, 'pawn-body');
       nearPi = Math.min(nearPi, Math.abs(body.rotation.y - Math.PI));
       maxY = Math.max(maxY, body.position.y);

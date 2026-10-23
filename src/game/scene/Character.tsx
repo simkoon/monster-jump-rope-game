@@ -18,7 +18,12 @@
 // ring breathes; everybody else only breathes ≤ 2 % with a per-seed phase (D-10). The face swaps
 // its cached geometry only when the key changes (D-08); idle / excited / sad blink (UI-SPEC C3).
 // All 9 faces come prebuilt from faceSet in render (D-08a), so the frame loop only swaps references.
-// Reduced motion (D-16) holds REST with yaw 0 and a still ring: only faces and blinks change.
+// Phase 8 tiered success jump (D-01, D-03, D-04): a stars beat (rx.stars set) plays the tiered
+// successBeatPose curve on its successPlan timing instead of the u-based success curve. The jump
+// progresses on landMs (RESEARCH Pitfall 6), so it touches down exactly when the effect pools fire
+// and never slows down with the longer 1600–2200 ms beat; the joy hold then ends on REST at the
+// beat end. The plan is cached per beat id in a ref (no per-frame allocation).
+// Reduced motion (D-16 / D-08) holds REST with yaw 0 and a still ring: only faces and blinks change.
 // Motion lives in refs only: no store write per frame, no geometry or material creation, delta
 // clamped to 0.25 s.
 import { useLayoutEffect, useMemo, useRef } from 'react';
@@ -26,6 +31,7 @@ import { useFrame } from '@react-three/fiber';
 import { Vector3, type Group } from 'three';
 import type { AnimalId } from '../../engine/animals';
 import { blinkClosed, faceKeyFor, reactionFor } from '../director/reaction';
+import { successPlan, type SuccessPlan } from '../director/successPlan';
 import {
   IDLE_PERIOD,
   REST,
@@ -38,6 +44,7 @@ import {
   bouncePose,
   breathePose,
   hopPose,
+  successBeatPose,
   type Pose,
 } from '../layout/charMotion';
 import type { FaceKey } from '../layout/chibiDims';
@@ -88,6 +95,7 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
   const fadeFrom = useRef<Pose>({ ...REST }); // the pose being blended out
   const fadeT = useRef(0);
   const faceKey = useRef<FaceKey>('idle'); // ChibiModel mounts with the idle face
+  const success = useRef<{ id: number; plan: SuccessPlan } | null>(null); // successPlan per stars beat
 
   // Stand on the rest point on mount so nothing slides in from the origin.
   useLayoutEffect(() => {
@@ -166,7 +174,13 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
     if (!reduced) {
       let pose: Pose;
       if (rx.act === 'hop') pose = hop ?? REST;
-      else if (rx.act !== 'rest') pose = actPose(rx.act, rx.ms > 0 ? Math.min(1, actT.current / (rx.ms / 1000)) : 1);
+      else if (rx.act === 'success' && rx.stars !== undefined && rx.beatId !== null) {
+        // Tiered jump on the beat's successPlan timing (landMs / jumpHeight, Pitfall 6).
+        if (success.current?.id !== rx.beatId) {
+          success.current = { id: rx.beatId, plan: successPlan(rx.stars, rx.ms, false) };
+        }
+        pose = successBeatPose(actT.current * 1000, success.current.plan);
+      } else if (rx.act !== 'rest') pose = actPose(rx.act, rx.ms > 0 ? Math.min(1, actT.current / (rx.ms / 1000)) : 1);
       else pose = isCurrent ? bouncePose(bounceT.current) : breathePose(clock.current, seed);
       // Blend the previous pose out additively: the new curve plays at full size while the old
       // offset from REST decays at SETTLE_RATE (no snap when a beat ends early, Pitfall 8).
