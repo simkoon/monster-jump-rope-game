@@ -7,11 +7,15 @@
 // singletons from geometries.ts and are never disposed here (Pitfall 9). The three base slabs
 // depend on the board size, so they are created per layout and disposed on change/unmount.
 // Phase 7 (07-05, UI-SPEC C6, RESEARCH Pitfall 4): the floating stars sit at head height, so on a
-// quest tile where a character stands (`occupied` = displayed positions) they rise to tile top +
-// STAR_LIFT_UP at STAR_SCALE_UP size and spacing, above the head and the crown, and ease back down
-// when the tile empties (1 − exp(−12·dt); instant under reduced motion). The star count — the
-// tile's difficulty — never changes, and no mesh is added: the same instances are rewritten, and
-// only on frames where a lift factor moved.
+// quest tile where one character stands (`occupied` = displayed positions) they rise to tile top +
+// STAR_LIFT_UP at STAR_SCALE_UP size and spacing, above the idle bounce and the crown, and ease back
+// down when the tile empties (1 − exp(−12·dt)). 07-06: while that character plays its success jump
+// (stars beat) or its winner cheer (win beat) the row hides (D-12a), and a tile with 2 or more
+// characters (`crowded`) hides its row so it never covers a back-row face (BOARD-05, D-17a(4), the
+// Pitfall 4 alternative); the tile color still shows the difficulty. Hiding shrinks the row in place
+// (1 − exp(−30·dt)). Under reduced motion lift and crowd hide snap and the act hide is off: bodies
+// hold REST, below the lifted row (D-16). The star count never changes, and no mesh is added: the
+// same instances are rewritten, and only on frames where a lift or visibility factor moved.
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { InstancedMesh, Object3D } from 'three';
@@ -29,6 +33,7 @@ import {
   type RingLayout,
 } from '../layout/ringLayout';
 import { prefersReducedMotion } from '../reducedMotion';
+import { usePresentation } from '../usePresentation';
 import { DIFF_THREE, GEO, MAT, STAR_CAP, TILE_CAP } from './geometries';
 import StartGate from './StartGate';
 import Arrows from './Arrows';
@@ -37,9 +42,12 @@ import TileIcons from './TileIcons';
 const STAR_LIFT = 0.55; // above the tile top
 const STAR_SPACING = 0.3; // across the travel direction
 const STAR_TILT = (-20 * Math.PI) / 180; // facing the camera, tilted back 20°
-const STAR_LIFT_UP = 1.2; // over an occupied tile: above the head and the crown top (≈ 1.05)
+// Over an occupied tile: the lifted star bottom (≈ 0.13 below its center) clears the crowned
+// full-size idle-bounce top (≈ 1.16) by ≥ 0.03. The jumps go higher; the row hides for them.
+const STAR_LIFT_UP = 1.35;
 const STAR_SCALE_UP = 0.75; // size and spacing factor while lifted (spacing 0.225)
 const LIFT_RATE = 12; // 1 − exp(−12·dt) ≈ 0.25 s
+const SHOW_RATE = 30; // hide / show: 1 − exp(−30·dt) ≈ 0.1 s
 const LIFT_EPS = 1e-4;
 const NO_TILES: ReadonlySet<number> = new Set();
 
@@ -57,8 +65,15 @@ interface StarRow {
   first: number;
 }
 
-// Writes every star matrix from the per-tile lift factor k ∈ [0, 1] (0 = resting, 1 = lifted).
-function writeStars(mesh: InstancedMesh, rows: readonly StarRow[], lift: Float32Array, d: Object3D): void {
+// Writes every star matrix from the per-tile lift factor k ∈ [0, 1] (0 = resting, 1 = lifted) and
+// visibility v ∈ [0, 1] (0 = hidden). Height and spacing follow k only, so a hiding row shrinks in place.
+function writeStars(
+  mesh: InstancedMesh,
+  rows: readonly StarRow[],
+  lift: Float32Array,
+  show: Float32Array,
+  d: Object3D,
+): void {
   const top = tileTop('quest');
   for (const row of rows) {
     const k = lift[row.tile];
@@ -69,11 +84,20 @@ function writeStars(mesh: InstancedMesh, rows: readonly StarRow[], lift: Float32
       const off = (j - (row.count - 1) / 2) * gap;
       d.position.set(row.x + row.ax * off, y, row.z + row.az * off);
       d.rotation.set(STAR_TILT, 0, 0);
-      d.scale.setScalar(scale);
+      d.scale.setScalar(scale * show[row.tile]);
       d.updateMatrix();
       mesh.setMatrixAt(row.first + j, d.matrix);
     }
   }
+}
+
+// Eases f[i] toward target by the step factor e, snapping within LIFT_EPS. True when it moved.
+function ease(f: Float32Array, i: number, target: number, e: number): boolean {
+  const cur = f[i];
+  if (cur === target) return false;
+  const next = cur + (target - cur) * e;
+  f[i] = Math.abs(target - next) < LIFT_EPS ? target : next;
+  return true;
 }
 
 // Write one matrix per entry, then publish count + needsUpdate (Pitfall 8).
@@ -107,9 +131,10 @@ function useBaseGeometries(l: RingLayout) {
 export interface BoardProps {
   tiles: readonly Tile[];
   occupied?: ReadonlySet<number>; // tile indices a character is displayed on
+  crowded?: ReadonlySet<number>; // tile indices 2 or more characters are displayed on
 }
 
-export default function Board({ tiles, occupied = NO_TILES }: BoardProps) {
+export default function Board({ tiles, occupied = NO_TILES, crowded = NO_TILES }: BoardProps) {
   const n = tiles.length;
   const layout = useMemo(() => ringLayout(n), [n]);
   const base = useBaseGeometries(layout);
@@ -117,6 +142,7 @@ export default function Board({ tiles, occupied = NO_TILES }: BoardProps) {
   const scratch = useMemo(() => new Object3D(), []);
   const rows = useRef<StarRow[]>([]);
   const lift = useRef(new Float32Array(TILE_CAP));
+  const show = useRef(new Float32Array(TILE_CAP).fill(1));
 
   const questRef = useRef<InstancedMesh>(null!);
   const padRef = useRef<InstancedMesh>(null!);
@@ -164,29 +190,35 @@ export default function Board({ tiles, occupied = NO_TILES }: BoardProps) {
       p++;
     });
     rows.current = starRows;
-    writeStars(star, starRows, lift.current, d);
+    writeStars(star, starRows, lift.current, show.current, d);
     commit(quest, q);
     commit(pad, p);
     commit(padTop, p);
     commit(star, s);
   }, [tiles, layout, scratch]);
 
-  // Ease each quest tile's lift toward 1 while occupied, else 0; rewrite the stars only on change.
+  // Ease each quest tile's lift toward 1 while occupied, else 0, and its visibility toward 0 while
+  // crowded or while its character jumps / cheers, else 1; rewrite the stars only on change.
   useFrame((_, delta) => {
-    const e = reduced ? 1 : 1 - Math.exp(-LIFT_RATE * Math.min(delta, 0.25));
+    const d = Math.min(delta, 0.25);
+    const eLift = reduced ? 1 : 1 - Math.exp(-LIFT_RATE * d);
+    const eShow = reduced ? 1 : 1 - Math.exp(-SHOW_RATE * d);
+    // Phase 6 Pattern 4: read the store in the frame, never a stale render closure.
+    const { current: beat, displayed } = usePresentation.getState();
+    const pos = displayed.positions;
+    const jumper = !reduced && beat?.kind === 'stars' ? pos[beat.pid] : undefined;
+    const winners = !reduced && beat?.kind === 'win' ? beat.winners : null;
     const k = lift.current;
+    const v = show.current;
     let moved = false;
     for (const row of rows.current) {
-      const target = occupied.has(row.tile) ? 1 : 0;
-      const cur = k[row.tile];
-      if (cur === target) continue;
-      let next = cur + (target - cur) * e;
-      if (Math.abs(target - next) < LIFT_EPS) next = target;
-      k[row.tile] = next;
-      moved = true;
+      let acting = row.tile === jumper;
+      if (!acting && winners) for (const w of winners) if (pos[w] === row.tile) acting = true;
+      moved = ease(k, row.tile, occupied.has(row.tile) ? 1 : 0, eLift) || moved;
+      moved = ease(v, row.tile, crowded.has(row.tile) || acting ? 0 : 1, eShow) || moved;
     }
     if (!moved || !starRef.current) return;
-    writeStars(starRef.current, rows.current, k, scratch);
+    writeStars(starRef.current, rows.current, k, v, scratch);
     starRef.current.instanceMatrix.needsUpdate = true;
   });
 

@@ -308,7 +308,7 @@ describe('CameraRig (Task 2)', () => {
 // ── Star lift over occupied quest tiles (07-05, UI-SPEC C6, RESEARCH Pitfall 4) ──
 
 const STAR_Y = tileTop('quest') + 0.55;
-const STAR_Y_UP = tileTop('quest') + 1.2;
+const STAR_Y_UP = tileTop('quest') + 1.35;
 
 // 24 tiles: hard quests at 3 and 6 (3 stars each), events at 2 / 5 / 9, easy quests elsewhere.
 const liftBoard = (): Tile[] =>
@@ -351,8 +351,12 @@ async function steps(r: Renderer, n: number, dt = 0.05): Promise<void> {
   });
 }
 
-async function renderLift(tiles: readonly Tile[], occupied: ReadonlySet<number>): Promise<Renderer> {
-  const r = await ReactThreeTestRenderer.create(<Board tiles={tiles} occupied={occupied} />);
+async function renderLift(
+  tiles: readonly Tile[],
+  occupied: ReadonlySet<number>,
+  crowded?: ReadonlySet<number>,
+): Promise<Renderer> {
+  const r = await ReactThreeTestRenderer.create(<Board tiles={tiles} occupied={occupied} crowded={crowded} />);
   open.push(r);
   return r;
 }
@@ -411,10 +415,10 @@ describe('Board — star lift (07-05)', () => {
     expectStars(inst(r, 'tile-stars'), starsOf(tiles, 3), STAR_Y_UP, 0.75, 0.225);
   });
 
-  it('keeps the star count and the draw budget with occupied tiles', async () => {
+  it('keeps the star count and the draw budget with occupied and crowded tiles', async () => {
     const tiles = mixedOf(24);
     const free = await renderLift(tiles, new Set());
-    const busy = await renderLift(tiles, new Set([1, 3, 4]));
+    const busy = await renderLift(tiles, new Set([1, 3, 4]), new Set([3]));
     await steps(busy, 30);
     expect(inst(busy, 'tile-stars').count).toBe(inst(free, 'tile-stars').count);
     expect(inst(busy, 'tile-stars').count).toBe(totalStars(tiles));
