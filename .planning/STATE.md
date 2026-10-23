@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 7
 current_phase_name: 치비 동물 캐릭터 & 표정
-status: executing
+status: verifying
 stopped_at: Completed 07-07-PLAN.md
-last_updated: "2026-10-23T07:29:32.619Z"
+last_updated: "2026-10-23T07:39:24.090Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 7 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
-  percent: 50
+  completed_plans: 19
+  percent: 75
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 
 Phase: 7 (치비 동물 캐릭터 & 표정) — EXECUTING
 Plan: 8 of 8 (gap closure: 07-06, 07-07 done, next 07-08)
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-23 — Phase 7 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -81,6 +81,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P05 | 14min | 3 tasks | 9 files |
 | Phase 07 P06 | 9min | 3 tasks | 11 files |
 | Phase 07 P07 | 4min | 2 tasks | 9 files |
+| Phase 07 P08 | 7min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -150,6 +151,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-06: STAR_LIFT_UP 1.35; quest-tile stars hide during their character's stars/win beat and on tiles with 2+ characters (D-12a, D-17a(4)); act hide off under reduced motion
 - [Phase 07]: 07-07: during gameOver the scoreboard crowns exactly game.winners (crownIds overrides the rank rule) and marks no current cell; TurnHud over shows 🏁 게임 끝 without the next block (D-14a)
 - [Phase 07]: 07-07: win banner emoji row is one flex item per animal (BannerCopy.bigItems); more than 4 winners use --game-heading so 8 fit in two rows (IN-01)
+- [Phase 07]: 07-08: faceOcclusion.test.tsx (mounted scene raycast, real gate/ears/crowns/stars, <= 30 % per face) is the final BOARD-05 criterion; slotOcclusion.test.ts stays as the D-19 disc check
+- [Phase 07]: 07-08: start gate unchanged (D-17a(2)); START moved to gate-free zones, lone start slot (0.25, 0.3); REGULAR theater layout with current at (0, 0.62); rabbit ears len 0.15 / y 0.31 (D-17a(3))
 
 ### Pending Todos
 
@@ -193,6 +196,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T07:29:32.614Z
+Last session: 2026-10-23T07:39:10.387Z
 Stopped at: Completed 07-07-PLAN.md
 Resume file: None
