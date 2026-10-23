@@ -73,6 +73,13 @@ afterEach(async () => {
   useGameStore.setState({ game: null });
 });
 
+// Frames inside act, so a store change made by a consumer re-renders before the next assertion.
+async function frames(r: Renderer, n: number, dt: number): Promise<void> {
+  await ReactThreeTestRenderer.act(async () => {
+    await r.advanceFrames(n, dt);
+  });
+}
+
 const hopSpec = (path: number[], ms: number): BeatSpec => ({ kind: 'hop', pid: 'a', path, by: 'dice', ms });
 
 describe('Pawn — hop beat consumer (D-19, D-25)', () => {
@@ -223,10 +230,10 @@ describe('PathPreview — preview beat consumer (D-16)', () => {
     expect(ring.position.z).toBeCloseTo(points[7].z, 6);
     expect(one(r, 'dest-cone').position.y).toBeGreaterThan(points[7].y + 0.9);
 
-    await r.advanceFrames(9, 0.05); // 0.45 s
+    await frames(r, 9, 0.05); // 0.45 s
     expect(usePresentation.getState().current!.kind).toBe('preview');
     expect(completeSpy).not.toHaveBeenCalled();
-    await r.advanceFrames(2, 0.05); // 0.55 s — the last frame already sees the hop (0.05 s in)
+    await frames(r, 2, 0.05); // 0.55 s — the last frame already sees the hop (0.05 s in)
     expect(completeSpy).toHaveBeenCalledTimes(1);
     expect(completeSpy).toHaveBeenCalledWith(previewId);
     const hop = usePresentation.getState().current!;
@@ -235,16 +242,16 @@ describe('PathPreview — preview beat consumer (D-16)', () => {
     // Hop is current: the dots stay, then drop as tiles are passed (250 ms per tile).
     expect(dots(r).count).toBe(3);
     expect(one(r, 'dest-ring').visible).toBe(true);
-    await r.advanceFrames(5, 0.05); // 0.30 s into the hop → one tile passed
+    await frames(r, 5, 0.05); // 0.30 s into the hop → one tile passed
     expect(dots(r).count).toBe(2);
-    await r.advanceFrames(5, 0.05); // 0.55 s → two tiles passed
+    await frames(r, 5, 0.05); // 0.55 s → two tiles passed
     expect(dots(r).count).toBe(1);
-    await r.advanceFrames(10, 0.05); // past the hop length: the preview never completes a hop
+    await frames(r, 10, 0.05); // past the hop length: the preview never completes a hop
     expect(completeSpy).toHaveBeenCalledTimes(1);
     expect(one(r, 'dest-ring').visible).toBe(true);
 
     await ReactThreeTestRenderer.act(async () => usePresentation.getState().completeBeat(hop.id));
-    await r.advanceFrames(1, 0.05);
+    await frames(r, 1, 0.05);
     expect(usePresentation.getState().busy).toBe(false);
     expect(dots(r).count).toBe(0);
     expect(one(r, 'dest-ring').visible).toBe(false);
@@ -256,8 +263,10 @@ describe('PathPreview — preview beat consumer (D-16)', () => {
     await play([hopSpec([1, 2], 500)]);
     const id = usePresentation.getState().current!.id;
     expect(dots(r).count).toBe(2);
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {}); // act warning by design
     usePresentation.getState().completeBeat(id); // outside act: no React re-render
     await r.advanceFrames(1, 0.05);
+    quiet.mockRestore();
     expect(dots(r).count).toBe(0);
     expect(one(r, 'dest-ring').visible).toBe(false);
   });
@@ -269,7 +278,7 @@ describe('PathPreview — preview beat consumer (D-16)', () => {
     expect(one(r, 'dest-ring').visible).toBe(false);
     await ReactThreeTestRenderer.act(async () => usePresentation.getState().skipAll());
     await play([{ kind: 'dice', pid: 'a', face: 3, ms: 1000 }]);
-    await r.advanceFrames(4, 0.05);
+    await frames(r, 4, 0.05);
     expect(dots(r).count).toBe(0);
     expect(one(r, 'dest-cone').visible).toBe(false);
   });
