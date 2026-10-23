@@ -848,6 +848,24 @@
 }
 /* Lift the grid areas above the decorative grass ::before. */
 .game-stage.stage > * { position: relative; }
+/* The shell's 1px border made the 100dvh stage overflow by 2px (page scroll). */
+.app--playing .panel--game-shell { border-width: 0; }
+
+/* Turn bar inside the stage: the name and the end-now label stay on one line,
+   so the bar never grows tall and steals height from the board. */
+.game-stage.stage .game-topbar { min-width: 0; }
+.game-stage.stage .turn-pill-content { flex-wrap: nowrap; }
+.game-stage.stage .turn-pill-content .game-turn-member { flex-basis: auto; }
+/* Team mode: the member line still gets its own row under the name. */
+.game-stage.stage .turn-pill-content:has(.game-turn-member) { flex-wrap: wrap; }
+.game-stage.stage .turn-pill-content:has(.game-turn-member) .game-turn-member { flex-basis: 100%; }
+.game-stage.stage .game-turn-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-stage.stage .game-topbar > .game-btn--sm { flex: none; white-space: nowrap; }
 
 .stage-canvas-cell {
   position: relative;
@@ -922,6 +940,9 @@
   .app--playing .game-stage.stage .game-judge .game-btn,
   .app--playing .game-stage.stage .ctx-btn { min-height: 64px; }
   .app--playing .game-stage.stage .game-controls .game-btn { min-width: 0; width: 100%; flex: 1 1 100%; }
+  /* Phase 4.1 shows '끝내기' through ::before but a later rule restored the label's
+     font size, so both texts rendered ("끝내기지…"). */
+  .app--playing .game-stage.stage .game-topbar > .game-btn--sm { font-size: 0; }
 }
 @media (max-height: 760px) {
   .app--playing .game-stage.stage .stage-bottom { grid-template-rows: minmax(56px, auto) auto; }
@@ -936,7 +957,15 @@
     grid-template-columns: minmax(0, 1fr) 240px;
     grid-template-rows: auto minmax(0, 1fr);
   }
-  .game-stage.stage > .game-topbar { grid-row: 1; grid-column: 1; }
+  .game-stage.stage > .game-topbar {
+    grid-row: 1;
+    grid-column: 1;
+    min-height: 0;
+    padding: 8px 16px;
+    gap: 16px;
+  }
+  .game-stage.stage .game-turn-pill { padding: 6px 16px; }
+  .game-stage.stage .game-turn-name { font-size: var(--game-heading); }
   .game-stage.stage > .stage-canvas-cell { grid-row: 2; grid-column: 1; }
   .game-stage.stage > .stage-bottom {
     grid-row: 1 / -1;
@@ -972,6 +1001,14 @@
 }
 @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 500px) {
   .game-stage.stage { grid-template-columns: minmax(0, 1fr) 200px; }
+  /* Phone landscape: a slim one-line turn bar so the board keeps its height. */
+  .game-stage.stage > .game-topbar { padding: 4px 12px; gap: 12px; border-radius: 20px; }
+  .game-stage.stage .game-turn-pill { padding: 4px 12px; border-width: 2px; }
+  .game-stage.stage .game-turn-name { font-size: 20px; }
+  .game-stage.stage .game-topbar .label { display: none; }
+  .game-stage.stage .game-topbar > .game-btn--sm { min-height: 40px; padding: 0 12px; font-size: 13px; }
+  .app--playing .game-stage.stage .game-controls .game-btn { padding: 0 8px; font-size: 16px; white-space: nowrap; }
+  .game-stage.stage .game-controls .game-btn-emoji { font-size: 26px; }
   .game-stage.stage .stage-bottom .sb-cell { min-height: 44px; }
   .game-stage.stage .stage-bottom .sb-avatar { width: 32px; height: 32px; }
 }
