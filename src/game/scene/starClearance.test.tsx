@@ -3,7 +3,8 @@
 // character standing there (D-12a, 07-REVIEW WR-02, BOARD-05 / D-17a(4)). Mounts the real
 // SceneContents (real Character and Board meshes) and checks every frame: a lone character's lifted
 // stars clear its idle bounce and crown, they hide for its success jump and winner cheer, a tile
-// with 2+ characters hides its stars, and a hopping character never meets the rows of the tiles it
+// with 2+ characters hides its stars, a lone tile's row hides while it would cover a face on the
+// tile behind it (D-17b(3)), and a hopping character never meets the rows of the tiles it
 // leaves, crosses or lands on (07-REVIEW WR-04). Reduced motion is mocked through a mutable flag.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
@@ -289,6 +290,28 @@ describe('star clearance (D-12a, WR-02)', () => {
     await frames(r, 60);
     expectRow(tileStars(r, 3), 3, Y_UP, 0.75);
     expectRow(tileStars(r, 5), starsFor('normal'), Y_UP, 0.75);
+  });
+
+  it('hides a lone tile’s lifted row while the ring neighbor behind it holds a character (D-17b(3))', async () => {
+    // Left side of the 20-tile ring: tile 8 stands straight behind tile 7.
+    const r = await mountScene(
+      [
+        { id: 'r', animal: 'rabbit', tile: 7, stars: 1 },
+        { id: 'b', animal: 'bear', tile: 8, stars: 0 },
+      ],
+      'r',
+    );
+    await frames(r, 42);
+    expect(tileStars(r, 7).every(hidden)).toBe(true);
+    expectRow(tileStars(r, 8), starsFor('easy'), Y_UP, 0.75); // nothing behind tile 8
+
+    // Side by side on the bottom side, neither row covers the other's face: both stay lifted.
+    await ReactThreeTestRenderer.act(async () => {
+      usePresentation.getState().reset({ positions: { r: 3, b: 4 }, stars: { r: 1, b: 0 } }, null);
+    });
+    await frames(r, 60);
+    expectRow(tileStars(r, 3), 3, Y_UP, 0.75);
+    expectRow(tileStars(r, 4), starsFor('easy'), Y_UP, 0.75);
   });
 
   it('keeps the star count, the capacity and the board draw calls with occupied and crowded tiles', async () => {

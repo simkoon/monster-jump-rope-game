@@ -40,7 +40,10 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
   const winBeat = usePresentation((s) => (s.current?.kind === 'win' ? s.current : null));
 
   const order = useMemo(() => participants.map((p) => p.id), [participants]);
-  const slots = useMemo(() => pawnSlots(order, positions, currentId), [order, positions, currentId]);
+  const slots = useMemo(
+    () => pawnSlots(order, positions, currentId, tiles.length),
+    [order, positions, currentId, tiles.length],
+  );
   const crowned = useMemo(() => new Set(winBeat ? winBeat.winners : leaders(stars)), [winBeat, stars]);
   // Tiles with 1+ characters lift their floating stars, tiles with 2+ hide them (UI-SPEC C6, D-17a).
   const { occupied, crowded } = useMemo(() => {

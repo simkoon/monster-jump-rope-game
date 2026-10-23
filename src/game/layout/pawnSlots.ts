@@ -3,14 +3,19 @@
 //   - free of React/DOM imports and of any runtime import of three / @react-three/*
 //     (main-chunk safety — the HUD may read `leaders`), and
 //   - pure: every function returns new values and never mutates its inputs.
-// Slot rule (Phase 7, UI-SPEC C5, D-17, D-17a): two frozen tables. faceOcclusion.test.tsx is the final
-// proof (D-17a(4)): it mounts the real scene — gate, ears, crowns, stars — and keeps every face ≤ 30 %
-// hidden from the real camera; slotOcclusion.test.ts stays as the head-disc check (D-19). On a tile the
-// current turn (if it stands there) takes k = 0 — front-center on a regular tile, the frontmost slot on
-// the start tile — at full size; everyone else follows participant order at the table size s
-// (0.85–0.90 for 2–4, 0.65–0.72 for 5–8). The start tile (index 0) has its own tables, a lone
-// character included, so nobody stands in the gate pillars (Pitfall 3) or behind the arch.
-// Slots depend only on (order, positions, currentId), so the same game state always looks the same.
+// Slot rule (Phase 7, UI-SPEC C5, D-17, D-17a, D-17b): one frozen table per tile shape.
+// faceOcclusion.test.tsx is the final proof (D-17a(4)): it mounts the real scene — gate, ears,
+// crowns, stars, and two adjacent crowded tiles — and keeps every face ≤ 30 % hidden from the real
+// camera; slotOcclusion.test.ts stays as the head-disc check (D-19) and pins the bound. On a tile
+// the current turn (if it stands there) takes k = 0 — front-center on a regular tile, the frontmost
+// slot on the start tile — at full size; everyone else follows participant order at the table size
+// s (0.85–0.90 for 2–4, 0.65–0.72 for 5–8). D-17b: toward either ring neighbor no slot center goes
+// past EDGE = 0.45 from its tile center, so a character is always nearer its own tile and two
+// adjacent crowds never mix; a crowd spreads only across the ring (bottom / top side: along z, left /
+// right side: along x, corners: away from both neighbors) and stays on the board base. The start
+// tile (index 0) has its own tables, a lone character included, so nobody stands in the gate pillars
+// (Pitfall 3) or behind the arch. Slots depend only on (order, positions, currentId, ring size), so
+// the same game state always looks the same.
 import type { Tile } from '../../engine/board';
 import { ringLayout, tileCenter, tileTop } from './ringLayout';
 
@@ -33,28 +38,122 @@ export interface SlotTable {
   slots: ReadonlyArray<Slot>;
 }
 
-const CENTER_TABLE: SlotTable = { s: 1, slots: [[0, 0]] };
+// D-17b tile shapes. A table is written for one orientation; `mirror` = −1 flips x for the other:
+//   'z'    bottom and top sides: ≤ EDGE along x (the ring), spread along z (yard / outer apron)
+//   'x'    left side (the right side mirrors): ≤ EDGE along z, spread along x (−x = outer apron)
+//   'near' the bottom-left corner: ≤ EDGE toward +x and −z, spread toward −x and +z
+//   'far'  the top-left corner (top-right mirrors): ≤ EDGE toward +x and +z, spread toward −x and −z
+//   'preStart' the last tile (right side, written as seen there): ≤ EDGE along z, spread along x.
+//          The start block in front of it is taller and its crowd stands at its back, which hides
+//          the middle of this tile at any depth, so here the current takes the frontmost slot out
+//          toward the apron (+x), like the start tile's current, instead of the middle.
+// The bottom-right corner is the start tile.
+export type SlotShape = 'start' | 'z' | 'x' | 'near' | 'far' | 'preStart';
+type RegularShape = Exclude<SlotShape, 'start'>;
 
-// Regular tiles, index n − 2 (UI-SPEC C5). Camera = +z. A theater layout: the current turn stands
-// front-center, two flank slots, then a back row. A full-size crowned current hides the faces
-// straight behind it across the whole depth of a far tile, so the others stand ≥ 0.5 to its side or
-// in the back row, and the back row sees over the flank slots (D-17a(1), proven by
-// faceOcclusion.test.tsx).
-const REGULAR: readonly SlotTable[] = [
-  { s: 0.9, slots: [[0, 0.45], [0.56, -0.3]] },
-  { s: 0.85, slots: [[0, 0.55], [-0.56, -0.3], [0.56, -0.3]] },
-  { s: 0.85, slots: [[0, 0.62], [-0.6, -0.05], [0.6, -0.05], [0, -0.62]] },
-  { s: 0.7, slots: [[0, 0.62], [-0.66, -0.02], [0.66, -0.02], [-0.3, -0.64], [0.3, -0.64]] },
-  { s: 0.66, slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.45, -0.64], [0, -0.64], [0.45, -0.64]] },
-  {
-    s: 0.65,
-    slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.6, -0.65], [-0.2, -0.65], [0.2, -0.65], [0.6, -0.65]],
-  },
-  {
-    s: 0.65,
-    slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.62, -0.65], [-0.31, -0.65], [0, -0.65], [0.31, -0.65], [0.62, -0.65]],
-  },
-];
+export const EDGE = 0.45; // max slot offset toward a ring neighbor (D-17b(1))
+
+// A lone character per shape: n = 1.
+const LONE: Record<RegularShape, SlotTable> = {
+  z: { s: 1, slots: [[0, 0]] },
+  x: { s: 1, slots: [[0, 0.4]] },
+  near: { s: 1, slots: [[0, 0.16]] },
+  far: { s: 1, slots: [[0, 0]] },
+  preStart: { s: 1, slots: [[0.58, 0.3]] },
+};
+
+// Regular tiles, index n − 2 (UI-SPEC C5). Camera = +z. The current turn stands front-center (the
+// frontmost slot on 'preStart'); a
+// full-size crowned current hides the faces straight behind it across a whole tile, so the others
+// stand in lanes beside it, and a row stands behind another only far enough back to see over it.
+// Toward a ring neighbor the rows stop at EDGE, and the rows of two neighbors never line up across
+// the gap (D-17b, proven by faceOcclusion.test.tsx with two adjacent crowded tiles).
+const REGULAR: Record<RegularShape, readonly SlotTable[]> = {
+  z: [
+    { s: 0.9, slots: [[0, 0.66], [0.26, -0.43]] },
+    { s: 0.85, slots: [[0, 0.71], [-0.26, -0.46], [0.26, -0.38]] },
+    { s: 0.85, slots: [[0, 0.74], [-0.37, -0.02], [0.43, -0.02], [0.04, -0.78]] },
+    { s: 0.7, slots: [[0, 0.46], [-0.45, 0.38], [0.45, 0.38], [-0.38, -0.72], [0.38, -0.72]] },
+    { s: 0.66, slots: [[0, 0.62], [-0.45, 0.54], [0.45, 0.22], [-0.45, -0.64], [0, -0.64], [0.45, -0.64]] },
+    {
+      s: 0.65,
+      slots: [[0, 0.54], [-0.45, 0.46], [0.45, 0.46], [-0.45, -0.36], [0.45, -0.2], [-0.14, -0.82], [0.22, -0.82]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.74], [-0.45, 0.7], [0.45, 0.7], [-0.45, -0.12], [0.45, -0.12], [-0.3, -0.76], [0, -0.76], [0.3, -0.76]],
+    },
+  ],
+  x: [
+    { s: 0.9, slots: [[0, 0.28], [0.54, -0.02]] },
+    { s: 0.85, slots: [[0, 0.22], [-0.66, -0.12], [0.56, -0.08]] },
+    { s: 0.85, slots: [[0, 0.26], [-0.66, 0.2], [0.44, 0.22], [0.77, -0.26]] },
+    { s: 0.7, slots: [[0, 0.34], [-0.5, 0.28], [0.5, 0.2], [-0.75, -0.42], [0.78, -0.42]] },
+    { s: 0.66, slots: [[0, 0.42], [-0.58, 0.26], [0.58, 0.18], [-0.72, -0.42], [0.8, -0.42], [0.25, -0.42]] },
+    {
+      s: 0.65,
+      slots: [[0, 0.42], [-0.58, 0.26], [0.58, 0.1], [-0.8, -0.42], [0.8, -0.42], [0.25, -0.42], [-0.49, -0.42]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.42], [-0.58, 0.26], [0.5, 0.18], [-0.8, -0.42], [0.8, -0.42], [0.25, -0.42], [-0.49, -0.42], [0.82, 0.22]],
+    },
+  ],
+  near: [
+    { s: 0.9, slots: [[0, 0.57], [0.35, 0.045]] },
+    { s: 0.85, slots: [[0, 0.615], [-0.57, -0.15], [0.27, -0.07]] },
+    { s: 0.85, slots: [[0, 0.758], [-0.6, 0.39], [0.26, 0.06], [-0.39, -0.278]] },
+    { s: 0.7, slots: [[0, 0.758], [-0.6, 0.39], [0.38, 0.23], [-0.45, -0.45], [0.39, -0.45]] },
+    {
+      s: 0.66,
+      slots: [[0, 0.758], [-0.6, 0.39], [0.38, 0.39], [-0.6, -0.45], [-0.23, -0.37], [0.38, -0.45]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.758], [-0.68, 0.47], [0.38, 0.39], [-0.6, -0.06], [0.38, -0.14], [-0.37, -0.45], [-0.01, -0.45]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.678], [-0.68, 0.47], [0.42, 0.63], [-0.68, -0.06], [0.42, 0.06], [-0.45, -0.45], [-0.15, -0.45], [0.15, -0.45]],
+    },
+  ],
+  far: [
+    { s: 0.9, slots: [[0, 0.145], [0.27, -0.742]] },
+    { s: 0.85, slots: [[0, 0.112], [-0.57, -0.455], [0.27, -0.775]] },
+    { s: 0.85, slots: [[0, 0.259], [-0.6, 0.115], [0.36, -0.405], [-0.09, -0.779]] },
+    { s: 0.7, slots: [[0, 0.039], [-0.68, 0.035], [0.42, -0.005], [-0.57, -0.778], [0.33, -0.798]] },
+    {
+      s: 0.66,
+      slots: [[0, 0.279], [-0.6, 0.115], [0.42, -0.125], [-0.6, -0.778], [-0.15, -0.818], [0.26, -0.818]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.359], [-0.68, 0.195], [0.38, 0.355], [-0.72, -0.48], [0.42, -0.36], [-0.41, -0.817], [0.09, -0.797]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.339], [-0.76, 0.275], [0.38, 0.275], [-0.68, -0.36], [0.42, -0.36], [-0.45, -0.816], [-0.15, -0.816], [0.15, -0.816]],
+    },
+  ],
+  preStart: [
+    { s: 0.9, slots: [[0.71, 0.22], [-0.46, -0.06]] },
+    { s: 0.85, slots: [[0.71, 0.22], [-0.46, -0.14], [0.13, -0.08]] },
+    { s: 0.85, slots: [[0.55, 0.34], [-0.3, -0.06], [0.13, -0.12], [-0.78, 0.33]] },
+    { s: 0.7, slots: [[0.6, 0.32], [-0.8, 0.28], [-0.5, -0.05], [-0.8, -0.42], [0.45, -0.42]] },
+    {
+      s: 0.66,
+      slots: [[0.43, 0.45], [-0.35, -0.38], [-0.03, -0.42], [0.79, -0.44], [-0.75, -0.1], [0, 0.18]],
+    },
+    {
+      s: 0.65,
+      slots: [[0.31, 0.4], [-0.35, -0.38], [0.07, -0.42], [0.75, -0.3], [-0.75, -0.02], [-0.08, 0.1], [-0.45, 0.28]],
+    },
+    {
+      s: 0.65,
+      slots: [[0, 0.42], [0.58, 0.26], [-0.5, 0.18], [0.8, -0.42], [-0.8, -0.42], [-0.25, -0.42], [0.49, -0.42], [-0.82, 0.22]],
+    },
+  ],
+};
 
 // Start tile (1.4 × 1.4), index n − 2: slot 0 is the frontmost (largest z); every slot keeps clear
 // of the two gate pillars (StartGate.tsx). Seen from the camera the arch and its star hide a diagonal
@@ -81,11 +180,25 @@ const START: readonly SlotTable[] = [
 // half of its face).
 const START_LONE: SlotTable = { s: 1, slots: [[0.25, 0.3]] };
 
-// The slot table for n characters on one tile. n is clamped to 1..8 (MAX_PARTICIPANTS, T-07-05).
-export function slotTable(n: number, isStart: boolean): SlotTable {
+// The shape of tile i on a ring of ringSize tiles, and whether its tables mirror x (D-17b).
+export function tileShape(ringSize: number, i: number): { shape: SlotShape; mirror: 1 | -1 } {
+  const perSide = Math.max(1, Math.floor(ringSize / 4));
+  const side = Math.floor(i / perSide);
+  if (i === 0) return { shape: 'start', mirror: 1 };
+  if (i === ringSize - 1) return { shape: 'preStart', mirror: 1 };
+  if (i % perSide === 0) {
+    return side === 1 ? { shape: 'near', mirror: 1 } : { shape: 'far', mirror: side === 2 ? 1 : -1 };
+  }
+  if (side === 0 || side === 2) return { shape: 'z', mirror: 1 };
+  return { shape: 'x', mirror: side === 1 ? 1 : -1 };
+}
+
+// The slot table for n characters on a tile of this shape (unmirrored). n is clamped to 1..8
+// (MAX_PARTICIPANTS, T-07-05).
+export function slotTable(n: number, shape: SlotShape): SlotTable {
   const c = Number.isFinite(n) ? Math.min(8, Math.max(1, Math.floor(n))) : 1;
-  if (c === 1) return isStart ? START_LONE : CENTER_TABLE;
-  return (isStart ? START : REGULAR)[c - 2];
+  if (shape === 'start') return c === 1 ? START_LONE : START[c - 2];
+  return c === 1 ? LONE[shape] : REGULAR[shape][c - 2];
 }
 
 // Slot offset per participant id. A participant missing from `positions` stands on the start tile.
@@ -93,6 +206,7 @@ export function pawnSlots(
   order: readonly string[],
   positions: Readonly<Record<string, number>>,
   currentId: string | null,
+  ringSize: number,
 ): Record<string, PawnSlot> {
   const byTile = new Map<number, string[]>();
   for (const id of order) {
@@ -105,11 +219,13 @@ export function pawnSlots(
   for (const [tile, ids] of byTile) {
     const k0 = currentId === null ? -1 : ids.indexOf(currentId);
     const ranked = k0 > 0 ? [ids[k0], ...ids.slice(0, k0), ...ids.slice(k0 + 1)] : ids;
-    const { s, slots } = slotTable(ranked.length, tile === 0);
+    const { shape, mirror } = tileShape(ringSize, tile);
+    const { s, slots } = slotTable(ranked.length, shape);
     ranked.forEach((id, k) => {
       // More than 8 on one tile cannot happen (participants ≤ 8); reuse the last slot just in case.
       const [dx, dz] = slots[Math.min(k, slots.length - 1)];
-      out[id] = { dx, dz, scale: k === 0 && id === currentId ? 1 : s };
+      // + 0 turns a mirrored −0 into 0.
+      out[id] = { dx: mirror * dx + 0, dz, scale: k === 0 && id === currentId ? 1 : s };
     });
   }
   return out;

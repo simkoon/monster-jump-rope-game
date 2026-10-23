@@ -13,11 +13,13 @@
 // (stars beat) or its winner cheer (win beat) the row hides (D-12a), and a tile with 2 or more
 // characters (`crowded`) hides its row so it never covers a back-row face (BOARD-05, D-17a(4), the
 // Pitfall 4 alternative); the tile color still shows the difficulty. Hiding shrinks the row in place
-// (1 − exp(−30·dt)). During a hop beat the rows of the mover's departure tile and of every tile on
-// its path snap away, and a hidden row takes its new lift at once, so the landing tile's row is
-// already up when it shows again (07-REVIEW WR-04). Under reduced motion lift and crowd hide snap
-// and the act and hop hides are off: bodies hold REST, below the lifted row (D-16). The star count never changes, and no mesh is added: the
-// same instances are rewritten, and only on frames where a lift or visibility factor moved.
+// (1 − exp(−30·dt)). A lone character's lifted row also hides while the ring neighbor straight
+// behind it holds a character, whose face it would cover (D-17b(3)). During a hop beat the rows of
+// the mover's departure tile and of every tile on its path snap away, and a hidden row takes its
+// new lift at once, so the landing tile's row is already up when it shows again (07-REVIEW WR-04).
+// Under reduced motion lift and crowd hide snap and the act and hop hides are off: bodies hold
+// REST, below the lifted row (D-16). The star count never changes, and no mesh is added: the same
+// instances are rewritten, and only on frames where a lift or visibility factor moved.
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { InstancedMesh, Object3D } from 'three';
@@ -65,6 +67,7 @@ interface StarRow {
   az: number;
   count: number;
   first: number;
+  behind: number[]; // ring neighbors straight behind it (farther from the camera)
 }
 
 // Writes every star matrix from the per-tile lift factor k ∈ [0, 1] (0 = resting, 1 = lifted) and
@@ -91,6 +94,13 @@ function writeStars(
       mesh.setMatrixAt(row.first + j, d.matrix);
     }
   }
+}
+
+// How many characters `pos` puts on a tile.
+function onTile(pos: Readonly<Record<string, number>>, tile: number): number {
+  let c = 0;
+  for (const id in pos) if (pos[id] === tile) c++;
+  return c;
 }
 
 // Eases f[i] toward target by the step factor e, snapping within LIFT_EPS. True when it moved.
@@ -176,7 +186,10 @@ export default function Board({ tiles, occupied = NO_TILES, crowded = NO_TILES }
         q++;
         // Stars in a row across the travel direction, facing the camera (written by writeStars).
         const count = starsFor(t.diff);
-        starRows.push({ tile: i, x: c.x, z: c.z, ax: Math.cos(h), az: -Math.sin(h), count, first: s });
+        const behind = [i - 1, i + 1]
+          .map((j) => (j + n) % n)
+          .filter((j) => tileCenter(layout, j).z < c.z - layout.pitch / 2);
+        starRows.push({ tile: i, x: c.x, z: c.z, ax: Math.cos(h), az: -Math.sin(h), count, first: s, behind });
         s += count;
         return;
       }
@@ -197,7 +210,7 @@ export default function Board({ tiles, occupied = NO_TILES, crowded = NO_TILES }
     commit(pad, p);
     commit(padTop, p);
     commit(star, s);
-  }, [tiles, layout, scratch]);
+  }, [tiles, layout, scratch, n]);
 
   // Ease each quest tile's lift toward 1 while occupied, else 0, and its visibility toward 0 while
   // crowded or while its character jumps / cheers, else 1; rewrite the stars only on change.
@@ -222,12 +235,14 @@ export default function Board({ tiles, occupied = NO_TILES, crowded = NO_TILES }
       // eased hide, so those rows snap away.
       const hopping = hop !== null && (pos[hop.pid] === row.tile || hop.path.includes(row.tile));
       // The props follow `displayed` one React render late; a hop that just landed is already in pos.
-      let count = 0;
-      for (const id in pos) if (pos[id] === row.tile) count++;
+      const count = onTile(pos, row.tile);
       // A hidden row lifts at once, so a landing character never meets it on the way up.
-      const lifted = occupied.has(row.tile) || count > 0 ? 1 : 0;
-      moved = ease(k, row.tile, lifted, v[row.tile] === 0 ? 1 : eLift) || moved;
-      const hide = crowded.has(row.tile) || count > 1 || acting || hopping;
+      const lifted = occupied.has(row.tile) || count > 0;
+      moved = ease(k, row.tile, lifted ? 1 : 0, v[row.tile] === 0 ? 1 : eLift) || moved;
+      // D-17b(3): a lifted row stands in the sight line of the faces on the ring neighbor straight
+      // behind it (left and right sides, corners), so it hides while that tile holds a character.
+      const screens = lifted && row.behind.some((t) => occupied.has(t) || onTile(pos, t) > 0);
+      const hide = crowded.has(row.tile) || count > 1 || screens || acting || hopping;
       moved = ease(v, row.tile, hide ? 0 : 1, hopping ? 1 : eShow) || moved;
     }
     if (!moved || !starRef.current) return;

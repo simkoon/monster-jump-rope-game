@@ -7,10 +7,10 @@
 // The head tilts around its own center, so the tilt never changes these discs.
 import { describe, it, expect } from 'vitest';
 import { PerspectiveCamera, Vector3 } from 'three';
-import { BODY_R, GROUND_RIM_R, HEAD_A, HEAD_C_Y, HEAD_R } from './chibiDims';
+import { BODY_R, HEAD_A, HEAD_C_Y, HEAD_R } from './chibiDims';
 import { fitCamera } from './fitCamera';
-import { slotTable } from './pawnSlots';
-import { PITCH, boardExtents, ringLayout, tileCenter, tileTop } from './ringLayout';
+import { EDGE, slotTable, tileShape, type SlotShape } from './pawnSlots';
+import { BASE_MARGIN, boardExtents, ringLayout, tileCenter, tileTop } from './ringLayout';
 
 // Measured phone canvas cells (374×594 portrait, 588×290 landscape) plus phone, tablet and desktop.
 const VIEWS = [
@@ -45,10 +45,19 @@ function lens(r1: number, r2: number, d: number): number {
   return a + b - 0.5 * Math.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2));
 }
 
+const SHAPES: readonly SlotShape[] = ['start', 'z', 'x', 'near', 'far', 'preStart'];
+
 // Sizes on one tile: slot 0 is full size when it holds the current turn, everything else is s.
-const scales = (n: number, isStart: boolean, cur: boolean) => {
-  const { s, slots } = slotTable(n, isStart);
+const scales = (n: number, shape: SlotShape, cur: boolean) => {
+  const { s, slots } = slotTable(n, shape);
   return slots.map((_, k) => (k === 0 && cur ? 1 : s));
+};
+
+// The table of tile i on an L-tile ring with its mirror applied: world offsets from the tile center.
+const tileSlots = (L: number, i: number, n: number) => {
+  const { shape, mirror } = tileShape(L, i);
+  const { s, slots } = slotTable(n, shape);
+  return { shape, s, slots: slots.map(([dx, dz]) => [mirror * dx, dz] as const) };
 };
 
 describe('slot occlusion (D-19): no nearer head covers more than 30 % of a farther head', () => {
@@ -67,8 +76,8 @@ describe('slot occlusion (D-19): no nearer head covers more than 30 % of a farth
       const y0 = tileTop(i === 0 ? 'start' : 'quest');
       for (const cnt of COUNTS) {
         for (const cur of [true, false]) {
-          const { slots } = slotTable(cnt, i === 0);
-          const sc = scales(cnt, i === 0, cur);
+          const { shape, slots } = tileSlots(n, i, cnt);
+          const sc = scales(cnt, shape, cur);
           const discs = slots.map(([dx, dz], k) => {
             const p = new Vector3(t.x + dx, y0 + HEAD_C_Y * sc[k], t.z + dz);
             const q = p.clone().project(cam);
@@ -98,12 +107,12 @@ describe('slot occlusion (D-19): no nearer head covers more than 30 % of a farth
 });
 
 describe('slot spacing (D-17, D-19)', () => {
-  for (const isStart of [false, true]) {
-    it(`${isStart ? 'start' : 'regular'} tiles: heads never interpenetrate (xz distance ≥ 0.85·(rᵢ + rⱼ))`, () => {
+  for (const shape of SHAPES) {
+    it(`${shape} tiles: heads never interpenetrate (xz distance ≥ 0.85·(rᵢ + rⱼ))`, () => {
       for (const cnt of COUNTS) {
         for (const cur of [true, false]) {
-          const { slots } = slotTable(cnt, isStart);
-          const sc = scales(cnt, isStart, cur);
+          const { slots } = slotTable(cnt, shape);
+          const sc = scales(cnt, shape, cur);
           for (let a = 0; a < cnt; a++) {
             for (let b = a + 1; b < cnt; b++) {
               const d = Math.hypot(slots[a][0] - slots[b][0], slots[a][1] - slots[b][1]);
@@ -117,15 +126,29 @@ describe('slot spacing (D-17, D-19)', () => {
     });
   }
 
-  it("regular tiles: the ground disc stays out of the neighbor tile's center-side half", () => {
-    for (const cnt of COUNTS) {
-      const { s, slots } = slotTable(cnt, false);
-      slots.forEach(([dx, dz], k) => {
-        const sc = k === 0 ? 1 : s; // largest possible size of this slot
-        expect(Math.max(Math.abs(dx), Math.abs(dz)) + GROUND_RIM_R * sc, `n ${cnt}, slot ${k}`).toBeLessThanOrEqual(
-          PITCH - 0.25,
-        );
-      });
+  // D-17b(1)(2): measured along the ring (the lattice step to each neighbor), so the start tile's
+  // outward offset does not tilt the axis of tiles 1 and L − 1.
+  it('regular tiles: no slot passes EDGE toward a ring neighbor and every body stays on the board base', () => {
+    for (const L of SIZES) {
+      const l = ringLayout(L);
+      const base = l.half + BASE_MARGIN;
+      for (let i = 1; i < L; i++) {
+        const c = tileCenter(l, i);
+        const axes = [l.tiles[(i + L - 1) % L], l.tiles[(i + 1) % L]].map((t) => {
+          const len = Math.hypot(t.x - c.x, t.z - c.z);
+          return [(t.x - c.x) / len, (t.z - c.z) / len] as const;
+        });
+        for (const cnt of [1, ...COUNTS]) {
+          const { s, slots } = tileSlots(L, i, cnt);
+          slots.forEach(([dx, dz], k) => {
+            const at = `L ${L}, tile ${i}, n ${cnt}, slot ${k}`;
+            const body = BODY_R * (k === 0 ? 1 : s); // largest possible size of this slot
+            for (const [ux, uz] of axes) expect(dx * ux + dz * uz, at).toBeLessThanOrEqual(EDGE + 1e-9);
+            expect(Math.abs(c.x + dx) + body, at).toBeLessThanOrEqual(base);
+            expect(Math.abs(c.z + dz) + body, at).toBeLessThanOrEqual(base);
+          });
+        }
+      }
     }
   });
 });
@@ -149,7 +172,7 @@ describe('start tile slots clear the gate (D-17, Pitfall 3)', () => {
   // Each slot is checked at its largest possible size (slot 0 is full size when current).
   const startSlots = () =>
     COUNTS.flatMap((cnt) => {
-      const { s, slots } = slotTable(cnt, true);
+      const { s, slots } = slotTable(cnt, 'start');
       return slots.map(([dx, dz], k) => ({ cnt, k, dx, dz, sc: k === 0 ? 1 : s }));
     });
 

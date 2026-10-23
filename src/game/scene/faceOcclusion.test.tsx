@@ -1,6 +1,7 @@
 // @vitest-environment node
 // src/game/scene/faceOcclusion.test.tsx — no character's face is more than 30 % hidden, with 1-8
-// characters on one tile (BOARD-05, ROADMAP SC4, D-17, D-17a(4), 07-VERIFICATION gap 1).
+// characters on one tile or split over two adjacent tiles (BOARD-05, ROADMAP SC4, D-17, D-17a(4),
+// D-17b(4), 07-VERIFICATION gap 1, 07-REVIEW CR-01).
 // This is the final criterion for the slot tables. slotOcclusion.test.ts stays as the cheap D-19
 // check (head discs only); it cannot see the start gate, the ears, the crowns or the stars, which is
 // how the 07-05 tables passed it while the arch hid back-row faces at the start of every game.
@@ -13,6 +14,8 @@
 // animals; bear is the current turn, rabbit next) and `rabbits` (n rabbits: the longest ears in every
 // slot). Everyone holds 1 star, so everyone is a crowned leader (crowns only add occluders, so this
 // covers the no-crown states too), and every quest tile is hard (the widest 3-star row).
+// Pairs: two adjacent tiles at once (CROSS_PAIRS) with the splits in SPLITS, p0 on the first tile,
+// so a neighbor's crowd and its lifted or hidden star row are in the scene too.
 // Exact y-prune: the camera is above every face, so a camera→sample segment never dips below the
 // sample; a mesh whose world box top is below the sample cannot hit it and is skipped (that drops
 // the board slabs and tiles, which keeps the file fast).
@@ -25,6 +28,7 @@ import { SceneContents } from './SceneContents';
 import { usePresentation } from '../usePresentation';
 import { EMPTY_DISPLAYED } from '../director/displayed';
 import { fitCamera } from '../layout/fitCamera';
+import { slotTable, tileShape } from '../layout/pawnSlots';
 import { boardExtents, ringLayout, tileCenter } from '../layout/ringLayout';
 import { boardWith, questTile } from '../../engine/testkit';
 import { ANIMALS, type AnimalId } from '../../engine/animals';
@@ -59,6 +63,29 @@ const REGULAR_TILES = (L: number) => {
   return [m, L / 4 + m, L / 2 + m, (3 * L) / 4 + m, L / 4, L / 2, (3 * L) / 4];
 };
 
+// Adjacent pairs: the middle of the left side (the first tile is the front one), of the right side
+// (the first is the back one) and of the top side, the top-left corner after the left-side tile in
+// front of it, and the last tile behind the start block (its gate and crowd stand in front).
+const CROSS_PAIRS = (L: number): [number, number][] => {
+  const s = L / 4;
+  const m = Math.floor(L / 8);
+  return [
+    [s + m, s + m + 1],
+    [3 * s + m, 3 * s + m + 1],
+    [2 * s + m, 2 * s + m + 1],
+    [2 * s - 1, 2 * s],
+    [L - 1, 0],
+  ];
+};
+const SPLITS = [
+  [1, 1],
+  [3, 2],
+  [2, 3],
+  [4, 4],
+  [1, 7],
+  [7, 1],
+] as const;
+
 const hardBoard = (L: number) =>
   boardWith(L, Object.fromEntries(Array.from({ length: L - 1 }, (_, i) => [i + 1, questTile('hard')])));
 
@@ -91,10 +118,17 @@ afterEach(async () => {
 });
 
 async function mountTile(L: number, tile: number, cast: Cast, n: number): Promise<Mounted> {
-  const parts = castOf(cast, n);
+  return mountTiles(L, [[tile, n]], cast);
+}
+
+// Several tiles at once: groups [tile, count] in participant order, so p0 (the current turn) stands
+// on the first tile. The roster cast keeps counting through the groups (8 participants = 8 animals).
+async function mountTiles(L: number, groups: readonly (readonly [number, number])[], cast: Cast): Promise<Mounted> {
+  const parts = castOf(cast, groups.reduce((a, [, c]) => a + c, 0));
+  const tileOf = groups.flatMap(([tile, c]) => Array.from({ length: c }, () => tile));
   usePresentation.getState().reset(
     {
-      positions: Object.fromEntries(parts.map((p) => [p.id, tile])),
+      positions: Object.fromEntries(parts.map((p, i) => [p.id, tileOf[i]])),
       stars: Object.fromEntries(parts.map((p) => [p.id, 1])),
     },
     null,
@@ -206,12 +240,22 @@ function measureFace(m: Mounted, pid: string, L: number): { view: string; hidden
 
 // One mount per (L, tile, cast, n): every face of that tile in every view.
 async function measureTile(L: number, tile: number, cast: Cast, n: number): Promise<FaceRecord[]> {
-  const m = await mountTile(L, tile, cast, n);
   const kind = tile === 0 ? 'start' : 'regular';
+  return measureTiles(L, [[tile, n]], cast, `${kind} L${L} t${tile} ${cast} n${n}`);
+}
+
+async function measureTiles(
+  L: number,
+  groups: readonly (readonly [number, number])[],
+  cast: Cast,
+  label: string,
+): Promise<FaceRecord[]> {
+  const m = await mountTiles(L, groups, cast);
+  const n = groups.reduce((a, [, c]) => a + c, 0);
   const out: FaceRecord[] = [];
   for (let k = 0; k < n; k++) {
     for (const f of measureFace(m, `p${k}`, L)) {
-      out.push({ label: `${kind} L${L} t${tile} ${cast} n${n} slot ${k} ${f.view}`, hidden: f.hidden, samples: f.samples, by: f.by });
+      out.push({ label: `${label} slot ${k} ${f.view}`, hidden: f.hidden, samples: f.samples, by: f.by });
     }
   }
   await unmount(m);
@@ -276,6 +320,33 @@ describe('face occlusion — regular tiles (D-17a(4))', () => {
   }
 
   it('control: a 0.65 character straight behind the full-size current reads as hidden', async () => {
-    expect(await controlCover(16, 2, 0, -0.15)).toBeGreaterThanOrEqual(0.9);
+    const [, front] = slotTable(2, tileShape(16, 2).shape).slots[0];
+    expect(await controlCover(16, 2, 0, front - 0.3)).toBeGreaterThanOrEqual(0.9);
   });
+});
+
+describe('face occlusion — two adjacent tiles (D-17b(4))', () => {
+  it('picks the left, right and top side middles, the top-left corner and the tile before start', () => {
+    expect(CROSS_PAIRS(16)).toEqual([
+      [6, 7],
+      [14, 15],
+      [10, 11],
+      [7, 8],
+      [15, 0],
+    ]);
+  });
+
+  for (const L of SIZES) {
+    it(`${L} tiles: no face over 30 % on 5 pairs, splits 1+1 3+2 2+3 4+4 1+7 7+1, 2 casts, 6 views`, async () => {
+      const records: FaceRecord[] = [];
+      for (const [a, b] of CROSS_PAIRS(L)) {
+        for (const cast of CASTS) {
+          for (const [na, nb] of SPLITS) {
+            records.push(...(await measureTiles(L, [[a, na], [b, nb]], cast, `pair L${L} t${a}+t${b} ${cast} ${na}+${nb}`)));
+          }
+        }
+      }
+      expectClean(records, 2160);
+    }, 60_000);
+  }
 });
