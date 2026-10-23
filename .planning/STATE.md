@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: 3D 블루마블 재구축
 current_phase: 6
 current_phase_name: 3D 순환판 & 게임 화면
-status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-10-23T01:56:48.708Z"
+status: verifying
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-10-23T02:32:55.885Z"
 last_activity: 2026-10-22
 last_activity_desc: Phase 6 execution started
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 11
-  completed_plans: 10
-  percent: 25
+  completed_plans: 11
+  percent: 50
 ---
 
 # Project State
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 
 Phase: 6 (3D 순환판 & 게임 화면) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-22 — Phase 6 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P03 | 7min | 2 tasks | 7 files |
 | Phase 06 P04 | 8min | 3 tasks | 14 files |
 | Phase 06 P05 | 11min | 2 tasks | 11 files |
+| Phase 06 P06 | 2 sessions | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-04: Banner completes banner beats by id after beat.ms; dice/preview/hop are left to their consumer or the store watchdog
 - [Phase 06]: 06-05: beat consumers read usePresentation.getState() inside useFrame (not a render-time beat) so a beat started/ended between renders is never missed; completion guarded by startedId/doneId refs
 - [Phase 06]: 06-05: GameCanvas reached only via loadGameCanvas() dynamic import; source guard enforces no forbidden drei, no URLs in src/game, no scene text, no 3D value imports outside src/game/scene
+- [Phase 06]: 06-06: portrait bottom area reserves one primary-button row so the fitted board does not resize when controls hide during beats — otherwise the canvas cell grows by a button height every beat and the camera re-fits
 
 ### Pending Todos
 
@@ -167,6 +169,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T01:56:44.946Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-10-23T02:32:51.340Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
