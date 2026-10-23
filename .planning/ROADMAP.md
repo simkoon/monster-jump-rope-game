@@ -148,7 +148,7 @@ Plans:
   4. 주사위·이동·퀘스트 성공·별 획득·시상식에 CC0 효과음이 나오고, 사용자가 효과음을 켜고 끌 수 있다
   5. 새로고침 없이 5판을 연속으로 해도 느려지거나 멈추지 않으며, iPhone·iPad Safari와 노트북 Chrome 실기기에서 원활하게 동작함이 확인된다
 
-**Plans:** 2/11 plans executed
+**Plans:** 3/11 plans executed
 
 Plans:
 **Wave 1**
@@ -158,7 +158,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-03-PLAN.md — 탭 건너뛰기(capture click·Esc, data-skip-ignore) + 250ms 공유 입력 잠금 + 2.5초 예산 순수·통합 테스트 (wave 2)
+- [x] 08-03-PLAN.md — 탭 건너뛰기(capture click·Esc, data-skip-ignore) + 250ms 공유 입력 잠금 + 2.5초 예산 순수·통합 테스트 (wave 2)
 - [ ] 08-04-PLAN.md — 3D 성공 효과: 항상 마운트된 컨페티·별 버스트·충격파 링·퍼프 풀 + ⭐3 카메라 흔들림·정확 복원 + 출발 보너스·이벤트 소량 효과, 드로우콜 ≤ 100 / 연출 중 ≤ 104 (wave 2)
 - [ ] 08-05-PLAN.md — 캐릭터 등급별 성공 점프(landMs 기준 successBeatPose)·Reaction.stars·Character 연결 + 회귀 테스트 정리 (wave 2)
 - [ ] 08-06-PLAN.md — 효과음 바탕: soundOn 설정·설정 탭 그룹·문구 + Web Audio 합성 엔진(마스터·리미터·iOS 복귀·노드 정리) + FakeAudioContext + CC0 고지 (wave 2)
@@ -189,4 +189,4 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
 | 7. 치비 동물 캐릭터 & 표정 | 8/8 | Complete   | 2026-10-23 |
-| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 2/11 | In Progress|  |
+| 8. 퀘스트 성공 연출 & 시상식 & 마감 | 3/11 | In Progress|  |
