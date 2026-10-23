@@ -21,6 +21,7 @@ import { BADGE_COPY, ceremonyCardAria } from '../labels';
 import { CEREMONY_INTRO_MS } from '../layout/podiumLayout';
 import sfx, { __resetSfxForTests } from '../sfx/sfx';
 import { installFakeAudio } from '../../test/fakeAudio';
+import gameCss from '../styles/game.css?raw';
 
 const stats = (over: Partial<PlayerStats>): PlayerStats => ({ ...EMPTY_STATS, ...over });
 
@@ -412,5 +413,100 @@ describe('useCeremonyIntro (D-16)', () => {
     rerender(<IntroHost active gameKey="g2" />);
     expect(intro()).toBe('2:off');
     expect(fanfares()).toBe(2);
+  });
+});
+
+// ---------- game.css ceremony block (UI-SPEC F7 / F8 / §Spacing / §Color, D-12, D-13) ----------
+
+describe('game.css ceremony block (08-10)', () => {
+  const MARK = '=== Phase 8: ceremony (08-10) ===';
+  const start = gameCss.indexOf(MARK);
+  const next = gameCss.indexOf('=== Phase 8:', start + MARK.length);
+  const block = start < 0 ? '' : gameCss.slice(start, next < 0 ? undefined : next);
+  // The whole rule text for a selector (first match), e.g. rule('.sound-toggle').
+  const rule = (src: string, sel: string) => {
+    const esc = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return src.match(new RegExp(`(^|[\\s,}])${esc}\\s*\\{[^}]*\\}`))?.[0] ?? '';
+  };
+  const mediaBody = (src: string, cond: string) => {
+    const i = src.indexOf(`@media ${cond}`);
+    if (i < 0) return '';
+    let depth = 0;
+    for (let k = src.indexOf('{', i); k < src.length; k++) {
+      if (src[k] === '{') depth++;
+      else if (src[k] === '}' && --depth === 0) return src.slice(i, k + 1);
+    }
+    return '';
+  };
+
+  it('exists once, tokens and color-mix only: no hex literal, no coral', () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(gameCss.indexOf(MARK, start + 1)).toBe(-1);
+    expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(block).not.toContain('--coral');
+    expect(block).toContain('color-mix(');
+  });
+
+  it('portrait grid rows and the landscape columns (360px, 300px on phone landscape)', () => {
+    expect(block).toMatch(/\.game-stage\.stage\.stage--ceremony\s*\{[^}]*grid-template-rows:\s*auto minmax\(200px, 1fr\) auto auto/);
+    const land = mediaBody(block, '(orientation: landscape) and (min-aspect-ratio: 5/4) {');
+    expect(land).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) 360px/);
+    expect(land).toMatch(/\.stage-canvas-cell\s*\{[^}]*grid-row:\s*1 \/ -1/);
+    const phone = mediaBody(block, '(orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 500px)');
+    expect(phone).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) 300px/);
+  });
+
+  it('panel max 48dvh with vertical scroll; the card grid auto-fills 160px columns with an 8px gap', () => {
+    const panel = rule(block, '.ceremony-panel');
+    expect(panel).toMatch(/max-height:\s*48dvh/);
+    expect(panel).toMatch(/overflow-y:\s*auto/);
+    const list = rule(block, '.ceremony-list');
+    expect(list).toContain('repeat(auto-fill, minmax(160px, 1fr))');
+    expect(list).toMatch(/gap:\s*8px/);
+  });
+
+  it('sound toggle: absolute top-right 8px, z 4, 56px circle, 48px on phone and short screens, sky focus ring', () => {
+    const t = rule(block, '.sound-toggle');
+    expect(t).toMatch(/position:\s*absolute/);
+    expect(t).toMatch(/top:\s*8px/);
+    expect(t).toMatch(/right:\s*8px/);
+    expect(t).toMatch(/z-index:\s*4/);
+    expect(t).toMatch(/width:\s*56px/);
+    expect(t).toMatch(/height:\s*56px/);
+    expect(t).toMatch(/border-radius:\s*999px/);
+    for (const cond of ['(max-width: 560px)', '(max-height: 760px)']) {
+      const m = mediaBody(block, cond);
+      expect(rule(m, '.sound-toggle'), cond).toMatch(/width:\s*48px/);
+      expect(rule(m, '.sound-toggle'), cond).toMatch(/height:\s*48px/);
+    }
+    expect(rule(block, '.sound-toggle:focus-visible')).toMatch(/outline:\s*3px solid var\(--sky\)/);
+  });
+
+  it('action buttons: 72 / 64 / 56px, 다시 하기 flex 2 and 처음으로 flex 1 at the same height', () => {
+    const btn = /\.ceremony-actions > \.game-btn,\s*\.game-stage\.stage\.stage--ceremony \.ceremony-actions > \.game-btn--sm\s*\{[^}]*min-height:\s*(\d+)px/;
+    expect(block.match(btn)?.[1]).toBe('72');
+    expect(mediaBody(block, '(max-width: 560px)').match(btn)?.[1]).toBe('64');
+    expect(mediaBody(block, '(max-height: 760px)').match(btn)?.[1]).toBe('56');
+    expect(block).toMatch(/\.ceremony-actions > \.game-btn\s*\{[^}]*flex:\s*2/);
+    expect(block).toMatch(/\.ceremony-actions > \.game-btn--sm\s*\{[^}]*flex:\s*1/);
+  });
+
+  it('no last-place styling: no :last-child / :nth-* selectors, no opacity or filter on the plain card', () => {
+    expect(block).not.toMatch(/:last-child|:nth-last-child|:nth-child/);
+    const card = rule(block, '.ceremony-card');
+    expect(card).not.toBe('');
+    expect(card).not.toMatch(/opacity|filter/);
+    expect(rule(block, '.ceremony-card.is-winner')).toContain('color-mix(in srgb, var(--sun) 22%, var(--panel))');
+  });
+
+  it('its own reduced-motion block turns the intro animations off', () => {
+    const rm = mediaBody(block, '(prefers-reduced-motion: reduce)');
+    expect(rm).not.toBe('');
+    for (const k of ['ceremony-title-in', 'ceremony-card-in', 'dom-podium-pop']) {
+      expect(block).toContain(`@keyframes ${k}`);
+    }
+    expect(rm).toMatch(/\.ceremony-title[^{]*\{[^}]*animation:\s*none/);
+    expect(rm).toMatch(/\.ceremony-card[^{]*\{[^}]*animation:\s*none/);
+    expect(rm).toMatch(/\.dom-podium-champ[^{]*\{[^}]*animation:\s*none/);
   });
 });
