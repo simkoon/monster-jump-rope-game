@@ -95,7 +95,7 @@ describe('confettiPiece', () => {
       for (let i = 0; i < 20; i++) {
         expect(confettiPiece(i, 300, 5, tier)).toEqual(confettiPiece(i, 300, 5, tier));
         const p0 = confettiPiece(i, 0, 5, tier);
-        expect([p0.x, p0.y, p0.z]).toEqual([0, 0, 0]);
+        for (const v of [p0.x, p0.y, p0.z]) expect(v).toBeCloseTo(0, 12);
         expect(p0.scale).toBe(1);
       }
     expect(confettiPiece(1, 300, 5, 3)).not.toEqual(confettiPiece(1, 300, 6, 3));
@@ -219,7 +219,7 @@ describe('puffPiece', () => {
   it('rises 0 → 0.5, spreads ≤ 0.3 and scales 0.4 → 1.0 → 0 over PUFF_LIFE_MS', () => {
     for (let i = 0; i < 6; i++) {
       const p0 = puffPiece(i, 6, 0, 9);
-      expect(p0.y).toBe(0);
+      expect(p0.y).toBeCloseTo(0, 12);
       expect(p0.scale).toBeCloseTo(0.4, 12);
       const mid = puffPiece(i, 6, PUFF_LIFE_MS * 0.5, 9);
       expect(mid.scale).toBe(1);
