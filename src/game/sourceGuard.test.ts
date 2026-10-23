@@ -7,7 +7,9 @@
 //   (d) three / @react-three stay out of every main-chunk module (only src/game/scene, minus the
 //       two DOM-only scene helpers, may import them as values),
 //   (e) no physics or post-processing package,
-//   (f) no shadow maps (no cast/receive props in the scene, no `shadows` on the Canvas).
+//   (f) no shadow maps (no cast/receive props in the scene, no `shadows` on the Canvas),
+//   (g) the dev-only character gallery stays out of the app (D-23, T-07-14): only the gallery entry
+//       src/gallery.tsx imports it, and the app entry / root never mention it.
 import { describe, it, expect } from 'vitest';
 
 const SOURCES = import.meta.glob(['/src/**/*.{ts,tsx}', '!/src/**/*.test.{ts,tsx}'], {
@@ -58,6 +60,8 @@ describe('source guard (D-02, D-03, D-04, STAB-04)', () => {
   it('scans the real sources', () => {
     expect(files.length).toBeGreaterThan(20);
     expect(Object.keys(SOURCES)).toContain('/src/game/scene/Board.tsx');
+    expect(Object.keys(SOURCES)).toContain('/src/game/scene/Character.tsx');
+    expect(Object.keys(SOURCES)).toContain('/src/game/scene/CharacterGallery.tsx');
     expect(Object.keys(SOURCES).some((f) => f.includes('.test.'))).toBe(false);
   });
 
@@ -144,6 +148,23 @@ describe('source guard (D-02, D-03, D-04, STAB-04)', () => {
       }
     }
     expect(bad).toEqual([]);
+  });
+
+  it('(g) keeps the dev gallery out of the app', () => {
+    const bad: string[] = [];
+    for (const [file, src] of files) {
+      if (file === '/src/gallery.tsx') continue;
+      for (const { spec } of importsOf(src)) {
+        // Basename match, as in (d): any path ending in CharacterGallery counts.
+        if (/(^|\/)CharacterGallery(\.tsx?)?$/.test(spec)) bad.push(`${file}: ${spec}`);
+      }
+    }
+    expect(bad).toEqual([]);
+    expect(SOURCES['/src/gallery.tsx']).toMatch(/from\s*['"]\.\/game\/scene\/CharacterGallery['"]/);
+    for (const entry of ['/src/main.tsx', '/src/App.tsx']) {
+      expect(SOURCES[entry], entry).toBeDefined();
+      expect(SOURCES[entry], entry).not.toMatch(/gallery/i);
+    }
   });
 
   it('the Canvas-tag rule sees through arrow functions', () => {
