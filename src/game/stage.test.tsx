@@ -19,6 +19,7 @@ import { advanceTurn, judge, rollDice } from '../engine/game';
 import { boardWith, dice, eventTile, makeGame, mission, questTile } from '../engine/testkit';
 import type { GameState } from '../engine/state';
 import { fakeCanvas, settle, waitForCanvas } from '../test/fakeGameCanvas';
+import { INPUT_LOCK_MS, resetSharedInputLock, SKIP_LOCK_MS } from './useInputLock';
 
 vi.mock('./scene/GameCanvas', () => import('../test/fakeGameCanvas'));
 
@@ -384,5 +385,125 @@ describe('GameStage — 지금 끝내기 during beats (Pitfall 11)', () => {
     expect(engine().phase).toBe('gameOver');
     expect(P().busy).toBe(false);
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+  });
+});
+
+describe('GameStage — tap to skip (FX-03, D-07, Pitfall 3 / 4)', () => {
+  const nextBtn = () => screen.queryByRole('button', { name: '다음 ➡️' });
+  const board = () => within(screen.getByRole('list', { name: '별 순위' }));
+
+  beforeEach(() => {
+    resetSharedInputLock();
+  });
+  afterEach(() => {
+    resetSharedInputLock();
+  });
+
+  it('the ✅ tap does not skip; a later tap ends the stars beat with the final stars and locks 다음 for 250 ms', async () => {
+    await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    expect(P().current?.kind).toBe('stars'); // the starting tap never skips (Pitfall 3)
+    // Past the ✅ tap's own 400 ms window, so only the shared skip lock can block 다음.
+    act(() => {
+      vi.advanceTimersByTime(INPUT_LOCK_MS + 100);
+    });
+    expect(P().current?.kind).toBe('stars');
+    fireEvent.click(document.body); // tap anywhere
+    expect(P().busy).toBe(false);
+    expect(board().getByText('⭐3')).toBeInTheDocument();
+    expect(document.querySelector('.beat-banner')).toBeNull();
+
+    const seq = engine().log.seq;
+    fireEvent.click(nextBtn()!);
+    expect(engine().log.seq).toBe(seq); // the skip lock (Pitfall 4)
+    act(() => {
+      vi.advanceTimersByTime(SKIP_LOCK_MS - 1);
+    });
+    fireEvent.click(nextBtn()!);
+    expect(engine().log.seq).toBe(seq);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    fireEvent.click(nextBtn()!);
+    expect(engine().log.seq).toBe(seq + 1);
+  });
+
+  it('Escape during the stars beat skips it', async () => {
+    await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    expect(P().current?.kind).toBe('stars');
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(P().busy).toBe(false);
+    expect(board().getByText('⭐3')).toBeInTheDocument();
+  });
+
+  it('지금 끝내기 and taps inside its dialog never skip the stars beat', async () => {
+    await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    const id = P().current!.id;
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    const dialog = screen.getByRole('dialog');
+    expect(P().current?.id).toBe(id);
+    fireEvent.click(dialog);
+    fireEvent.click(screen.getByTestId('modal-overlay'));
+    expect(P().current?.id).toBe(id);
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    fireEvent.keyDown(screen.getByRole('button', { name: '계속하기' }), { key: 'Escape' }); // closes the dialog only
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(P().current?.id).toBe(id);
+    fireEvent.click(screen.getByRole('button', { name: '지금 끝내기' }));
+    fireEvent.click(screen.getByRole('button', { name: '계속하기' }));
+    expect(P().current?.id).toBe(id);
+    expect(engine().phase).toBe('turnResolved');
+  });
+
+  it('a tap during a miss beat does not skip it', async () => {
+    await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '❌ 실패' }));
+    const miss = P().current!;
+    expect(miss.kind).toBe('miss');
+    fireEvent.click(document.body);
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(P().current).toBe(miss);
+  });
+
+  it('a tap during a dice beat does not skip it', async () => {
+    await mountApp(baseGame());
+    vi.useFakeTimers();
+    pinDie(3);
+    fireEvent.click(rollBtn()!);
+    const die = P().current!;
+    expect(die.kind).toBe('dice');
+    fireEvent.click(document.body);
+    expect(P().current).toBe(die);
+  });
+
+  it('a tap during the win beat shows the result screen at once', async () => {
+    await mountApp(atLastTurn(true));
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '🏆 결과 보기' }));
+    expect(P().current?.kind).toBe('win');
+    expect(screen.queryByText('게임 끝!')).toBeNull();
+    fireEvent.click(document.body);
+    expect(P().busy).toBe(false);
+    expect(screen.getByText('게임 끝!')).toBeInTheDocument();
+  });
+
+  it('2.5 s budget end to end: STARS_MS[3] after ✅ the 다음 ➡️ button is visible and works', async () => {
+    await mountApp(atJudgement());
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', { name: '✅ 성공' }));
+    expect(nextBtn()).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(STARS_MS[3]);
+    });
+    expect(STARS_MS[3]).toBeLessThanOrEqual(2500);
+    const seq = engine().log.seq;
+    fireEvent.click(nextBtn()!);
+    expect(engine().log.seq).toBe(seq + 1);
   });
 });
