@@ -1,8 +1,11 @@
 // src/game/layout/charMotion.test.ts — pure pose curves (D-10..D-14, D-16, CHAR-03, UI-SPEC C4).
 import { describe, it, expect } from 'vitest';
 import {
+  CELEBRATE_PERIOD,
   REST,
   actPose,
+  celebratePose,
+  introJumpPose,
   approachAngle,
   bonusPose,
   bouncePose,
@@ -314,5 +317,74 @@ describe('successBeatPose (Phase 8 tiered jump, D-01 / D-03 / D-04)', () => {
     expect(successBeatPose(300, plan)).not.toBe(successBeatPose(300, plan));
     expect(successBeatPose(300, plan)).toEqual(successBeatPose(300, plan));
     expect(plan).toEqual(copy);
+  });
+});
+
+describe('celebratePose (Phase 8 ceremony loop, D-12)', () => {
+  const T = Array.from({ length: 1501 }, (_, i) => (i / 1000) * CELEBRATE_PERIOD);
+  const peakOf = (kind: 'winner' | 'joy') => Math.max(...T.map((t) => celebratePose(kind, t).y));
+  const armsOf = (kind: 'winner' | 'joy', t: number) => {
+    const p = celebratePose(kind, t);
+    return (p.armL + p.armR) / 2;
+  };
+
+  it('loops every 1.5 s and is REST at every multiple of the period', () => {
+    expect(CELEBRATE_PERIOD).toBe(1.5);
+    for (const kind of ['winner', 'joy'] as const) {
+      for (const k of [0, 1, 2, 5]) expectRest(celebratePose(kind, k * CELEBRATE_PERIOD), `${kind} ${k}`);
+      for (const t of [0.1, 0.37, 0.8, 1.3]) {
+        const a = celebratePose(kind, t);
+        const b = celebratePose(kind, t + 3 * CELEBRATE_PERIOD);
+        for (const f of FIELDS) expect(b[f], `${kind} ${t} ${f}`).toBeCloseTo(a[f], 9);
+      }
+    }
+  });
+
+  it('winner = the big cheer: jump 0.35, arms +2.4', () => {
+    expect(peakOf('winner')).toBeCloseTo(0.35, 2);
+    expect(armsOf('winner', 0.5 * CELEBRATE_PERIOD)).toBeCloseTo(2.4, 6);
+    for (const t of T) {
+      const p = celebratePose('winner', t);
+      const ref = cheerPose(t / CELEBRATE_PERIOD);
+      for (const f of FIELDS) expect(p[f]).toBeCloseTo(ref[f], 9);
+    }
+  });
+
+  it('joy = the same shape, smaller: jump 0.15, arms +1.4', () => {
+    expect(peakOf('joy')).toBeCloseTo(0.15, 2);
+    expect(armsOf('joy', 0.5 * CELEBRATE_PERIOD)).toBeCloseTo(1.4, 6);
+    for (const t of T) {
+      const p = celebratePose('joy', t);
+      expect(p.y).toBeLessThanOrEqual(0.15 + 1e-9);
+      expect(p.yaw).toBe(0);
+    }
+  });
+
+  it('negative times wrap into the loop (phase shift before the clock starts)', () => {
+    const a = celebratePose('joy', -0.2);
+    const b = celebratePose('joy', CELEBRATE_PERIOD - 0.2);
+    for (const f of FIELDS) expect(a[f]).toBeCloseTo(b[f], 9);
+  });
+});
+
+describe('introJumpPose (Phase 8 ceremony intro, D-16)', () => {
+  const T = Array.from({ length: 1001 }, (_, i) => i / 1000);
+  it('crouch → 0.45 jump → land within 0.6 s, REST at both ends', () => {
+    expectRest(introJumpPose(0), 'start');
+    expectRest(introJumpPose(-1), 'before');
+    expectRest(introJumpPose(0.6), 'end');
+    expectRest(introJumpPose(5), 'after');
+    expect(Math.max(...T.map((t) => introJumpPose(t).y))).toBeCloseTo(0.45, 2);
+    expect(Math.min(...T.map((t) => introJumpPose(t).squashY))).toBeLessThan(1);
+    for (const t of T) expect(introJumpPose(t).yaw).toBe(0);
+  });
+
+  it('is continuous (no snap at 1 ms steps)', () => {
+    let prev = introJumpPose(0);
+    for (let ms = 1; ms <= 700; ms++) {
+      const p = introJumpPose(ms / 1000);
+      for (const f of FIELDS) expect(Math.abs(p[f] - prev[f]), `${ms} ${f}`).toBeLessThan(0.05);
+      prev = p;
+    }
   });
 });
