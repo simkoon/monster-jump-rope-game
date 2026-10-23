@@ -8,7 +8,8 @@
 // real floating stars) and rays go from the real fitCamera camera position to the camera-facing
 // vertices of each character's chibi-face mesh. A sample is hidden when anything outside that
 // character's own pawn group is hit first.
-// Matrix: 6 views × 16/20/24 tiles × the start tile × n 1-8 × 2 casts — `roster` (the first n
+// Matrix: 6 views × 16/20/24 tiles × the start tile and 7 regular tiles (the middle of each side and
+// the 3 non-start corners) × n 1-8 × 2 casts — `roster` (the first n
 // animals; bear is the current turn, rabbit next) and `rabbits` (n rabbits: the longest ears in every
 // slot). Everyone holds 1 star, so everyone is a crowned leader (crowns only add occluders, so this
 // covers the no-crown states too), and every quest tile is hard (the widest 3-star row).
@@ -50,6 +51,13 @@ const MIN_SAMPLES = 12; // a face measured with fewer camera-facing vertices fai
 const LIMIT = 0.3;
 const CASTS = ['roster', 'rabbits'] as const;
 type Cast = (typeof CASTS)[number];
+
+// The middle of the bottom, left, top and right sides, then the three non-start corners (ringLayout:
+// index 0 is the bottom-right corner, the ring runs along the bottom edge first).
+const REGULAR_TILES = (L: number) => {
+  const m = Math.floor(L / 8);
+  return [m, L / 4 + m, L / 2 + m, (3 * L) / 4 + m, L / 4, L / 2, (3 * L) / 4];
+};
 
 const hardBoard = (L: number) =>
   boardWith(L, Object.fromEntries(Array.from({ length: L - 1 }, (_, i) => [i + 1, questTile('hard')])));
@@ -247,5 +255,27 @@ describe('face occlusion — start tile (D-17a(4))', () => {
 
   it('control: a 0.65 character behind the arch reads as hidden', async () => {
     expect(await controlCover(16, 0, 0.35, -0.45)).toBeGreaterThanOrEqual(0.9);
+  });
+});
+
+describe('face occlusion — regular tiles (D-17a(4))', () => {
+  it('picks the side middles and the non-start corners', () => {
+    expect(REGULAR_TILES(16)).toEqual([2, 6, 10, 14, 4, 8, 12]);
+    expect(REGULAR_TILES(20)).toEqual([2, 7, 12, 17, 5, 10, 15]);
+    expect(REGULAR_TILES(24)).toEqual([3, 9, 15, 21, 6, 12, 18]);
+  });
+
+  for (const L of SIZES) {
+    it(`${L} tiles: no face over 30 % on 7 tiles with 1-8 characters, 2 casts, 6 views`, async () => {
+      const records: FaceRecord[] = [];
+      for (const tile of REGULAR_TILES(L)) {
+        for (const cast of CASTS) for (const n of COUNTS) records.push(...(await measureTile(L, tile, cast, n)));
+      }
+      expectClean(records, 3024);
+    }, 60_000);
+  }
+
+  it('control: a 0.65 character straight behind the full-size current reads as hidden', async () => {
+    expect(await controlCover(16, 2, 0, -0.15)).toBeGreaterThanOrEqual(0.9);
   });
 });

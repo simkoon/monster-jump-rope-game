@@ -35,20 +35,24 @@ export interface SlotTable {
 
 const CENTER_TABLE: SlotTable = { s: 1, slots: [[0, 0]] };
 
-// Regular tiles, index n − 2 (UI-SPEC C5; max projected cover 15.6 %, limit 30 %). Camera = +z.
+// Regular tiles, index n − 2 (UI-SPEC C5). Camera = +z. A theater layout: the current turn stands
+// front-center, two flank slots, then a back row. A full-size crowned current hides the faces
+// straight behind it across the whole depth of a far tile, so the others stand ≥ 0.5 to its side or
+// in the back row, and the back row sees over the flank slots (D-17a(1), proven by
+// faceOcclusion.test.tsx).
 const REGULAR: readonly SlotTable[] = [
-  { s: 0.9, slots: [[0, 0.3], [0.36, -0.3]] },
-  { s: 0.85, slots: [[0, 0.4], [-0.44, -0.18], [0.44, -0.18]] },
-  { s: 0.85, slots: [[0, 0.44], [-0.48, -0.08], [0.48, -0.08], [0, -0.42]] },
-  { s: 0.7, slots: [[0, 0.48], [-0.5, 0.06], [0.5, 0.06], [-0.22, -0.44], [0.22, -0.44]] },
-  { s: 0.66, slots: [[0, 0.48], [-0.52, 0.22], [0.52, 0.22], [-0.38, -0.46], [0.38, -0.46], [0, -0.36]] },
+  { s: 0.9, slots: [[0, 0.45], [0.56, -0.3]] },
+  { s: 0.85, slots: [[0, 0.55], [-0.56, -0.3], [0.56, -0.3]] },
+  { s: 0.85, slots: [[0, 0.62], [-0.6, -0.05], [0.6, -0.05], [0, -0.62]] },
+  { s: 0.7, slots: [[0, 0.62], [-0.66, -0.02], [0.66, -0.02], [-0.3, -0.64], [0.3, -0.64]] },
+  { s: 0.66, slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.45, -0.64], [0, -0.64], [0.45, -0.64]] },
   {
     s: 0.65,
-    slots: [[0, 0.5], [-0.52, 0.26], [0.52, 0.26], [-0.5, -0.2], [0.5, -0.2], [-0.18, -0.48], [0.18, -0.48]],
+    slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.6, -0.65], [-0.2, -0.65], [0.2, -0.65], [0.6, -0.65]],
   },
   {
     s: 0.65,
-    slots: [[0, 0.52], [-0.52, 0.42], [0.52, 0.42], [-0.52, -0.06], [0.52, -0.06], [-0.36, -0.52], [0.36, -0.52], [0, -0.4]],
+    slots: [[0, 0.62], [-0.68, 0], [0.68, 0], [-0.62, -0.65], [-0.31, -0.65], [0, -0.65], [0.31, -0.65], [0.62, -0.65]],
   },
 ];
 

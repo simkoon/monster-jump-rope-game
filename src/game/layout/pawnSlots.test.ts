@@ -21,7 +21,7 @@ describe('pawnSlots (D-17, BOARD-05)', () => {
     const s = pawnSlots(EIGHT, on(EIGHT, 5), 'p3');
     const { s: small, slots } = slotTable(8, false);
     expect(small).toBe(0.65);
-    expect(s.p3).toEqual({ dx: 0, dz: 0.52, scale: 1 });
+    expect(s.p3).toEqual({ dx: 0, dz: 0.62, scale: 1 });
     ['p1', 'p2', 'p4', 'p5', 'p6', 'p7', 'p8'].forEach((id, j) => {
       const [dx, dz] = slots[j + 1];
       expect(s[id]).toEqual({ dx, dz, scale: 0.65 });
