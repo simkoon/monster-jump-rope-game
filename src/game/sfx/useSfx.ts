@@ -17,7 +17,7 @@
 // D-21: the AudioContext is created / resumed only inside a user gesture: document capture
 //   pointerup / touchend / click / keydown call sfx.unlock() (when soundOn). One physical tap fires
 //   several of these events; UNLOCK_THROTTLE_MS folds them into one unlock so sfx's iOS recovery
-//   ladder (suspend + resume, then recreate) counts gestures, not events. A touch pointerup is
+//   ladder (resume inside the gesture, then recreate) counts gestures, not events. A touch pointerup is
 //   left to its touchend (the event iOS has always honoured for audio). The 게임 시작 tap is the
 //   first gesture. Hidden page → every voice stops at once; visible again → resume is retried.
 // D-08: under reduced motion the dice beat is 0 ms and never becomes current, so the dice sound

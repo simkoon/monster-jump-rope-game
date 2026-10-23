@@ -309,16 +309,17 @@ describe('sfx resume / iOS recovery (D-21)', () => {
     await flush();
   });
 
-  it('a stuck / interrupted context is suspended + resumed on the next gesture, then recreated (≤ MAX_RECREATE)', async () => {
+  it('a stuck / interrupted context is resumed on the next gesture, then recreated (≤ MAX_RECREATE)', async () => {
     const { audio, ctx } = setup();
     expect(MAX_RECREATE).toBe(3);
     ctx.resumeWorks = false;
     ctx.state = 'interrupted';
+    const before = ctx.resumeCalls;
 
-    unlock(); // gesture 1: suspend → resume
+    unlock(); // gesture 1: resume() inside the gesture
     await flush();
-    expect(ctx.suspendCalls).toBe(1);
-    expect(ctx.resumeCalls).toBeGreaterThanOrEqual(1);
+    expect(ctx.suspendCalls).toBe(0);
+    expect(ctx.resumeCalls).toBe(before + 1);
     expect(audio.contexts).toHaveLength(1);
 
     unlock(); // gesture 2: still not running → close + recreate
@@ -328,6 +329,24 @@ describe('sfx resume / iOS recovery (D-21)', () => {
     expect(audio.latest()!.state).toBe('running');
     expect(audio.liveNodes()).toBe(MASTER_CHAIN_NODES); // the old master chain is disconnected
     expect(play('hop')).toBe(1);
+  });
+
+  it('the gesture calls resume() synchronously, not from a promise callback (WR-01, WebKit)', () => {
+    const { ctx } = setup();
+    ctx.state = 'interrupted';
+    const before = ctx.resumeCalls;
+    unlock();
+    // No await: a resume() chained after suspend() would only run in a later microtask.
+    expect(ctx.resumeCalls).toBe(before + 1);
+    expect(ctx.suspendCalls).toBe(0);
+    expect(ctx.state).toBe('running');
+  });
+
+  it('a later gesture never suspends a fresh context whose own resume() is still pending (WR-01)', () => {
+    const { ctx } = setup();
+    ctx.state = 'suspended'; // e.g. create()'s resume() has not settled yet
+    unlock();
+    expect(ctx.suspendCalls).toBe(0);
   });
 
   it('recreates at most MAX_RECREATE times, never throws', async () => {

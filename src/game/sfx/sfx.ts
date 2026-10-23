@@ -8,8 +8,10 @@
 // D-21: the single AudioContext is created lazily by unlock(), which callers only ever invoke from
 //   a user gesture (autoplay policy). Graph: voices → master gain (MASTER_GAIN) → limiter
 //   (DynamicsCompressor, LIMITER) → destination. resume() retries a suspended context (tab back in
-//   view). iOS can leave the context 'interrupted' or stuck: on a later gesture it is suspended +
-//   resumed, and if still not running it is closed and recreated, at most MAX_RECREATE times.
+//   view). iOS can leave the context 'interrupted' or stuck: a later gesture calls resume()
+//   synchronously inside that gesture (WebKit ignores a resume() from a promise callback, so no
+//   suspend-then-resume chain), and if the next gesture still finds it not running it is closed
+//   and recreated, at most MAX_RECREATE times.
 //   Every resume / suspend / close rejection is swallowed — the game never depends on sound.
 //   iOS note: with the default audio session the ring/silent switch mutes Web Audio (the 설정 탭
 //   hint says so); no 'playback' session is requested, so a teacher's music is not interrupted.
@@ -167,8 +169,10 @@ export function unlock(): void {
     recreate();
     return;
   }
+  // Synchronously, inside the gesture: WebKit only honors a resume() made in the gesture handler.
+  // No suspend() first — it would also cancel a resume() a fresh create() still has pending.
   try {
-    swallow(c.suspend().then(() => c.resume()));
+    swallow(c.resume());
   } catch {
     /* ignore */
   }

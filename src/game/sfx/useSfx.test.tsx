@@ -102,6 +102,19 @@ describe('D-21: the AudioContext only starts inside a user gesture', () => {
     expect(unlock).toHaveBeenCalledTimes(1);
   });
 
+  it('a tap on an interrupted (iOS) context calls resume() synchronously inside that gesture (WR-01)', () => {
+    render(<Host />);
+    tap();
+    const ctx = audio.latest()!;
+    ctx.state = 'interrupted';
+    const before = ctx.resumeCalls;
+    fireEvent.touchEnd(document);
+    // Still inside the dispatch: no microtask has run, so a suspend().then(resume) would show 0.
+    expect(ctx.resumeCalls).toBe(before + 1);
+    expect(ctx.suspendCalls).toBe(0);
+    expect(ctx.state).toBe('running');
+  });
+
   it('with soundOn off a gesture creates no context', () => {
     useSettings.setState({ soundOn: false });
     render(<Host />);
