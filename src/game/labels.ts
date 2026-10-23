@@ -79,7 +79,8 @@ export function estimateBasis(mode: 'solo' | 'team', n: number, rounds: number):
   return `${n}${mode === 'team' ? '팀' : '명'} × ${rounds}라운드 기준`;
 }
 
-// D-26: one-line tile glyph for the temporary ring strip.
+// D-26: one-line tile glyph (first used by the Phase 5 ring strip, now removed). Kept, with
+// tileAriaLabel, for a future DOM tile description (deferred tile-number idea).
 export function tileGlyph(tile: Tile): string {
   switch (tile.kind) {
     case 'start':

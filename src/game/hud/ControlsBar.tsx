@@ -8,7 +8,7 @@
 // the result line and the buttons appear together only after the beats end.
 // `↩️ 판정 되돌리기` is shown only while an undo exists — hidden, never disabled (D-16).
 // The next phase's primary button lands in the same place (React reuses the node), so this alone
-// does NOT stop a double tap from skipping a phase: the screen component wraps every action in the
+// does NOT stop a double tap from skipping a phase: GameStage wraps every action in the
 // useInputLock guard for that (T-05-19, CR-01, T-06-09).
 import type { JudgementResult, Phase } from '../../engine/state';
 
