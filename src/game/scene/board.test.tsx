@@ -2,12 +2,16 @@
 // src/game/scene/board.test.tsx — structure of the static 3D ring board (BOARD-01..03, D-07, D-11..D-15, D-28).
 // Runs in node with @react-three/test-renderer (no WebGL, RESEARCH Pitfall 1/3). Nodes are found by
 // three object name; InstancedMesh `count` and `getColorAt` are read straight from the instance.
+// 07-05: the star lift over occupied quest tiles is driven with advanceFrames (fixed delta), with
+// reduced motion mocked through a mutable flag.
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { Color, InstancedMesh, Matrix4, PerspectiveCamera, Quaternion, Vector3, type Object3D } from 'three';
 import { useThree } from '@react-three/fiber';
 import Board from './Board';
 import CameraRig from './CameraRig';
+import { SceneContents } from './SceneContents';
+import { usePresentation } from '../usePresentation';
 import { boardExtents, gapPoint, ringLayout, tileTop, type RingLayout } from '../layout/ringLayout';
 import { fitCamera } from '../layout/fitCamera';
 import { GEO } from './geometries';
@@ -17,6 +21,9 @@ import { starsFor } from '../../engine/scoring';
 import type { Tile } from '../../engine/board';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+const rm = vi.hoisted(() => ({ reduced: false }));
+vi.mock('../reducedMotion', () => ({ prefersReducedMotion: () => rm.reduced }));
 
 type Renderer = Awaited<ReturnType<typeof ReactThreeTestRenderer.create>>;
 
@@ -68,6 +75,8 @@ afterEach(async () => {
   for (const r of open) await r.unmount();
   open = [];
   vi.restoreAllMocks();
+  rm.reduced = false;
+  usePresentation.getState().reset({ positions: {}, stars: {} }, null);
 });
 
 describe('Board — tiles, stars, start (Task 1)', () => {
@@ -293,5 +302,142 @@ describe('CameraRig (Task 2)', () => {
     expect(cam.position.z).toBeCloseTo(fit.position[2], 5);
     expect(cam.position.distanceTo(before)).toBeGreaterThan(1e-3);
     expectBoardInView(cam, l, 844 / 330);
+  });
+});
+
+// ── Star lift over occupied quest tiles (07-05, UI-SPEC C6, RESEARCH Pitfall 4) ──
+
+const STAR_Y = tileTop('quest') + 0.55;
+const STAR_Y_UP = tileTop('quest') + 1.2;
+
+// 24 tiles: hard quests at 3 and 6 (3 stars each), events at 2 / 5 / 9, easy quests elsewhere.
+const liftBoard = (): Tile[] =>
+  boardWith(24, {
+    2: eventTile('forward', 3),
+    3: questTile('hard'),
+    5: eventTile('backward', 2),
+    6: questTile('hard'),
+    9: eventTile('extra', 0),
+  });
+
+// Instance indices of a quest tile's stars (stars are laid out in tile order).
+function starsOf(tiles: readonly Tile[], tile: number): number[] {
+  let first = 0;
+  for (let i = 0; i < tile; i++) {
+    const t = tiles[i];
+    if (t.kind === 'quest') first += starsFor(t.diff);
+  }
+  const t = tiles[tile];
+  if (t.kind !== 'quest') throw new Error(`tile ${tile} is not a quest`);
+  return Array.from({ length: starsFor(t.diff) }, (_, k) => first + k);
+}
+
+const starPoses = (mesh: InstancedMesh, ks: readonly number[]) => ks.map((k) => pose(mesh, k));
+const spacing = (ps: readonly { pos: Vector3 }[]) => ps.slice(1).map((p, i) => p.pos.distanceTo(ps[i].pos));
+
+function expectStars(mesh: InstancedMesh, ks: readonly number[], y: number, scale: number, gap: number) {
+  const ps = starPoses(mesh, ks);
+  for (const p of ps) {
+    expect(p.pos.y).toBeCloseTo(y, 3);
+    expect(p.scale.x).toBeCloseTo(scale, 3);
+    expect(p.scale.y).toBeCloseTo(scale, 3);
+  }
+  for (const g of spacing(ps)) expect(g).toBeCloseTo(gap, 3);
+}
+
+async function steps(r: Renderer, n: number, dt = 0.05): Promise<void> {
+  await ReactThreeTestRenderer.act(async () => {
+    await r.advanceFrames(n, dt);
+  });
+}
+
+async function renderLift(tiles: readonly Tile[], occupied: ReadonlySet<number>): Promise<Renderer> {
+  const r = await ReactThreeTestRenderer.create(<Board tiles={tiles} occupied={occupied} />);
+  open.push(r);
+  return r;
+}
+
+describe('Board — star lift (07-05)', () => {
+  it('raises the stars of an occupied quest tile above the heads, smaller and closer; others stay', async () => {
+    const tiles = liftBoard();
+    const r = await renderLift(tiles, new Set([3]));
+    await steps(r, 30);
+    const stars = inst(r, 'tile-stars');
+    const up = starsOf(tiles, 3);
+    expect(up).toHaveLength(starsFor('hard'));
+    expectStars(stars, up, STAR_Y_UP, 0.75, 0.225);
+    expectStars(stars, starsOf(tiles, 6), STAR_Y, 1, 0.3);
+    const rest = Array.from({ length: stars.count }, (_, k) => k).filter((k) => !up.includes(k));
+    for (const p of starPoses(stars, rest)) {
+      expect(p.pos.y).toBeCloseTo(STAR_Y, 5);
+      expect(p.scale.x).toBeCloseTo(1, 5);
+    }
+  });
+
+  it('eases the stars back down when the tile empties (not a snap)', async () => {
+    const tiles = liftBoard();
+    const r = await renderLift(tiles, new Set([3]));
+    await steps(r, 30);
+    await ReactThreeTestRenderer.act(async () => {
+      await r.update(<Board tiles={tiles} occupied={new Set()} />);
+    });
+    await steps(r, 2); // 0.1 s
+    const stars = inst(r, 'tile-stars');
+    for (const p of starPoses(stars, starsOf(tiles, 3))) {
+      expect(p.pos.y).toBeGreaterThan(STAR_Y + 1e-3);
+      expect(p.pos.y).toBeLessThan(STAR_Y_UP - 1e-3);
+    }
+    await steps(r, 30);
+    expectStars(stars, starsOf(tiles, 3), STAR_Y, 1, 0.3);
+  });
+
+  it('ignores the start tile and event tiles in the occupied set', async () => {
+    const tiles = liftBoard();
+    const r = await renderLift(tiles, new Set([0, 2, 5, 9]));
+    await steps(r, 30);
+    const stars = inst(r, 'tile-stars');
+    for (const p of starPoses(stars, Array.from({ length: stars.count }, (_, k) => k))) {
+      expect(p.pos.y).toBeCloseTo(STAR_Y, 5);
+      expect(p.scale.x).toBeCloseTo(1, 5);
+    }
+    expectStars(stars, starsOf(tiles, 3), STAR_Y, 1, 0.3);
+  });
+
+  it('snaps the lift on the first frame under reduced motion (D-16)', async () => {
+    rm.reduced = true;
+    const tiles = liftBoard();
+    const r = await renderLift(tiles, new Set([3]));
+    await steps(r, 1);
+    expectStars(inst(r, 'tile-stars'), starsOf(tiles, 3), STAR_Y_UP, 0.75, 0.225);
+  });
+
+  it('keeps the star count and the draw budget with occupied tiles', async () => {
+    const tiles = mixedOf(24);
+    const free = await renderLift(tiles, new Set());
+    const busy = await renderLift(tiles, new Set([1, 3, 4]));
+    await steps(busy, 30);
+    expect(inst(busy, 'tile-stars').count).toBe(inst(free, 'tile-stars').count);
+    expect(inst(busy, 'tile-stars').count).toBe(totalStars(tiles));
+    expect(inst(busy, 'tile-stars').instanceMatrix.count).toBe(72);
+    const meshes = busy.scene.findAll((n) => (n.instance as { isMesh?: boolean } | undefined)?.isMesh === true);
+    const boardMeshes = meshes.filter((n) => {
+      let o = n.instance as Object3D | null;
+      while (o && o.name !== 'board') o = o.parent;
+      return o !== null;
+    });
+    expect(boardMeshes.length).toBeLessThanOrEqual(30);
+  });
+
+  it('SceneContents lifts the stars of the tile a participant is displayed on', async () => {
+    const tiles = liftBoard();
+    usePresentation.getState().reset({ positions: { a: 3 }, stars: { a: 0 } }, null);
+    const r = await ReactThreeTestRenderer.create(
+      <SceneContents tiles={tiles} participants={[{ id: 'a', animal: 'bear' }]} currentId="a" restFace={null} />,
+    );
+    open.push(r);
+    await steps(r, 30);
+    const stars = inst(r, 'tile-stars');
+    expectStars(stars, starsOf(tiles, 3), STAR_Y_UP, 0.75, 0.225);
+    expectStars(stars, starsOf(tiles, 6), STAR_Y, 1, 0.3);
   });
 });

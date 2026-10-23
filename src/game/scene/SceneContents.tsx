@@ -5,7 +5,8 @@
 // Phase 7 (07-04): every participant is a chibi Character (seed = participant index). During the
 // win beat the crowns go to the winners (co-winners too, even with 0 stars) and the turn ring is
 // hidden — nobody is "current" while the winners cheer (UI-SPEC C6). Slots keep using currentId,
-// so nobody slides during the win beat.
+// so nobody slides during the win beat. 07-05: Board gets the displayed tiles as `occupied`, so
+// the floating stars of a tile with characters on it rise above their heads.
 // Lights are code-only (D-03): hemisphere + key + rim from palette LIGHTS — no environment map,
 // no shadow maps, no post-processing (D-04). The ground shadow lives in GameCanvas.
 import { useMemo } from 'react';
@@ -40,6 +41,8 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
   const order = useMemo(() => participants.map((p) => p.id), [participants]);
   const slots = useMemo(() => pawnSlots(order, positions, currentId), [order, positions, currentId]);
   const crowned = useMemo(() => new Set(winBeat ? winBeat.winners : leaders(stars)), [winBeat, stars]);
+  // Tiles a character stands on: their floating stars rise above the heads (UI-SPEC C6).
+  const occupied = useMemo(() => new Set(Object.values(positions)), [positions]);
 
   return (
     <>
@@ -47,7 +50,7 @@ export function SceneContents({ tiles, participants, currentId, restFace }: Scen
       <directionalLight color={LIGHTS.key.color} intensity={LIGHTS.key.intensity} position={[...LIGHTS.key.position]} />
       <directionalLight color={LIGHTS.rim.color} intensity={LIGHTS.rim.intensity} position={[...LIGHTS.rim.position]} />
       <CameraRig layout={layout} />
-      <Board tiles={tiles} />
+      <Board tiles={tiles} occupied={occupied} />
       {participants.map((p, index) => (
         <Character
           key={p.id}
