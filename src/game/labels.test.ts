@@ -314,10 +314,35 @@ describe('bannerCopy (D-23, D-24, UI-SPEC S6b)', () => {
     });
   });
 
-  it('non-banner beats → null', () => {
+  it('non-banner beats → null (the miss beat is timed but has no copy, D-13)', () => {
     expect(bannerCopy({ kind: 'dice', pid: 'p1', face: 3, ms: 1000 })).toBeNull();
     expect(bannerCopy({ kind: 'preview', pid: 'p1', path: [1], ms: 500 })).toBeNull();
     expect(bannerCopy({ kind: 'hop', pid: 'p1', path: [1], by: 'dice', ms: 250 })).toBeNull();
+    expect(bannerCopy({ kind: 'miss', pid: 'p1', ms: 700 })).toBeNull();
+  });
+
+  it('win: one winner → 🏆 우승! with the animal emoji only (D-14, UI-SPEC C7d)', () => {
+    expect(bannerCopy({ kind: 'win', winners: ['p1'], animals: ['bear'], ms: 1500 })).toEqual({
+      top: '🏆 우승!',
+      big: '🐻',
+      sub: null,
+      tone: 'final',
+      label: '',
+      variant: 'win',
+      bigLabel: '곰',
+    });
+  });
+
+  it('win: co-winners → 🏆 공동 우승! with the emojis in participant order', () => {
+    expect(
+      bannerCopy({ kind: 'win', winners: ['p1', 'p2'], animals: ['bear', 'rabbit'], ms: 1500 }),
+    ).toMatchObject({ top: '🏆 공동 우승!', big: '🐻 🐰', bigLabel: '곰, 토끼', variant: 'win' });
+  });
+
+  it('banner beats carry no win variant', () => {
+    const copy = bannerCopy({ kind: 'stars', pid: 'p1', stars: 1, ms: 900 });
+    expect(copy?.variant).toBeUndefined();
+    expect(copy?.bigLabel).toBeUndefined();
   });
 });
 
@@ -329,6 +354,7 @@ describe('scoreAria / boardAria / recovery copy (HUD-01, STAB-02)', () => {
 
   it('board aria', () => {
     expect(boardAria(20, '하늘')).toBe('20칸 순환 보드, 지금 하늘 차례');
+    expect(boardAria(20, '하늘', true)).toBe('20칸 순환 보드, 게임 끝'); // UI-SPEC C7f
   });
 
   it('recovery copy', () => {

@@ -191,7 +191,9 @@ export function chipItems(move: MoveResult | null, pending: readonly BeatKind[])
   return out;
 }
 
-// D-23 / D-24 / UI-SPEC S6(b): banner copy per banner beat; null for dice / preview / hop.
+// D-23 / D-24 / UI-SPEC S6(b): banner copy per banner beat; null for dice / preview / hop and
+// for the copy-less miss beat (Phase 7 D-13). The win beat (D-14, UI-SPEC C7d) shows only animal
+// emojis and fixed animal names — never a participant name (T-07-02).
 export type BannerTone = 'sun' | 'grass' | 'coral' | 'grape' | 'final';
 
 export interface BannerCopy {
@@ -200,6 +202,8 @@ export interface BannerCopy {
   sub: string | null; // Body line
   tone: BannerTone;
   label: Event['label']; // 보너스 / 함정 chip, '' for none
+  variant?: 'win'; // extra banner class (win banner only)
+  bigLabel?: string; // accessible name of an emoji-only big line (win banner only)
 }
 
 export function bannerCopy(beat: BeatSpec): BannerCopy | null {
@@ -222,6 +226,16 @@ export function bannerCopy(beat: BeatSpec): BannerCopy | null {
       return { top: '🎉 성공!', big: `⭐+${beat.stars}`, sub: null, tone: 'grass', label: '' };
     case 'finalRound':
       return { top: null, big: '🔔 마지막 라운드!', sub: '이번 라운드가 마지막이에요', tone: 'final', label: '' };
+    case 'win':
+      return {
+        top: beat.winners.length > 1 ? '🏆 공동 우승!' : '🏆 우승!',
+        big: beat.animals.map((a) => ANIMAL_EMOJI[a]).join(' '),
+        sub: null,
+        tone: 'final',
+        label: '',
+        variant: 'win',
+        bigLabel: beat.animals.map((a) => ANIMAL_NAME[a]).join(', '),
+      };
     default:
       return null;
   }
@@ -232,8 +246,10 @@ export function scoreAria(rank: number, animal: AnimalId, name: string, stars: n
   return `${crowned ? '1등 왕관, ' : ''}${rank}등 ${ANIMAL_NAME[animal]} ${name} 별 ${stars}개`;
 }
 
-// Canvas cell accessible name (role="img").
-export function boardAria(length: number, name: string): string {
+// Canvas cell accessible name (role="img"). While the engine is gameOver (the win beat) the
+// finished game has no "current turn" (UI-SPEC C7f).
+export function boardAria(length: number, name: string, over = false): string {
+  if (over) return `${length}칸 순환 보드, 게임 끝`;
   return `${length}칸 순환 보드, 지금 ${name} 차례`;
 }
 

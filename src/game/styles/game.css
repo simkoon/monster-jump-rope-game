@@ -1016,3 +1016,22 @@
 @media (prefers-reduced-motion: reduce) {
   .game-stage.stage .game-quest-card { animation: none; }
 }
+
+/* ============================================================
+   Phase 7 — win banner (07-01)
+   The gold .beat-banner--final look plus a narrower box that stays inside
+   the board yard so the cheering winners on the ring stay visible
+   (UI-SPEC C7d, §Spacing: xs 4 between emojis, base 16 / xl 24 padding).
+   The emoji row wraps to at most two rows for eight co-winners. Tokens
+   only; the reduced-motion rule for .beat-banner already drops the fade.
+   ============================================================ */
+.beat-banner--win {
+  width: min(60%, 320px);
+  padding: 16px 24px;
+}
+.beat-banner-emoji {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}

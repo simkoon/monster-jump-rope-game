@@ -139,6 +139,43 @@ describe('Banner (D-23, D-24, D-25, UI-SPEC S6b)', () => {
     expect(usePresentation.getState().busy).toBe(false);
   });
 
+  it('miss beat (07-01, D-13): no DOM, completed by the Banner at exactly 700 ms', () => {
+    vi.useFakeTimers();
+    const { container } = render(<Banner />);
+    play([{ kind: 'miss', pid: 'p1', ms: 700 }]);
+    expect(container.innerHTML).toBe('');
+    tick(699);
+    expect(usePresentation.getState().current?.kind).toBe('miss');
+    tick(1); // the Banner timer, not the 1200 ms watchdog
+    expect(usePresentation.getState().busy).toBe(false);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('win beat (07-01, D-14, UI-SPEC C7d): gold win banner with the emoji row, done at 1500 ms', () => {
+    vi.useFakeTimers();
+    render(<Banner />);
+    play([{ kind: 'win', winners: ['p1', 'p2'], animals: ['bear', 'rabbit'], ms: 1500 }]);
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveClass('beat-banner', 'beat-banner--final', 'beat-banner--win');
+    expect(banner).toHaveTextContent('🏆 공동 우승!');
+    const row = within(banner).getByRole('img', { name: '곰, 토끼' });
+    expect(row).toHaveClass('beat-banner-big', 'beat-banner-emoji');
+    expect(row).toHaveTextContent('🐻 🐰');
+    tick(1499);
+    expect(usePresentation.getState().current?.kind).toBe('win');
+    tick(1);
+    expect(usePresentation.getState().busy).toBe(false);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('a one-winner win banner says 🏆 우승!', () => {
+    vi.useFakeTimers();
+    render(<Banner />);
+    play([{ kind: 'win', winners: ['p1'], animals: ['fox'], ms: 1500 }]);
+    expect(screen.getByRole('status')).toHaveTextContent('🏆 우승!');
+    expect(screen.getByRole('img', { name: '여우' })).toHaveTextContent('🦊');
+  });
+
   it('a non-banner beat renders nothing and is left to its consumer (store watchdog only)', () => {
     vi.useFakeTimers();
     const { container } = render(<Banner />);

@@ -6,6 +6,7 @@
 // One engine transition (GameLog.events) becomes a list of data beats. Every beat carries its
 // own length in ms, so the presentation queue arms one watchdog per beat and no hand-summed
 // animation budget exists anywhere (the v1 missing-preview bug cannot come back).
+import type { AnimalId } from '../../engine/animals';
 import type { Effect, Event, GameEvent } from '../../engine/state';
 
 export const BEAT_MS = {
@@ -18,6 +19,9 @@ export const BEAT_MS = {
   event: 1000,
   stars: 600,
   finalRound: 1500,
+  // Phase 7 reaction beats (D-13, D-14): the 3D characters show their sad / winner faces here.
+  miss: 700,
+  win: 1500,
 } as const;
 
 // Per-tile hop length: clamp(2000 / len, 100, 250). One move (event steps ≤ 20 by schema) stays
@@ -41,7 +45,11 @@ export type BeatSpec =
       ms: number;
     }
   | { kind: 'stars'; pid: string; stars: number; ms: number }
-  | { kind: 'finalRound'; ms: number };
+  | { kind: 'finalRound'; ms: number }
+  // Phase 7 (07-01): one ❌ judgement of pid, and the natural game end (winners and their
+  // animals in participant order; no pid — every co-winner cheers).
+  | { kind: 'miss'; pid: string; ms: number }
+  | { kind: 'win'; winners: string[]; animals: AnimalId[]; ms: number };
 
 export type BeatKind = BeatSpec['kind'];
 
@@ -106,3 +114,9 @@ export const budgetMs = (beats: readonly BeatSpec[]): number => beats.reduce((s,
 // Beats shown as a DOM banner over the canvas (UI-SPEC S6).
 export const isBannerBeat = (beat: BeatSpec): boolean =>
   beat.kind === 'startBonus' || beat.kind === 'event' || beat.kind === 'stars' || beat.kind === 'finalRound';
+
+// Beats completed by the DOM Banner timer at exactly beat.ms (D-22, UI-SPEC C7a): the banner beats
+// plus the reaction beats miss (no copy) and win. 3D consumers never complete them; the store
+// watchdog (ms + 500) is the fallback when no Banner is mounted.
+export const isTimedBeat = (beat: BeatSpec): boolean =>
+  isBannerBeat(beat) || beat.kind === 'miss' || beat.kind === 'win';

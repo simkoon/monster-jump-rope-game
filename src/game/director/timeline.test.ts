@@ -4,7 +4,16 @@ import { describe, it, expect } from 'vitest';
 import { advanceTurn, endGame, judge, rollDice, undoJudgement } from '../../engine/game';
 import { boardWith, dice, eventTile, makeGame, patchParticipant, questTile } from '../../engine/testkit';
 import type { GameEvent, GameState } from '../../engine/state';
-import { BEAT_MS, budgetMs, buildTimeline, hopMs, isBannerBeat, type BeatSpec, type TimelineCtx } from './timeline';
+import {
+  BEAT_MS,
+  budgetMs,
+  buildTimeline,
+  hopMs,
+  isBannerBeat,
+  isTimedBeat,
+  type BeatSpec,
+  type TimelineCtx,
+} from './timeline';
 
 const ctxOf = (g: GameState, reducedMotion = false): TimelineCtx => ({
   totalRounds: g.config.rules.rounds,
@@ -222,17 +231,36 @@ describe('buildTimeline — finalRound (ROUND-02, D-24)', () => {
   });
 });
 
-describe('isBannerBeat', () => {
-  it('is true exactly for startBonus, event, stars, finalRound', () => {
-    const all: BeatSpec[] = [
-      { kind: 'dice', pid: 'p', face: 1, ms: 1 },
-      { kind: 'preview', pid: 'p', path: [1], ms: 1 },
-      { kind: 'hop', pid: 'p', path: [1], by: 'dice', ms: 1 },
-      { kind: 'startBonus', pid: 'p', stars: 1, ms: 1 },
-      { kind: 'event', pid: 'p', eff: 'extra', steps: 0, suppressed: false, name: '', label: '', ms: 1 },
-      { kind: 'stars', pid: 'p', stars: 1, ms: 1 },
-      { kind: 'finalRound', ms: 1 },
-    ];
+describe('isBannerBeat / isTimedBeat (07-01, D-22)', () => {
+  const all: BeatSpec[] = [
+    { kind: 'dice', pid: 'p', face: 1, ms: 1 },
+    { kind: 'preview', pid: 'p', path: [1], ms: 1 },
+    { kind: 'hop', pid: 'p', path: [1], by: 'dice', ms: 1 },
+    { kind: 'startBonus', pid: 'p', stars: 1, ms: 1 },
+    { kind: 'event', pid: 'p', eff: 'extra', steps: 0, suppressed: false, name: '', label: '', ms: 1 },
+    { kind: 'stars', pid: 'p', stars: 1, ms: 1 },
+    { kind: 'finalRound', ms: 1 },
+    { kind: 'miss', pid: 'p', ms: 1 },
+    { kind: 'win', winners: ['p'], animals: ['bear'], ms: 1 },
+  ];
+
+  it('isBannerBeat is true exactly for startBonus, event, stars, finalRound (not miss / win)', () => {
     expect(all.filter(isBannerBeat).map((b) => b.kind)).toEqual(['startBonus', 'event', 'stars', 'finalRound']);
+  });
+
+  it('isTimedBeat adds the reaction beats miss and win', () => {
+    expect(all.filter(isTimedBeat).map((b) => b.kind)).toEqual([
+      'startBonus',
+      'event',
+      'stars',
+      'finalRound',
+      'miss',
+      'win',
+    ]);
+  });
+
+  it('miss is 700 ms and win is 1500 ms in data (D-13, D-14)', () => {
+    expect(BEAT_MS.miss).toBe(700);
+    expect(BEAT_MS.win).toBe(1500);
   });
 });
