@@ -708,17 +708,20 @@ vi.stubGlobal('AudioContext', FakeAudioContext);
 | A7 | `position: fixed` 요소와 `getBoundingClientRect`가 iOS Safari 핀치 줌 상태에서도 같은 좌표계다 | Pattern 3 | 낮음. 앱은 확대 없이 쓴다. 문제가 있으면 비행 시작점만 어긋남 |
 | A8 | `DynamicsCompressorNode` 설정값이 교실 스피커에서 찌그러짐 없이 들린다 | Pattern 8 | 낮음. UAT에서 음량 확인 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **iOS 무음 스위치가 켜져 있을 때 소리를 낼 것인가?**
    - What we know: 기본(`auto`)은 무음 스위치를 따른다. `navigator.audioSession.type = 'playback'`이면 소리가 나지만 다른 앱 음악을 멈춘다(MDN: "exclusive").
    - What's unclear: 강사가 수업 중 같은 기기로 음악을 트는지 여부.
    - Recommendation: 기본은 `auto`(무음 스위치 존중)로 두고, 설정 탭 소리 스위치 아래에 "아이폰·아이패드 무음 모드에서는 소리가 나지 않아요" 힌트를 둔다. UAT ⑦에서 사용자에게 확인하고, 원하면 `'playback'` 옵션을 추가한다.
+   - RESOLVED: 기본 `auto` 오디오 세션을 유지하고(무음 스위치 존중, `playback` 옵션은 이번 단계에 넣지 않음), 설정 탭 효과음 그룹에 무음 모드 힌트를 둔다(UI-SPEC §F8 힌트 2). 실제 동작과 `playback` 필요 여부는 단계 끝 UAT(D-24 ⑦, UI-SPEC U13)에서 강사가 확인한다.
 2. **🔊/🔇 토글 위치(D-20 "컨트롤 바").**
    - What we know: `ControlsBar`는 비트 중과 gameOver에 `null`을 반환한다(ControlsBar.tsx:44). `.stage-bottom` 첫 줄은 버튼 한 줄 높이를 예약한다(game.css "stage-bottom").
    - Recommendation: `SoundToggle`을 ControlsBar의 hidden 분기 밖(같은 `.stage-bottom` 영역의 고정 작은 버튼)이나 TurnHud 오른쪽에 두어 연출 중·시상식에서도 보이게 한다. UI-SPEC 단계에서 확정한다.
+   - RESOLVED: UI-SPEC §F8에 따라 `SoundToggle`은 캔버스 셀(시상식에서는 시상대 셀) 오른쪽 위에 놓는다(안쪽 여백 8px, `position: absolute; z-index: 4`). 캔버스 셀은 게임과 시상식에서 같은 노드라 토글이 늘 같은 자리에 있고, 비트 중(ControlsBar 숨김)과 시상식에서도 보이고 눌린다.
 3. **시상식 레이아웃(세로 폰)에서 캔버스 셀 비율.**
    - Recommendation: UI-SPEC에서 "위 = 3D 시상대 셀, 아래 = 목록·배지·버튼"으로 정한다. `podiumLayout` 투영 테스트에 그 셀 크기들(VIEWS)을 넣는다.
+   - RESOLVED: UI-SPEC §F7에 따라 세로 화면은 위 = 3D 시상대 캔버스 셀, 아래 = 패널(우승 줄·별 카드·배지·버튼)로 나눈다(`grid-template-rows: auto minmax(200px, 1fr) auto auto`). 가로 화면은 오른쪽 360px(폰 가로 300px) 패널이다. `podiumLayout` 투영 테스트는 시상식 셀 크기 374×230, 374×400, 588×290, 544×390, 664×768을 쓴다.
 
 ## Environment Availability
 
