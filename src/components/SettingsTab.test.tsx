@@ -23,6 +23,12 @@ const FAIL_HINTS = {
   noStar: '바로 다음 차례로 넘어가요. 모은 별은 줄지 않아요.',
 };
 
+const SOUND_HINTS = [
+  '바로 적용돼요. 게임 화면 오른쪽 위 🔊 버튼으로도 켜고 끌 수 있어요.',
+  '아이폰·아이패드는 무음 모드를 켜면 소리가 나지 않아요.',
+  '성공 축하는 화면을 한 번 톡 치면 바로 넘어가요.',
+];
+
 describe('SettingsTab (S1, D-23, CFG-01~04)', () => {
   beforeEach(resetAll);
 
@@ -32,7 +38,7 @@ describe('SettingsTab (S1, D-23, CFG-01~04)', () => {
     expect(screen.getByText('여기서 정한 규칙은 다음 게임부터 적용돼요.')).toBeInTheDocument();
 
     const labels = Array.from(container.querySelectorAll('.settings-group > label')).map((l) => l.textContent);
-    expect(labels).toEqual(['미션에 실패하면', '기본 라운드 수', '출발 칸 보너스', '보드 크기']);
+    expect(labels).toEqual(['미션에 실패하면', '기본 라운드 수', '출발 칸 보너스', '보드 크기', '효과음']);
 
     expect(
       screen.getByText('바꾸면 바로 저장돼요. 설정은 이 기기에만 저장되고, 내보내기 파일에는 들어가지 않아요.'),
@@ -107,6 +113,31 @@ describe('SettingsTab (S1, D-23, CFG-01~04)', () => {
     expect(useSettings.getState().boardSize).toBe(16);
   });
 
+  it('효과음 🔊 켜기/🔇 끄기 + 힌트 3줄, 누르면 바로 저장된다 (AUDIO-02, D-20)', () => {
+    render(<SettingsTab />);
+    const group = screen.getByRole('group', { name: '효과음' });
+    expect(Array.from(group.querySelectorAll('button')).map((b) => b.textContent)).toEqual(['🔊 켜기', '🔇 끄기']);
+    expect(screen.getByRole('button', { name: '🔊 켜기' })).toHaveAttribute('aria-pressed', 'true');
+    for (const h of SOUND_HINTS) expect(screen.getByText(h)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '🔇 끄기' }));
+    expect(useSettings.getState().soundOn).toBe(false);
+    expect(JSON.parse(localStorage.getItem(SETTINGS_KEY)!).state.soundOn).toBe(false);
+    expect(screen.getByRole('button', { name: '🔇 끄기' })).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: '🔊 켜기' }));
+    expect(useSettings.getState().soundOn).toBe(true);
+  });
+
+  it('진행 중 게임이 있어도 효과음은 바로 바뀐다 (다음 판 스냅샷 없음, Pitfall 9)', () => {
+    act(() => useGameStore.setState({ game: {} as never }));
+    render(<SettingsTab />);
+    expect(screen.getByText('지금 하고 있는 게임에는 적용되지 않아요. 다음 판부터 바뀌어요.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '🔇 끄기' }));
+    expect(useSettings.getState().soundOn).toBe(false);
+    expect(screen.getByText(SOUND_HINTS[0])).toBeInTheDocument();
+  });
+
   it('진행 중 게임이 있을 때만 안내 배너를 보여준다', () => {
     const banner = '지금 하고 있는 게임에는 적용되지 않아요. 다음 판부터 바뀌어요.';
     render(<SettingsTab />);
@@ -153,6 +184,7 @@ describe('내보내기 파일에 설정이 들어가지 않는다 (DATA-07)', ()
     s.setDefaultRounds(12);
     s.setStartBonus(2);
     s.setBoardSize(16);
+    s.setSoundOn(false);
 
     render(<Header />);
     fireEvent.click(screen.getByRole('button', { name: '⬇️ 내보내기' }));
@@ -165,7 +197,7 @@ describe('내보내기 파일에 설정이 들어가지 않는다 (DATA-07)', ()
     });
     const parsed = JSON.parse(text);
     expect(Object.keys(parsed).sort()).toEqual(['categories', 'events', 'missions', 'version']);
-    for (const k of ['failRule', 'defaultRounds', 'startBonus', 'boardSize']) {
+    for (const k of ['failRule', 'defaultRounds', 'startBonus', 'boardSize', 'soundOn']) {
       expect(text).not.toContain(k);
     }
   });

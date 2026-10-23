@@ -10,7 +10,12 @@ import {
   REDRAW_LABEL,
   ROUND_DOTS_MAX,
   RULES_HINT,
+  SOUND_OPTIONS,
+  SOUND_SETTING_HINTS,
+  SOUND_SETTING_LABEL,
+  SOUND_TOGGLE_EMOJI,
   bannerCopy,
+  soundToggleLabel,
   boardAria,
   chipItems,
   nextUpText,
@@ -410,5 +415,26 @@ describe('scoreAria / boardAria / recovery copy (HUD-01, STAB-02)', () => {
       body: '게임은 그대로예요. 버튼을 눌러 다시 시도해 주세요.',
     });
     expect(REDRAW_LABEL).toBe('🔄 화면 다시 그리기');
+  });
+});
+
+describe('sound copy (AUDIO-02, D-20, UI-SPEC F8 / Copywriting)', () => {
+  it('settings group label, options and hints', () => {
+    expect(SOUND_SETTING_LABEL).toBe('효과음');
+    expect(SOUND_OPTIONS).toEqual([
+      { value: 'on', label: '🔊 켜기' },
+      { value: 'off', label: '🔇 끄기' },
+    ]);
+    expect(SOUND_SETTING_HINTS).toEqual([
+      '바로 적용돼요. 게임 화면 오른쪽 위 🔊 버튼으로도 켜고 끌 수 있어요.',
+      '아이폰·아이패드는 무음 모드를 켜면 소리가 나지 않아요.',
+      '성공 축하는 화면을 한 번 톡 치면 바로 넘어가요.',
+    ]);
+  });
+
+  it('toggle label says what a tap will do; emoji shows the current state', () => {
+    expect(soundToggleLabel(true)).toBe('효과음 끄기');
+    expect(soundToggleLabel(false)).toBe('효과음 켜기');
+    expect(SOUND_TOGGLE_EMOJI).toEqual({ on: '🔊', off: '🔇' });
   });
 });
