@@ -1,5 +1,5 @@
 // Next-turn selector (HUD-02). Same rule as engine advanceTurn; the engine is never edited.
-import { makeGame, player } from '../engine/testkit';
+import { makeGame, patchParticipant, player } from '../engine/testkit';
 import type { GameState } from '../engine/state';
 import { isFinalRound, nextUp } from './turnOrder';
 
@@ -46,10 +46,11 @@ describe('nextUp — team', () => {
       mode: 'team',
       participants: [
         player('t1', 'A', 'bear', { memberNames: ['a1', 'a2'] }),
-        player('t2', 'B', 'rabbit', { memberNames: ['b1', 'b2', 'b3'], memberTurnIndex: 2 }),
+        player('t2', 'B', 'rabbit', { memberNames: ['b1', 'b2', 'b3'] }),
       ],
     });
-    const s = at(g, { currentIndex: 0, round: 1, phase: 'awaitingRoll' });
+    // createGame starts every team at member 0 — move team B to its third member.
+    const s = at(patchParticipant(g, 1, { memberTurnIndex: 2 }), { currentIndex: 0, round: 1, phase: 'awaitingRoll' });
     expect(nextUp(s)).toEqual({ pid: 't2', member: 'b3', sameAgain: false });
   });
 
