@@ -4,9 +4,10 @@
 //     (main-chunk safety — the HUD may read `leaders`), and
 //   - pure: every function returns new values and never mutates its inputs.
 // Slot rule (Phase 7, UI-SPEC C5, D-17, D-17a, D-17b): one frozen table per tile shape.
-// faceOcclusion.test.tsx is the final proof (D-17a(4)): it mounts the real scene — gate, ears,
-// crowns, stars, and two adjacent crowded tiles — and keeps every face ≤ 30 % hidden from the real
-// camera; slotOcclusion.test.ts stays as the head-disc check (D-19) and pins the bound. On a tile
+// faceOcclusion.test.tsx and faceOrders.*.test.tsx are the final proof (D-17a(4)): they mount the
+// real scene — gate, ears, crowns, stars, and two adjacent crowded tiles — and keep every face ≤ 30 %
+// hidden from the real camera, for every animal order (07-VERIFICATION, SC4); slotOcclusion.test.ts
+// stays as the head-disc check (D-19) and pins the bound. On a tile
 // the current turn (if it stands there) takes k = 0 — front-center on a regular tile, the frontmost
 // slot on the start tile — at full size; everyone else follows participant order at the table size
 // s (0.85–0.90 for 2–4, 0.65–0.72 for 5–8). D-17b: toward either ring neighbor no slot center goes
@@ -120,11 +121,11 @@ const REGULAR: Record<RegularShape, readonly SlotTable[]> = {
   far: [
     { s: 0.9, slots: [[0, 0.145], [0.27, -0.742]] },
     { s: 0.85, slots: [[0, 0.112], [-0.57, -0.455], [0.27, -0.775]] },
-    { s: 0.85, slots: [[0, 0.259], [-0.6, 0.115], [0.36, -0.405], [-0.09, -0.779]] },
+    { s: 0.86, slots: [[0, 0.319], [-0.6, 0.115], [0.36, -0.405], [-0.15, -0.779]] },
     { s: 0.7, slots: [[0, 0.039], [-0.68, 0.035], [0.42, -0.005], [-0.57, -0.778], [0.33, -0.798]] },
     {
       s: 0.66,
-      slots: [[0, 0.279], [-0.6, 0.115], [0.42, -0.125], [-0.6, -0.778], [-0.15, -0.818], [0.26, -0.818]],
+      slots: [[0, 0.399], [-0.6, 0.115], [0.45, -0.125], [-0.6, -0.778], [-0.15, -0.818], [0.38, -0.818]],
     },
     {
       s: 0.65,
@@ -142,11 +143,11 @@ const REGULAR: Record<RegularShape, readonly SlotTable[]> = {
     { s: 0.7, slots: [[0.6, 0.32], [-0.8, 0.28], [-0.5, -0.05], [-0.8, -0.42], [0.45, -0.42]] },
     {
       s: 0.66,
-      slots: [[0.43, 0.45], [-0.35, -0.38], [-0.03, -0.42], [0.79, -0.44], [-0.75, -0.1], [0, 0.18]],
+      slots: [[0.49, 0.45], [-0.35, -0.38], [-0.03, -0.42], [0.67, -0.44], [-0.75, -0.1], [0, 0.18]],
     },
     {
       s: 0.65,
-      slots: [[0.31, 0.4], [-0.35, -0.38], [0.07, -0.42], [0.75, -0.3], [-0.75, -0.02], [-0.08, 0.1], [-0.45, 0.28]],
+      slots: [[0.31, 0.4], [-0.35, -0.38], [0.07, -0.42], [0.75, -0.42], [-0.75, -0.02], [-0.14, 0.1], [-0.45, 0.34]],
     },
     {
       s: 0.65,
@@ -159,20 +160,23 @@ const REGULAR: Record<RegularShape, readonly SlotTable[]> = {
 // of the two gate pillars (StartGate.tsx). Seen from the camera the arch and its star hide a diagonal
 // band from the back-right corner to the front-left pillar, so the slots fill the gate-free zones —
 // the back-left region, the outer (front-right) corner and the front row (D-17a(1), proven by
-// faceOcclusion.test.tsx; the gate itself is unchanged, D-17a(2)).
+// faceOcclusion.test.tsx; the gate itself is unchanged, D-17a(2)). Whatever animal stands in front,
+// a 0.65 face stays clear when that character is ≥ 0.55 nearer the camera or ≥ 0.4 to the side, so
+// 8 stand in three such rows 0.55 apart (3 + 2 + 3), the back two seen through the arch
+// (faceOrders.start.test.tsx, every animal order).
 const START: readonly SlotTable[] = [
   { s: 0.9, slots: [[0.25, 0.25], [-0.45, 0.1]] },
   { s: 0.85, slots: [[0.2, 0.4], [-0.55, -0.55], [-0.05, -0.55]] },
-  { s: 0.85, slots: [[0.5, 0.4], [-0.55, -0.55], [0.05, 0.35], [-0.1, -0.55]] },
+  { s: 0.85, slots: [[0.5, 0.4], [-0.55, -0.55], [0.05, 0.35], [-0.1, -0.34]] },
   { s: 0.72, slots: [[0.5, 0.5], [0.05, 0.45], [-0.55, 0.15], [-0.55, -0.5], [-0.1, -0.55]] },
   { s: 0.68, slots: [[0.5, 0.4], [-0.55, -0.55], [-0.55, 0.25], [-0.25, -0.2], [0.05, -0.55], [0.05, 0.35]] },
   {
     s: 0.65,
-    slots: [[0.49, 0.53], [0.07, 0.42], [0.08, -0.57], [-0.15, -0.25], [-0.41, -0.03], [-0.54, 0.45], [-0.58, -0.55]],
+    slots: [[0.49, 0.53], [0.01, 0.42], [0.02, -0.57], [-0.285, -0.49], [-0.53, -0.03], [-0.54, 0.51], [-0.58, -0.55]],
   },
   {
     s: 0.65,
-    slots: [[0.47, 0.51], [-0.36, 0.01], [-0.58, -0.38], [0.12, -0.59], [-0.35, -0.59], [-0.55, 0.47], [0.11, 0.21], [-0.11, -0.27]],
+    slots: [[0.15, 0.52], [0.57, 0.5], [-0.55, 0.5], [-0.59, -0.03], [-0.29, -0.03], [-0.56, -0.57], [-0.24, -0.58], [0.06, -0.58]],
   },
 ];
 

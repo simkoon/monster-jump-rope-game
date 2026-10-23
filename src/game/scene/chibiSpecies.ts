@@ -164,9 +164,11 @@ const CAT_TAIL = { R: 0.12, r: 0.028, x: 0.2, y: 0.2, z: -0.12, start: 1.25 * Ma
 // Dog: light muzzle with a big nose, dark floppy ears, short tail up and back.
 const DOG_NOSE_R = 0.035;
 const DOG_NOSE_DY = 0.035;
-// 07-05 gallery tuning: r 0.09 → 0.11 and x 0.27 → 0.29 (±0.02 bound) so the floppy ears clear the
-// head sides and read as ears at phone size.
-const DOG_EAR = { r: 0.11, s: [0.6, 1.3, 0.45] as const, x: 0.29, y: 0.06, tilt: 0.35 } as const;
+// 07-05 gallery tuning made them r 0.11 at x 0.29 to clear the head sides. 07-VERIFICATION (SC4): that
+// wide ear hid the face behind a dog 2-4 × as much as any other animal's ears. Now narrower and
+// longer (r 0.1 × (0.5, 1.4), x 0.27, y 0.05, tilt 0.25): they still hang well below the head center
+// as long floppy ears, but stick out less to the side (faceOrders.*.test.tsx).
+const DOG_EAR = { r: 0.1, s: [0.5, 1.4, 0.45] as const, x: 0.27, y: 0.05, tilt: 0.25 } as const;
 const DOG_TAIL = { r: 0.035, len: 0.07, y: 0.27, z: -0.19, back: 0.7 } as const;
 // Panda: white head, ink drop-shaped eye patches, ink round ears, ink tail.
 export const PANDA_PATCH = { r: 0.07, s: [0.85, 1.15, 0.35] as const, x: 0.105, y: -0.03, tilt: 0.5 } as const;
