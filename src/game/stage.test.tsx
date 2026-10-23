@@ -48,6 +48,13 @@ function atLastTurn(p2Success: boolean): GameState {
 }
 const P = () => usePresentation.getState();
 const engine = () => useGameStore.getState().game!;
+// D-14a: the DOM HUD during the win beat — the turn pill and the scoreboard cells.
+const pill = () => document.querySelector<HTMLElement>('.game-turn-pill')!;
+const sbCells = () => within(screen.getByRole('list', { name: '별 순위' })).getAllByRole('listitem');
+const crownedAvatars = () =>
+  sbCells()
+    .filter((li) => li.classList.contains('is-leader') && li.querySelector('.sb-rank')?.textContent === '👑')
+    .map((li) => li.querySelector('.sb-avatar')!.firstChild!.textContent);
 
 // The runtime die reads crypto.getRandomValues: pin it so 🎲 lands on 3 (the hard quest).
 function pinDie(face: number) {
@@ -211,6 +218,11 @@ describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7
     expect(banner).toHaveTextContent('🏆 우승!');
     expect(within(banner).getByRole('img', { name: '토끼' })).toHaveTextContent('🐰');
     expect(screen.getByRole('img', { name: '20칸 순환 보드, 게임 끝' })).toBeInTheDocument();
+    expect(pill().textContent).toBe('🏁 게임 끝');
+    expect(pill().textContent).not.toContain('차례');
+    expect(document.querySelector('.turn-next')).toBeNull();
+    expect(sbCells().some((li) => li.classList.contains('is-current'))).toBe(false);
+    expect(crownedAvatars()).toEqual(['🐰']);
     act(() => {
       vi.advanceTimersByTime(BEAT_MS.win - 1);
     });
@@ -228,6 +240,11 @@ describe('GameStage — win beat at the natural end (07-01, D-14, UI-SPEC C7d/C7
     const banner = document.querySelector<HTMLElement>('.beat-banner')!;
     expect(banner).toHaveTextContent('🏆 공동 우승!');
     expect(within(banner).getByRole('img', { name: '곰, 토끼' })).toHaveTextContent('🐻 🐰');
+    // All-zero co-winners: the old rank-1-with-stars rule showed no crown; now both cells match the
+    // 3D win crowns (D-14a).
+    expect(pill().textContent).toBe('🏁 게임 끝');
+    expect(sbCells().some((li) => li.classList.contains('is-current'))).toBe(false);
+    expect(crownedAvatars().sort()).toEqual(['🐰', '🐻'].sort());
   });
 
   it('지금 끝내기 → 게임 끝내기 during the win banner shows the result screen at once (C7e)', async () => {

@@ -127,6 +127,8 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
 
   const { phase, card, lastMove, lastJudgement, turn, config } = game;
   const cur = currentParticipant(game);
+  // D-14a: during the win beat the DOM HUD shows the finished game, like the 3D scene does.
+  const over = phase === 'gameOver';
   const participants = config.participants;
   const nextKind: NextKind = turn.extraGranted ? 'extra' : willEndOnAdvance(game) ? 'result' : 'next';
   const controlsVisible = !busy && consumedLog === game.log && ready && failure === null;
@@ -168,10 +170,11 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
         totalRounds={config.rules.rounds}
         next={nextUpView(game)}
         onEndNow={endNow}
+        over={over}
       />
 
       <div className="stage-canvas-cell">
-        <div className="stage-canvas" role="img" aria-label={boardAria(game.board.length, cur.name, phase === 'gameOver')}>
+        <div className="stage-canvas" role="img" aria-label={boardAria(game.board.length, cur.name, over)}>
           <CanvasErrorBoundary key={canvasKey} onError={handleError}>
             <Suspense fallback={null}>
               <LazyCanvas {...canvasProps} />
@@ -207,7 +210,11 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           onNext={() => guard(() => useGameStore.getState().next())}
           onUndo={() => guard(handleUndo)}
         />
-        <Scoreboard entries={entries} currentId={cur.id} />
+        <Scoreboard
+          entries={entries}
+          currentId={over ? null : cur.id}
+          crownIds={over ? game.winners : undefined}
+        />
       </div>
     </div>
   );
