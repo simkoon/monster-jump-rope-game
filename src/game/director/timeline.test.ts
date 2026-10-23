@@ -1,5 +1,6 @@
 // src/game/director/timeline.test.ts — engine log → beat mapping (06-02 Task 1, D-19, D-24;
-// Phase 7 07-01: miss / win reaction beats, stars 900 ms, D-12~D-16).
+// Phase 7 07-01: miss / win reaction beats, D-12~D-16; Phase 8 08-02: per-tier stars length
+// D-01 / D-08 and the miss retry flag D-09).
 // Every scenario drives the REAL engine transitions so the event order is the engine's own.
 import { describe, it, expect } from 'vitest';
 import { advanceTurn, endGame, judge, rollDice, undoJudgement } from '../../engine/game';
@@ -7,6 +8,8 @@ import { boardWith, dice, eventTile, makeGame, patchParticipant, questTile } fro
 import type { GameEvent, GameState } from '../../engine/state';
 import {
   BEAT_MS,
+  STARS_MS,
+  STARS_MS_REDUCED,
   budgetMs,
   buildTimeline,
   hopMs,
@@ -153,22 +156,53 @@ describe('buildTimeline — judgement, undo, end', () => {
   const onQuest = (diff: 'easy' | 'normal' | 'hard', failRule: 'retrySame' | 'retryNew' | 'noStar' = 'retrySame') =>
     rollDice(makeGame({ board: boardWith(20, { 3: questTile(diff) }), rules: { failRule } }), dice(3));
 
-  it('judged success (normal = 2 stars) → one stars beat', () => {
+  it('judged success (normal = 2 stars) → one stars beat of STARS_MS[2] = 1900 ms (D-01)', () => {
     const g = onQuest('normal');
     expect(g.phase).toBe('awaitingJudgement');
     const beats = beatsOf(judge(g, true, dice(1)));
-    expect(beats).toEqual([{ kind: 'stars', pid: 'p1', stars: 2, ms: BEAT_MS.stars }]);
-    expect(BEAT_MS.stars).toBe(900); // D-12
+    expect(beats).toEqual([{ kind: 'stars', pid: 'p1', stars: 2, ms: STARS_MS[2] }]);
+    expect(STARS_MS[2]).toBe(1900);
+  });
+
+  it.each([
+    ['easy', 1, 1600],
+    ['normal', 2, 1900],
+    ['hard', 3, 2200],
+  ] as const)('judged success on %s (%i stars) → %i ms; reduced motion → 1200 ms (D-01, D-08)', (diff, stars, ms) => {
+    const next = judge(onQuest(diff), true, dice(1));
+    expect(beatsOf(next)).toEqual([{ kind: 'stars', pid: 'p1', stars, ms }]);
+    expect(beatsOf(next, true)).toEqual([{ kind: 'stars', pid: 'p1', stars, ms: STARS_MS_REDUCED }]);
+  });
+
+  it('the old single stars entry is gone from BEAT_MS (D-01 replaces Phase 7 D-12)', () => {
+    expect(Object.keys(BEAT_MS)).not.toContain('stars');
   });
 
   it('judged fail with a retry (judged + questDrawn attempt 2) → one miss beat (D-13)', () => {
     const next = judge(onQuest('easy', 'retrySame'), false, dice(1));
     expect(next.log.events.map((e) => e.t)).toEqual(['judged', 'questDrawn']);
-    expect(beatsOf(next)).toEqual([{ kind: 'miss', pid: 'p1', ms: 700 }]);
+    expect(beatsOf(next)).toEqual([{ kind: 'miss', pid: 'p1', retry: true, ms: 700 }]);
   });
 
-  it('final judged fail → the same single miss beat', () => {
-    expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)))).toEqual([{ kind: 'miss', pid: 'p1', ms: 700 }]);
+  it('retryNew also flags the miss as a retry (questDrawn attempt 2)', () => {
+    expect(beatsOf(judge(onQuest('easy', 'retryNew'), false, dice(1)))).toEqual([
+      { kind: 'miss', pid: 'p1', retry: true, ms: 700 },
+    ]);
+  });
+
+  it('final judged fail → the same single miss beat with retry false', () => {
+    expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)))).toEqual([
+      { kind: 'miss', pid: 'p1', retry: false, ms: 700 },
+    ]);
+  });
+
+  it('a questDrawn attempt 2 of another pid does not flag the miss', () => {
+    const ctx: TimelineCtx = { totalRounds: 3, firstPid: 'p1', reducedMotion: false, lastEvent: null, animalOf: {} };
+    const events: GameEvent[] = [
+      { t: 'judged', pid: 'p1', success: false, stars: 0 },
+      { t: 'questDrawn', pid: 'p2', missionId: 'e1', diff: 'easy', stars: 1, attempt: 2 },
+    ];
+    expect(buildTimeline(events, ctx)).toEqual([{ kind: 'miss', pid: 'p1', retry: false, ms: 700 }]);
   });
 
   it('judgementUndone → no beats', () => {
@@ -216,13 +250,15 @@ describe('buildTimeline — judgement, undo, end', () => {
 
   it('reducedMotion keeps miss 700 and win 1500 (D-16, Pitfall 9)', () => {
     expect(beatsOf(judge(onQuest('easy', 'noStar'), false, dice(1)), true)).toEqual([
-      { kind: 'miss', pid: 'p1', ms: 700 },
+      { kind: 'miss', pid: 'p1', retry: false, ms: 700 },
     ]);
     expect(beatsOf(playOut(false), true)[0]).toMatchObject({ kind: 'win', ms: 1500 });
   });
 
-  it('D-15 length caps: stars ≤ 900, miss 700, win 1500; event / startBonus / finalRound unchanged', () => {
-    expect(BEAT_MS.stars).toBeLessThanOrEqual(900);
+  it('lengths: stars per tier 1600 / 1900 / 2200 (≤ 2500, D-02), reduced 1200; miss 700, win 1500; others unchanged', () => {
+    expect(STARS_MS).toEqual({ 1: 1600, 2: 1900, 3: 2200 });
+    expect(Math.max(...Object.values(STARS_MS))).toBeLessThanOrEqual(2500);
+    expect(STARS_MS_REDUCED).toBe(1200);
     expect(BEAT_MS.miss).toBe(700);
     expect(BEAT_MS.win).toBe(1500);
     expect(BEAT_MS.event).toBe(1000);
@@ -290,15 +326,15 @@ describe('isBannerBeat / isTimedBeat (07-01, D-22)', () => {
     { kind: 'event', pid: 'p', eff: 'extra', steps: 0, suppressed: false, name: '', label: '', ms: 1 },
     { kind: 'stars', pid: 'p', stars: 1, ms: 1 },
     { kind: 'finalRound', ms: 1 },
-    { kind: 'miss', pid: 'p', ms: 1 },
+    { kind: 'miss', pid: 'p', retry: false, ms: 1 },
     { kind: 'win', winners: ['p'], animals: ['bear'], ms: 1 },
   ];
 
-  it('isBannerBeat is true exactly for startBonus, event, stars, finalRound (not miss / win)', () => {
-    expect(all.filter(isBannerBeat).map((b) => b.kind)).toEqual(['startBonus', 'event', 'stars', 'finalRound']);
+  it('isBannerBeat is true for startBonus, event, stars, finalRound and miss (soft copy, D-09), not win', () => {
+    expect(all.filter(isBannerBeat).map((b) => b.kind)).toEqual(['startBonus', 'event', 'stars', 'finalRound', 'miss']);
   });
 
-  it('isTimedBeat adds the reaction beats miss and win', () => {
+  it('isTimedBeat covers the banner beats plus win', () => {
     expect(all.filter(isTimedBeat).map((b) => b.kind)).toEqual([
       'startBonus',
       'event',
