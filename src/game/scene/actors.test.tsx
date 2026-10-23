@@ -8,11 +8,14 @@ import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { Group, InstancedMesh, Mesh, type Object3D } from 'three';
 import Pawn from './Pawn';
 import PathPreview from './PathPreview';
+import Dice from './Dice';
+import { SceneContents } from './SceneContents';
+import { FACE_UP_EULER, diceSize, type DieFace } from '../layout/diceFaces';
 import { usePresentation } from '../usePresentation';
 import { EMPTY_DISPLAYED } from '../director/displayed';
 import type { BeatSpec } from '../director/timeline';
 import { useGameStore } from '../../harness/useGameStore';
-import { boardWith, makeGame, patchParticipant, player } from '../../engine/testkit';
+import { boardWith, eventTile, makeGame, patchParticipant, player, questTile } from '../../engine/testkit';
 import { standPoints } from '../layout/pawnSlots';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -281,5 +284,133 @@ describe('PathPreview — preview beat consumer (D-16)', () => {
     await frames(r, 4, 0.05);
     expect(dots(r).count).toBe(0);
     expect(one(r, 'dest-cone').visible).toBe(false);
+  });
+});
+
+describe('Dice — dice beat consumer (D-20)', () => {
+  const dieOf = (r: Renderer) => one(r, 'dice');
+  const expectFace = (o: Object3D, face: DieFace) => {
+    const [x, y, z] = FACE_UP_EULER[face];
+    expect(o.rotation.x).toBeCloseTo(x, 6);
+    expect(o.rotation.y).toBeCloseTo(y, 6);
+    expect(o.rotation.z).toBeCloseTo(z, 6);
+  };
+
+  it('spins, snaps exactly to the engine face and completes once within its 1000 ms beat', async () => {
+    const r = await mount(<Dice boardLength={20} restFace={null} />);
+    const restY = dieOf(r).position.y;
+    await play([{ kind: 'dice', pid: 'a', face: 5, ms: 1000 }]);
+    const id = usePresentation.getState().current!.id;
+
+    await r.advanceFrames(2, 0.05); // 0.1 s — jumping up
+    expect(dieOf(r).position.y).toBeGreaterThan(restY + 0.3);
+
+    await r.advanceFrames(16, 0.05); // 0.9 s
+    expect(usePresentation.getState().current?.id).toBe(id);
+    expect(completeSpy).not.toHaveBeenCalled();
+    expectFace(dieOf(r), 5); // snapped at 85 %
+
+    await r.advanceFrames(3, 0.05); // 1.05 s
+    expect(completeSpy).toHaveBeenCalledTimes(1);
+    expect(completeSpy).toHaveBeenCalledWith(id);
+    expect(usePresentation.getState().busy).toBe(false);
+
+    await r.advanceFrames(20, 0.05);
+    expect(completeSpy).toHaveBeenCalledTimes(1);
+    const die = dieOf(r);
+    const [x, y, z] = FACE_UP_EULER[5];
+    expect(Math.abs(die.rotation.x - x)).toBeLessThan(1e-6);
+    expect(Math.abs(die.rotation.y - y)).toBeLessThan(1e-6);
+    expect(Math.abs(die.rotation.z - z)).toBeLessThan(1e-6);
+    expect(die.position.y).toBeCloseTo(restY, 6);
+  });
+
+  it('has 21 pips and sizes itself by the board', async () => {
+    const r = await mount(<Dice boardLength={24} restFace={null} />);
+    const pips = one(r, 'dice-pips') as InstancedMesh;
+    expect(pips).toBeInstanceOf(InstancedMesh);
+    expect(pips.count).toBe(21);
+    expect(dieOf(r).scale.x).toBeCloseTo(diceSize(24), 9);
+    expect(one(r, 'dice-body')).toBeInstanceOf(Mesh);
+    const r16 = await mount(<Dice boardLength={16} restFace={null} />);
+    expect(dieOf(r16).scale.x).toBeCloseTo(diceSize(16), 9);
+  });
+
+  it('rests on the last face between rolls and keeps its rotation without one', async () => {
+    const r = await mount(<Dice boardLength={20} restFace={3} />);
+    await r.advanceFrames(1, 0.05);
+    expectFace(dieOf(r), 3);
+    await r.update(<Dice boardLength={20} restFace={null} />);
+    await r.advanceFrames(3, 0.05);
+    expectFace(dieOf(r), 3);
+  });
+
+  it('ignores beats other than dice', async () => {
+    const r = await mount(<Dice boardLength={20} restFace={2} />);
+    await play([hopSpec([1, 2], 500)]);
+    await r.advanceFrames(20, 0.05);
+    expect(completeSpy).not.toHaveBeenCalled();
+    expectFace(dieOf(r), 2);
+  });
+});
+
+describe('SceneContents — the WebGL-free scene graph (D-28)', () => {
+  const countDraws = (r: Renderer) => {
+    let n = 0;
+    r.scene.children.forEach((c) =>
+      (c.instance as Object3D).traverse((o) => {
+        if (o instanceof Mesh) n++;
+      }),
+    );
+    return n;
+  };
+
+  it('renders the board, one pawn per participant, the die and one turn ring', async () => {
+    const participants = [
+      { id: 'p1', animal: 'bear' as const },
+      { id: 'p2', animal: 'cat' as const },
+      { id: 'p3', animal: 'dog' as const },
+    ];
+    usePresentation.getState().reset({ positions: { p1: 0, p2: 0, p3: 4 }, stars: { p1: 0, p2: 2, p3: 1 } }, null);
+    const r = await mount(<SceneContents tiles={tiles20} participants={participants} currentId="p2" restFace={4} />);
+    for (const p of participants) one(r, `pawn-${p.id}`);
+    one(r, 'dice');
+    one(r, 'quest-tiles');
+    one(r, 'path-dots');
+    expect(named(r, 'turn-ring')).toHaveLength(1);
+    let ringOwner = '';
+    one(r, 'turn-ring').traverseAncestors((o) => {
+      if (/^pawn-p\d$/.test(o.name)) ringOwner = o.name;
+    });
+    expect(ringOwner).toBe('pawn-p2');
+    expect(named(r, 'crown')).toHaveLength(1); // p2 leads with 2 stars
+    // p1 and p2 share the start tile → two different grid slots.
+    await r.advanceFrames(30, 0.05);
+    const a = one(r, 'pawn-p1').position;
+    const b = one(r, 'pawn-p2').position;
+    expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(0.3);
+  });
+
+  it('stays within 100 draw calls with 8 pawns on a 24-tile board', async () => {
+    const animals = ['bear', 'rabbit', 'cat', 'dog', 'panda', 'fox', 'pig', 'chick'] as const;
+    const participants = animals.map((animal, i) => ({ id: `p${i + 1}`, animal }));
+    const ids = participants.map((p) => p.id);
+    usePresentation
+      .getState()
+      .reset(
+        { positions: Object.fromEntries(ids.map((id) => [id, 0])), stars: Object.fromEntries(ids.map((id) => [id, 1])) },
+        null,
+      );
+    const tiles24 = boardWith(24, {
+      2: eventTile('forward', 3),
+      5: eventTile('backward', 2),
+      9: eventTile('extra', 0),
+      3: questTile('hard'),
+      4: questTile('normal'),
+    });
+    const r = await mount(<SceneContents tiles={tiles24} participants={participants} currentId="p3" restFace={6} />);
+    expect(named(r, 'crown')).toHaveLength(8);
+    expect(named(r, 'turn-ring')).toHaveLength(1);
+    expect(countDraws(r)).toBeLessThanOrEqual(100);
   });
 });
