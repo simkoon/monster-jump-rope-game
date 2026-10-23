@@ -107,13 +107,13 @@ Plans:
   3. 캐릭터가 기다리는 동안 살짝 움직이고(대기), 칸을 지날 때마다 점프하며, 성공하면 점프·회전, 실패하면 아쉬워하고, 우승하면 환호한다
   4. 한 칸에 말이 최대 8개 모여도 모든 캐릭터가 서로 가리지 않고 하나하나 구분된다
 
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 07-01-PLAN.md — 반응 비트: ❌ miss 700ms·라운드 종료 win 1500ms·stars 900ms + 디렉터 manual 분기 + Banner 시간 비트 완료·금색 우승 배너 + 깨지는 통합 테스트 이전 (wave 1)
-- [ ] 07-02-PLAN.md — three 없는 순수 기반: chibiDims 치수·얼굴 키, 지금 차례 앞줄 표 기반 pawnSlots + 투영 가림 증명, charMotion 동작 곡선 (wave 1)
+- [x] 07-02-PLAN.md — three 없는 순수 기반: chibiDims 치수·얼굴 키, 지금 차례 앞줄 표 기반 pawnSlots + 투영 가림 증명, charMotion 동작 곡선 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -154,5 +154,5 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 5. 새 규칙 엔진 & 강사 설정 | 5/5 | Complete   | 2026-10-22 |
 | 6. 3D 순환판 & 게임 화면 | 6/6 | Complete   | 2026-10-23 |
-| 7. 치비 동물 캐릭터 & 표정 | 1/5 | In Progress|  |
+| 7. 치비 동물 캐릭터 & 표정 | 2/5 | In Progress|  |
 | 8. 퀘스트 성공 연출 & 시상식 & 마감 | 0/TBD | Not started | - |
