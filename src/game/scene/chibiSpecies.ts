@@ -152,8 +152,10 @@ const BEAR_EAR = { r: 0.085, x: 0.2, y: 0.2, z: -0.02, depth: 0.6, inner: 0.05 }
 const BEAR_TAIL = { r: 0.05, y: 0.14, z: -0.18 } as const;
 // Rabbit: long V ears leaning back with pink insides, cotton tail.
 const RABBIT_NOSE = { r: 0.02, y: -0.06 } as const;
-const RABBIT_EAR = { r: 0.06, len: 0.22, x: 0.1, y: 0.36, z: -0.04, splay: 0.12, back: 0.25 } as const;
-const RABBIT_INNER = { r: 0.036, len: 0.17 } as const;
+// D-17a(3): len 0.22 → 0.15 and y 0.36 → 0.31 (inner len 0.17 → 0.11) so a front-row rabbit's ears
+// stop covering the faces behind it (faceOcclusion.test.tsx); still the longest ears (chibi.test.tsx).
+const RABBIT_EAR = { r: 0.06, len: 0.15, x: 0.1, y: 0.31, z: -0.04, splay: 0.12, back: 0.25 } as const;
+const RABBIT_INNER = { r: 0.036, len: 0.11 } as const;
 const RABBIT_TAIL = { r: 0.07, y: 0.12, z: -0.19 } as const;
 // Cat: triangle ears with pink insides, thin tail curling up at the side.
 const CAT_NOSE = { r: 0.022, y: -0.06 } as const;

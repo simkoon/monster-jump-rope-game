@@ -170,6 +170,11 @@ describe('chibiSpecies (D-01, D-02, D-18, D-20, CHAR-01)', () => {
   it('D-02: animals differ by silhouette — ears, muzzle, nose, beak, tail', () => {
     const N = Object.fromEntries(ANIMALS.map((a) => [a, chibiNodes(a)])) as Record<(typeof ANIMALS)[number], ReturnType<typeof chibiNodes>>;
     expect(box(N.rabbit.ears).max.y).toBeGreaterThanOrEqual(box(N.bear.ears).max.y + 0.15);
+    // D-17a(3): the shortened rabbit ears still stand ≥ 1.6 × as far above the head top as the
+    // tallest head part of any other species (the chick's feathers count).
+    const above = (a: AnimalId) => box(N[a].ears).max.y - HEAD_B;
+    const others = Math.max(...ANIMALS.filter((a) => a !== 'rabbit').map(above));
+    expect(above('rabbit')).toBeGreaterThanOrEqual(1.6 * others);
     expect(box(N.dog.ears).min.y).toBeLessThan(0); // floppy ears hang below the head center
     expect(hasColor(N.dog.ears, CHAR_COLOR.dogEar)).toBe(true);
     expect(hasColor(N.cat.ears, CHAR_COLOR.cheek)).toBe(true); // inner ear

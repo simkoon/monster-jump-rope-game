@@ -3,11 +3,13 @@
 //   - free of React/DOM imports and of any runtime import of three / @react-three/*
 //     (main-chunk safety — the HUD may read `leaders`), and
 //   - pure: every function returns new values and never mutates its inputs.
-// Slot rule (Phase 7, UI-SPEC C5, D-17): two frozen tables measured by projecting head discs with the
-// real camera fit (slotOcclusion.test.ts proves them). On a tile the current turn (if it stands there)
-// takes k = 0 — front-center on a regular tile, the frontmost slot on the start tile — at full size;
-// everyone else follows participant order at the table size s (0.85–0.90 for 2–4, 0.65–0.72 for 5–8).
-// The start tile (index 0) has its own table so nobody stands in the gate pillars (Pitfall 3).
+// Slot rule (Phase 7, UI-SPEC C5, D-17, D-17a): two frozen tables. faceOcclusion.test.tsx is the final
+// proof (D-17a(4)): it mounts the real scene — gate, ears, crowns, stars — and keeps every face ≤ 30 %
+// hidden from the real camera; slotOcclusion.test.ts stays as the head-disc check (D-19). On a tile the
+// current turn (if it stands there) takes k = 0 — front-center on a regular tile, the frontmost slot on
+// the start tile — at full size; everyone else follows participant order at the table size s
+// (0.85–0.90 for 2–4, 0.65–0.72 for 5–8). The start tile (index 0) has its own tables, a lone
+// character included, so nobody stands in the gate pillars (Pitfall 3) or behind the arch.
 // Slots depend only on (order, positions, currentId), so the same game state always looks the same.
 import type { Tile } from '../../engine/board';
 import { ringLayout, tileCenter, tileTop } from './ringLayout';
@@ -51,31 +53,34 @@ const REGULAR: readonly SlotTable[] = [
 ];
 
 // Start tile (1.4 × 1.4), index n − 2: slot 0 is the frontmost (largest z); every slot keeps clear
-// of the two gate pillars (StartGate.tsx). UI-SPEC C5 values, except six slots moved off the pillars
-// so no head runs into one (07-02, slotOcclusion.test.ts): n 3 slot 2, n 4 slot 3, n 7 slots 0/1/6,
-// n 8 slot 0. 07-05 (UI-SPEC C6 arch check): n 5 slot 1 pulled 0.10 toward +z, which brings the
-// arch's cover of that face from about 51 % to 27 %; the other arch-covered back slots do not get
-// better within the 0.10 bound and are left for the phase-end look check.
+// of the two gate pillars (StartGate.tsx). Seen from the camera the arch and its star hide a diagonal
+// band from the back-right corner to the front-left pillar, so the slots fill the gate-free zones —
+// the back-left region, the outer (front-right) corner and the front row (D-17a(1), proven by
+// faceOcclusion.test.tsx; the gate itself is unchanged, D-17a(2)).
 const START: readonly SlotTable[] = [
-  { s: 0.9, slots: [[0.32, 0.15], [0.12, -0.46]] },
-  { s: 0.85, slots: [[0.15, 0.27], [-0.53, 0.01], [0.27, -0.48]] },
-  { s: 0.85, slots: [[0.28, 0.42], [-0.09, -0.53], [-0.55, 0.22], [0.37, -0.55]] },
-  { s: 0.72, slots: [[0.46, 0.37], [0.02, 0.25], [-0.58, -0.16], [-0.24, -0.57], [0.47, -0.57]] },
-  { s: 0.68, slots: [[0.51, 0.42], [-0.08, 0.09], [-0.57, 0.27], [-0.51, -0.42], [-0.03, -0.56], [0.37, -0.52]] },
+  { s: 0.9, slots: [[0.25, 0.25], [-0.45, 0.1]] },
+  { s: 0.85, slots: [[0.2, 0.4], [-0.55, -0.55], [-0.05, -0.55]] },
+  { s: 0.85, slots: [[0.5, 0.4], [-0.55, -0.55], [0.05, 0.35], [-0.1, -0.55]] },
+  { s: 0.72, slots: [[0.5, 0.5], [0.05, 0.45], [-0.55, 0.15], [-0.55, -0.5], [-0.1, -0.55]] },
+  { s: 0.68, slots: [[0.5, 0.4], [-0.55, -0.55], [-0.55, 0.25], [-0.25, -0.2], [0.05, -0.55], [0.05, 0.35]] },
   {
     s: 0.65,
-    slots: [[0.13, 0.47], [0.59, 0.03], [-0.24, -0.12], [-0.57, 0.23], [-0.59, -0.32], [0.02, -0.55], [0.44, -0.52]],
+    slots: [[0.49, 0.53], [0.07, 0.42], [0.08, -0.57], [-0.15, -0.25], [-0.41, -0.03], [-0.54, 0.45], [-0.58, -0.55]],
   },
   {
     s: 0.65,
-    slots: [[0.14, 0.48], [-0.06, -0.09], [-0.53, 0.42], [-0.45, -0.13], [-0.47, -0.57], [0, -0.56], [0.47, -0.55], [0.59, 0.4]],
+    slots: [[0.47, 0.51], [-0.36, 0.01], [-0.58, -0.38], [0.12, -0.59], [-0.35, -0.59], [-0.55, 0.47], [0.11, 0.21], [-0.11, -0.27]],
   },
 ];
+
+// A lone character on the start tile stands off the arch band (at the center the arch hides about
+// half of its face).
+const START_LONE: SlotTable = { s: 1, slots: [[0.25, 0.3]] };
 
 // The slot table for n characters on one tile. n is clamped to 1..8 (MAX_PARTICIPANTS, T-07-05).
 export function slotTable(n: number, isStart: boolean): SlotTable {
   const c = Number.isFinite(n) ? Math.min(8, Math.max(1, Math.floor(n))) : 1;
-  if (c === 1) return CENTER_TABLE;
+  if (c === 1) return isStart ? START_LONE : CENTER_TABLE;
   return (isStart ? START : REGULAR)[c - 2];
 }
 

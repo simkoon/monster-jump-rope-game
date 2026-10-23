@@ -1,8 +1,10 @@
-// src/game/layout/slotOcclusion.test.ts — same-tile slots proven with the real camera (D-17, D-19, BOARD-05).
-// three is imported here only (the source guard skips *.test files). Every head is projected with the
-// same fitCamera call CameraRig makes, as a disc: center = tile center + slot at y = tile top +
-// HEAD_C_Y·scale, radius = HEAD_R·scale measured sideways on screen. The head tilts around its own
-// center, so the tilt never changes these discs.
+// src/game/layout/slotOcclusion.test.ts — same-tile slots checked with the real camera (D-17, D-19, BOARD-05).
+// The D-19 head-disc check, kept as a cheap first look next to the final criterion
+// src/game/scene/faceOcclusion.test.tsx (D-17a(4)), which raycasts the mounted scene — gate, ears,
+// crowns and stars included. three is imported here only (the source guard skips *.test files).
+// Every head is projected with the same fitCamera call CameraRig makes, as a disc: center = tile
+// center + slot at y = tile top + HEAD_C_Y·scale, radius = HEAD_R·scale measured sideways on screen.
+// The head tilts around its own center, so the tilt never changes these discs.
 import { describe, it, expect } from 'vitest';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { BODY_R, GROUND_RIM_R, HEAD_A, HEAD_C_Y, HEAD_R } from './chibiDims';

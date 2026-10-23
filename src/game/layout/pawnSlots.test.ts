@@ -43,15 +43,15 @@ describe('pawnSlots (D-17, BOARD-05)', () => {
     const s = pawnSlots(['a', 'b'], { a: 0, b: 0 }, 'b');
     const { slots } = slotTable(2, true);
     expect(slots).toEqual([
-      [0.32, 0.15],
-      [0.12, -0.46],
+      [0.25, 0.25],
+      [-0.45, 0.1],
     ]);
-    expect(s.b).toEqual({ dx: 0.32, dz: 0.15, scale: 1 });
-    expect(s.a).toEqual({ dx: 0.12, dz: -0.46, scale: 0.9 });
+    expect(s.b).toEqual({ dx: 0.25, dz: 0.25, scale: 1 });
+    expect(s.a).toEqual({ dx: -0.45, dz: 0.1, scale: 0.9 });
   });
 
-  it('a lone character on the start tile stands in its center', () => {
-    expect(pawnSlots(['a'], { a: 0 }, 'a')).toEqual({ a: { dx: 0, dz: 0, scale: 1 } });
+  it('a lone character on the start tile stands off the arch band at full scale (D-17a(1))', () => {
+    expect(pawnSlots(['a'], { a: 0 }, 'a')).toEqual({ a: { dx: 0.25, dz: 0.3, scale: 1 } });
   });
 
   it('a character missing from positions counts as standing on the start tile', () => {
@@ -94,9 +94,9 @@ describe('slotTable (UI-SPEC C5)', () => {
     }
   }
 
-  it('n 1 is the tile center at full size on both tables', () => {
+  it('n 1 is full size: the tile center on a regular tile, the lone start slot on the start tile', () => {
     expect(slotTable(1, false)).toEqual({ s: 1, slots: [[0, 0]] });
-    expect(slotTable(1, true)).toEqual({ s: 1, slots: [[0, 0]] });
+    expect(slotTable(1, true)).toEqual({ s: 1, slots: [[0.25, 0.3]] });
   });
 
   it('clamps n to 1..8 (T-07-05)', () => {
