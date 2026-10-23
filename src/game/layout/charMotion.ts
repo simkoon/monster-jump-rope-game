@@ -178,6 +178,43 @@ export function cheerPose(u: number): Pose {
   });
 }
 
+// Phase 8 ceremony (D-12, UI-SPEC §F7): everybody cheers in a loop. 'winner' is the win cheer looped
+// over CELEBRATE_PERIOD (arms +2.4, jump 0.35); 'joy' is the same shape smaller (arms +1.4, jump
+// 0.15). REST at every multiple of the period; the consumer adds the per-person phase to tSec.
+export const CELEBRATE_PERIOD = 1.5; // s
+const JOY_CHEER_Y = 0.15 / 0.35;
+const JOY_CHEER_ARMS = 1.4 / 2.4;
+
+export function celebratePose(kind: 'winner' | 'joy', tSec: number): Pose {
+  const r = tSec % CELEBRATE_PERIOD;
+  const p = cheerPose((r < 0 ? r + CELEBRATE_PERIOD : r) / CELEBRATE_PERIOD);
+  if (kind === 'winner') return p;
+  p.y *= JOY_CHEER_Y;
+  p.armL *= JOY_CHEER_ARMS;
+  p.armR *= JOY_CHEER_ARMS;
+  p.earTilt *= JOY_CHEER_ARMS;
+  return p;
+}
+
+// Ceremony intro jump of the winners (D-16): crouch → 0.45 jump with arms up → land, facing the
+// camera, REST at 0 and at INTRO_JUMP_SEC.
+export const INTRO_JUMP_SEC = 0.6;
+export function introJumpPose(tSec: number): Pose {
+  const t = clamp01(tSec / INTRO_JUMP_SEC);
+  if (t <= 0 || t >= 1) return pose({});
+  const raise = t < 0.85 ? easeInOutSine(seg(t, 0, 0.35)) : 1 - easeInOutSine(seg(t, 0.85, 1));
+  const arm = 2.4 * raise;
+  if (t < 0.15) {
+    return pose({ squashY: 1 - 0.12 * easeInOutSine(seg(t, 0, 0.15)), armL: arm, armR: arm });
+  }
+  if (t < 0.8) {
+    const v = seg(t, 0.15, 0.8);
+    const squashY = v < 0.25 ? 0.88 + 0.12 * easeInOutSine(v / 0.25) : 1;
+    return pose({ y: 0.45 * arc(v), squashY, armL: arm, armR: arm });
+  }
+  return pose({ squashY: 1 - 0.1 * Math.sin(Math.PI * seg(t, 0.8, 1)), armL: arm, armR: arm });
+}
+
 // Surprise (forward / limited extra event, 1000 ms): a startled hop back with arms flung out,
 // back at REST by 0.60 while the surprised face stays until the beat ends.
 export function surprisePose(u: number): Pose {

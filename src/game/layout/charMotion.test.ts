@@ -321,7 +321,7 @@ describe('successBeatPose (Phase 8 tiered jump, D-01 / D-03 / D-04)', () => {
 });
 
 describe('celebratePose (Phase 8 ceremony loop, D-12)', () => {
-  const T = Array.from({ length: 1501 }, (_, i) => (i / 1000) * CELEBRATE_PERIOD);
+  const T = Array.from({ length: 1000 }, (_, i) => (i / 1000) * CELEBRATE_PERIOD); // one loop, [0, period)
   const peakOf = (kind: 'winner' | 'joy') => Math.max(...T.map((t) => celebratePose(kind, t).y));
   const armsOf = (kind: 'winner' | 'joy', t: number) => {
     const p = celebratePose(kind, t);
