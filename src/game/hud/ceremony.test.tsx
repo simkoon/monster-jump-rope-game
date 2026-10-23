@@ -500,7 +500,11 @@ describe('game.css ceremony block (08-10)', () => {
   });
 
   it('portrait grid rows and the landscape columns (360px, 300px on phone landscape)', () => {
-    expect(block).toMatch(/\.game-stage\.stage\.stage--ceremony\s*\{[^}]*grid-template-rows:\s*auto minmax\(200px, 1fr\) auto auto/);
+    // CR-02: the canvas floor shrinks on short screens and the panel row can give up height
+    // (minmax(0, auto)), so the actions row always stays inside the fixed 100dvh stage.
+    expect(rule(block, '.game-stage.stage.stage--ceremony')).toMatch(
+      /grid-template-rows:\s*auto minmax\(min\(160px, 22dvh\), 1fr\) minmax\(0, auto\) auto;/,
+    );
     const land = mediaBody(block, '(orientation: landscape) and (min-aspect-ratio: 5/4) {');
     expect(land).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\) 360px/);
     expect(land).toMatch(/\.stage-canvas-cell\s*\{[^}]*grid-row:\s*1 \/ -1/);
@@ -512,6 +516,7 @@ describe('game.css ceremony block (08-10)', () => {
     const panel = rule(block, '.ceremony-panel');
     expect(panel).toMatch(/max-height:\s*48dvh/);
     expect(panel).toMatch(/overflow-y:\s*auto/);
+    expect(panel).toMatch(/min-height:\s*0;/); // CR-02: the minmax(0, auto) row can shrink it
     const list = rule(block, '.ceremony-list');
     expect(list).toContain('repeat(auto-fill, minmax(160px, 1fr))');
     expect(list).toMatch(/gap:\s*8px/);

@@ -1236,8 +1236,11 @@
 /* ============================================================
    === Phase 8: ceremony (08-10) ===
    The award ceremony as a mode of the same stage (UI-SPEC F7, D-11 ~ D-16):
-   portrait = head / podium cell (the same canvas cell, ≥ 200px) / panel
-   (winner line + 모두의 별 cards, max 48dvh, scrolls inside) / actions;
+   portrait = head / podium cell (the same canvas cell, ≥ min(160px, 22dvh)) /
+   panel (winner line + 모두의 별 cards, max 48dvh, scrolls inside) / actions;
+   the panel row is minmax(0, auto), so on a short screen (8 players on an
+   iPhone in Safari, 375×548) it gives up height first and scrolls, and the
+   actions row is never pushed below the 100dvh / overflow: hidden stage (CR-02);
    landscape = the podium cell over every row of column 1, head, panel and
    actions in a 360px right column (300px on phone landscape). Overrides beat
    the play-stage grid rules through .game-stage.stage.stage--ceremony.
@@ -1252,7 +1255,7 @@
    Tokens and color-mix only; participant color through the inline --pc.
    ============================================================ */
 .game-stage.stage.stage--ceremony {
-  grid-template-rows: auto minmax(200px, 1fr) auto auto;
+  grid-template-rows: auto minmax(min(160px, 22dvh), 1fr) minmax(0, auto) auto;
   grid-template-columns: minmax(0, 1fr);
 }
 
