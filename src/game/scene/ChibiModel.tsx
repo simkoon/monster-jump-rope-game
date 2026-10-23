@@ -3,22 +3,24 @@
 // 7 meshes, plus the turn ring and the crown when shown (UI-SPEC C1 node table). It holds no state
 // and runs no frame loop: the caller owns the motion and drives it through the rig refs —
 // `applyPose(rig, pose)` for the body / arms / head / ears transforms, and `rig.face.current.geometry
-// = faceGeo(animal, key)` for an expression change, which swaps a cached geometry and never creates
-// a geometry or material (D-08, D-09). The face prop only sets the initial geometry; R3F re-applies
-// it only when the prop itself changes, so a swap through the ref survives re-renders.
+// = faces[key]` for an expression change, which swaps a cached geometry and never creates a
+// geometry or material (D-08, D-09). All 9 faces of the animal are built here in render through
+// faceSet (D-08a), so a failing build is a render error the game's CanvasErrorBoundary catches.
+// The face prop only sets the initial geometry; R3F re-applies it only when the prop itself
+// changes, so a swap through the ref survives re-renders.
 // Node tree (the caller wraps it in its ground group `pawn-{pid}`):
 //   chibi-ground, turn-ring (stay on the floor)
 //   pawn-body (jump, squash, yaw, lean) › chibi-torso, shoulder pivots › chibi-arm-l / chibi-arm-r,
 //     chibi-head-pivot (head center: tilt, nod) › chibi-head, ears pivot › chibi-ears, chibi-face, crown
 // Every geometry and material is a shared singleton, passed with `dispose={null}` (Phase 6 Pitfall 9).
 // This module lives in the lazy 3D chunk, so it may import three at runtime.
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useMemo } from 'react';
 import type { Group, Mesh } from 'three';
 import type { AnimalId } from '../../engine/animals';
 import { REST, type Pose } from '../layout/charMotion';
 import { ARM_REST, CROWN_LOCAL, CROWN_SCALE, HEAD_C_Y, HEAD_TILT, SHOULDER, type FaceKey } from '../layout/chibiDims';
 import { ACTOR_GEO, ACTOR_MAT } from './actorGeometries';
-import { faceGeo } from './chibiFaces';
+import { faceSet } from './chibiFaces';
 import { CHAR_MAT, GROUND_MAT, chibiNodes } from './chibiSpecies';
 
 export interface ChibiRig {
@@ -72,6 +74,7 @@ export interface ChibiModelProps {
 
 export default function ChibiModel({ animal, rig, face, ring, crown }: ChibiModelProps) {
   const n = chibiNodes(animal);
+  const faces = useMemo(() => faceSet(animal), [animal]);
 
   // A fresh model already stands in the rest pose (head tilted back, arms resting) before the
   // first frame.
@@ -98,7 +101,7 @@ export default function ChibiModel({ animal, rig, face, ring, crown }: ChibiMode
           <group ref={rig.ears} name="chibi-ears-pivot">
             <mesh name="chibi-ears" geometry={n.ears} material={CHAR_MAT} dispose={null} />
           </group>
-          <mesh ref={rig.face} name="chibi-face" geometry={faceGeo(animal, face)} material={CHAR_MAT} dispose={null} />
+          <mesh ref={rig.face} name="chibi-face" geometry={faces[face]} material={CHAR_MAT} dispose={null} />
           {crown && (
             <mesh
               name="crown"

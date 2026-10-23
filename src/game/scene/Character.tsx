@@ -17,6 +17,7 @@
 // restarts the act clock (u = elapsed / beat length). At rest the current character bounces and its
 // ring breathes; everybody else only breathes ≤ 2 % with a per-seed phase (D-10). The face swaps
 // its cached geometry only when the key changes (D-08); idle / excited / sad blink (UI-SPEC C3).
+// All 9 faces come prebuilt from faceSet in render (D-08a), so the frame loop only swaps references.
 // Reduced motion (D-16) holds REST with yaw 0 and a still ring: only faces and blinks change.
 // Motion lives in refs only: no store write per frame, no geometry or material creation, delta
 // clamped to 0.25 s.
@@ -44,7 +45,7 @@ import type { PawnSlot, StandPoint } from '../layout/pawnSlots';
 import { prefersReducedMotion } from '../reducedMotion';
 import { usePresentation } from '../usePresentation';
 import ChibiModel, { applyPose, createChibiRig } from './ChibiModel';
-import { faceGeo } from './chibiFaces';
+import { faceSet } from './chibiFaces';
 
 export interface CharacterProps {
   pid: string;
@@ -69,6 +70,7 @@ const restPoint = (points: readonly StandPoint[], pid: string): StandPoint => {
 export default function Character({ pid, animal, seed, points, slot, isCurrent, isLeader }: CharacterProps) {
   const ground = useRef<Group>(null!);
   const rig = useMemo(createChibiRig, []);
+  const faces = useMemo(() => faceSet(animal), [animal]);
   const reduced = useMemo(() => prefersReducedMotion(), []);
 
   // Hop consumer (Phase 6).
@@ -198,7 +200,7 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
     const key = faceKeyFor(rx.expression, blink);
     if (key !== faceKey.current && rig.face.current) {
       faceKey.current = key;
-      rig.face.current.geometry = faceGeo(animal, key);
+      rig.face.current.geometry = faces[key];
     }
   });
 

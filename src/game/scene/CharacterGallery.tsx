@@ -15,7 +15,7 @@
 //     motion (beat length, then 600 ms of REST); &u freezes every actor at that progress
 // &reduced=1 forces reduced motion (D-16) for every view: bodies hold REST, faces still change.
 // All labels are DOM text outside the Canvas (no 3D text, source guard (c)). Each Canvas sets
-// window.__ready after 2 rendered frames as the headless capture signal.
+// window.__ready after 3 rendered frames as the headless capture signal.
 import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
 import { ANIMALS, type AnimalId } from '../../engine/animals';
@@ -40,7 +40,7 @@ import { LIGHTS } from '../palette';
 import { prefersReducedMotion } from '../reducedMotion';
 import { usePresentation } from '../usePresentation';
 import ChibiModel, { applyPose, createChibiRig } from './ChibiModel';
-import { faceGeo } from './chibiFaces';
+import { faceSet } from './chibiFaces';
 import { SceneContents } from './SceneContents';
 
 declare global {
@@ -205,7 +205,7 @@ function PitchedCamera({ targetY }: { targetY: number }) {
   return null;
 }
 
-// Headless capture signal: true after 2 rendered frames.
+// Headless capture signal: true after 3 rendered frames.
 function ReadySignal() {
   const frames = useRef(0);
   useFrame(() => {
@@ -287,6 +287,7 @@ function actFrame(act: GalleryAct, seed: number, tSec: number, u: number | null)
 
 function GalleryActor({ animal, seed, x, reduced }: { animal: AnimalId; seed: number; x: number; reduced: boolean }) {
   const rig = useMemo(createChibiRig, []);
+  const faces = useMemo(() => faceSet(animal), [animal]);
   const clock = useRef(0);
   const faceKey = useRef<FaceKey>('idle');
   useFrame((_, delta) => {
@@ -295,7 +296,7 @@ function GalleryActor({ animal, seed, x, reduced }: { animal: AnimalId; seed: nu
     applyPose(rig, reduced ? REST : pose);
     if (face !== faceKey.current && rig.face.current) {
       faceKey.current = face;
-      rig.face.current.geometry = faceGeo(animal, face);
+      rig.face.current.geometry = faces[face];
     }
   });
   return (

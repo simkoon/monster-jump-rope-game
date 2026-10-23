@@ -11,7 +11,9 @@
 // highlights stay ≥ LINE_R_MIN / HIGHLIGHT_R_MIN (phone legibility). TorusGeometry with arc π is the
 // ∩ arch (^^ eyes, sad mouth) and turned by π it is the ∪ smile; CircleGeometry(r, n, π, π) is the
 // lower half-disc open mouth.
-// Faces are built on first use per (animal, key), cached and never disposed (Phase 6 Pitfall 9).
+// Every participating animal gets all 9 keys prebuilt during React render through faceSet (D-08a),
+// so the frame loop only swaps cached references and a failing build is a render error an error
+// boundary catches. Faces are cached per (animal, key) and never disposed (Phase 6 Pitfall 9).
 // Values are UI-SPEC C3 START values; 07-05 may tune them after the gallery check.
 // This module lives in the lazy 3D chunk, so it may import three at runtime.
 import {
@@ -31,6 +33,7 @@ import {
   CHEEK_Y,
   EYE_X,
   EYE_Y,
+  FACE_KEYS,
   HEAD_A,
   HEAD_B,
   HEAD_C,
@@ -293,4 +296,19 @@ export function faceGeo(animal: AnimalId, key: FaceKey): BufferGeometry {
     cache.set(id, g);
   }
   return g;
+}
+
+const sets = new Map<AnimalId, Readonly<Record<FaceKey, BufferGeometry>>>();
+
+// All 9 face geometries of one animal, built through the cache above. Call it in render (useMemo):
+// the record is frozen and its identity stable, so a frame loop can swap `faces[key]` for free.
+export function faceSet(animal: AnimalId): Readonly<Record<FaceKey, BufferGeometry>> {
+  let s = sets.get(animal);
+  if (!s) {
+    const rec = {} as Record<FaceKey, BufferGeometry>;
+    for (const k of FACE_KEYS) rec[k] = faceGeo(animal, k);
+    s = Object.freeze(rec);
+    sets.set(animal, s);
+  }
+  return s;
 }
