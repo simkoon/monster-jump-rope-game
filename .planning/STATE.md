@@ -6,14 +6,14 @@ current_phase: 8
 current_phase_name: 퀘스트 성공 연출 & 시상식 & 마감
 status: executing
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-10-23T17:37:37.029Z"
+last_updated: "2026-10-23T17:55:21.433Z"
 last_activity: 2026-10-23
 last_activity_desc: Phase 8 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 30
-  completed_plans: 27
+  completed_plans: 28
   percent: 75
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
-Plan: 9 of 11
+Plan: 10 of 11
 Status: Ready to execute
 Last activity: 2026-10-23 — Phase 8 execution started
 
@@ -90,6 +90,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08 P06 | 10 min | 2 tasks | 12 files |
 | Phase 08 P07 | 12 min | 2 tasks | 10 files |
 | Phase 08 P08 | 6min | 2 tasks | 5 files |
+| Phase 08 P09 | 20 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -179,6 +180,9 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-08: a beat that stops being current >50 ms before its length is a skip → sfx.stopGroup(id); on-time ends let tails ring
 - [Phase 08]: 08-08: gesture unlock throttled to one call per 400 ms (touch pointerup deferred to touchend) so one tap = one step of the iOS recovery ladder
 - [Phase 08]: 08-08: reduced-motion dice plays once from the engine log; win/preview/finalRound beats are silent (fanfare is 08-10's ceremony)
+- [Phase 08]: 08-09: the ceremony is a prop of the same scene (board-set group + ContactShadows group only turn invisible; Podium and FX pools always mounted; pid-keyed Characters snap to podiumLayout stands)
+- [Phase 08]: 08-09: a lone non-winner uses scale 1.0 (2–4 band); 1.15 is reserved for a single winner
+- [Phase 08]: 08-09: ceremony loop clock is offset by the intro (winners 0.8 s, others 0.4 s) and switches blend the pose gap, so intro → loop has no seam
 
 ### Pending Todos
 
@@ -222,6 +226,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T17:37:32.281Z
+Last session: 2026-10-23T17:55:07.074Z
 Stopped at: Completed 08-03-PLAN.md
 Resume file: None
