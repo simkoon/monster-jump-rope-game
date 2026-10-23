@@ -3,7 +3,9 @@
 // Re-fits the default R3F perspective camera with fitCamera whenever the canvas size or the board
 // changes, so the whole board stays inside the canvas for portrait, square and landscape cells.
 // The camera is FIXED: no user orbit/zoom controls, no automatic framing helper and no follow — the
-// pose depends only on the canvas aspect and the board extents. Renders nothing.
+// pose depends only on the canvas aspect and the board extents (the podium extents in the ceremony,
+// 08-09 — the same fit, re-run when the ceremony starts / ends or the cell resizes, Pitfall 11).
+// Renders nothing.
 // The one exception is the ⭐3 success shake, and it lives HERE (RESEARCH Pitfall 7): the fitted pose
 // is kept in a ref, so a re-fit during the shake (rotation / resize) only replaces the base the
 // offset is added to and the two can never fight. During [landMs, landMs + shakeMs] of a ⭐3 stars
@@ -25,7 +27,14 @@ import { usePresentation } from '../usePresentation';
 
 type Vec3 = readonly [number, number, number];
 
-export default function CameraRig({ layout }: { layout: RingLayout }) {
+export interface CameraRigProps {
+  layout: RingLayout;
+  // Ceremony (08-09, D-11): the podium box to frame instead of the board. Same fixed fitCamera
+  // (target = origin); the shake below keeps working from whichever fitted pose is current.
+  extents?: { hx: number; hz: number; h: number } | null;
+}
+
+export default function CameraRig({ layout, extents = null }: CameraRigProps) {
   const width = useThree((s) => s.size.width);
   const height = useThree((s) => s.size.height);
   const camera = useThree((s) => s.camera);
@@ -37,7 +46,7 @@ export default function CameraRig({ layout }: { layout: RingLayout }) {
 
   useLayoutEffect(() => {
     const aspect = height > 0 ? width / height : 1;
-    const fit = fitCamera(aspect, boardExtents(layout));
+    const fit = fitCamera(aspect, extents ?? boardExtents(layout));
     fitted.current = { position: fit.position, target: fit.target };
     camera.position.set(...fit.position);
     if ((camera as PerspectiveCamera).isPerspectiveCamera) {
@@ -49,7 +58,7 @@ export default function CameraRig({ layout }: { layout: RingLayout }) {
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     invalidate();
-  }, [width, height, layout, camera, invalidate]);
+  }, [width, height, layout, extents, camera, invalidate]);
 
   useFrame((_, delta) => {
     const fit = fitted.current;

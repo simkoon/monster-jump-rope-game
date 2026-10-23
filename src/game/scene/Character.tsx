@@ -23,6 +23,15 @@
 // progresses on landMs (RESEARCH Pitfall 6), so it touches down exactly when the effect pools fire
 // and never slows down with the longer 1600–2200 ms beat; the joy hold then ends on REST at the
 // beat end. The plan is cached per beat id in a ref (no per-frame allocation).
+// Phase 8 ceremony (08-09, D-12, D-16, UI-SPEC §F7): while `stand` is set the character SNAPS to the
+// podium stand (no easing — nothing slides across the hidden board) and back to its displayed rest
+// point + slot the frame `stand` is null again (restart). It faces the camera; winners show the
+// winner face, everybody else the joy face (no blinks, nobody sad); everybody loops celebratePose
+// (winners big, the others smaller, phase stand.phaseSec). A new introId with introActive plays the
+// intro: winners jump (introJumpPose) from INTRO_JUMP_AT_MS, the others start cheering at
+// INTRO_CHEER_AT_MS; the loop clock is offset so the intro flows into the loop without a seam, and a
+// tap skip (introActive false) blends out like any early beat end. The hop / rest-point code is
+// skipped while standing; the board behaviour is unchanged when no stand is set.
 // Reduced motion (D-16 / D-08) holds REST with yaw 0 and a still ring: only faces and blinks change.
 // Motion lives in refs only: no store write per frame, no geometry or material creation, delta
 // clamped to 0.25 s.
@@ -43,12 +52,16 @@ import {
   approachAngle,
   bouncePose,
   breathePose,
+  celebratePose,
   hopPose,
+  introJumpPose,
+  INTRO_JUMP_SEC,
   successBeatPose,
   type Pose,
 } from '../layout/charMotion';
 import type { FaceKey } from '../layout/chibiDims';
 import type { PawnSlot, StandPoint } from '../layout/pawnSlots';
+import { INTRO_CHEER_AT_MS, INTRO_JUMP_AT_MS, type CeremonyStand } from '../layout/podiumLayout';
 import { prefersReducedMotion } from '../reducedMotion';
 import { usePresentation } from '../usePresentation';
 import ChibiModel, { applyPose, createChibiRig } from './ChibiModel';
@@ -62,6 +75,10 @@ export interface CharacterProps {
   slot: PawnSlot;
   isCurrent: boolean;
   isLeader: boolean;
+  // Ceremony (08-09): where this character stands on / in front of the podium, and the intro run.
+  stand?: CeremonyStand | null;
+  introId?: number;
+  introActive?: boolean;
 }
 
 const TAU = 2 * Math.PI;
@@ -69,12 +86,28 @@ const wrap = (a: number) => a - TAU * Math.round(a / TAU); // → [−π, π]
 const FADE_MIN = 1e-3; // blend weight below which the old pose is gone
 const BLEND_FIELDS = ['y', 'squashY', 'headPitch', 'armL', 'armR', 'earTilt', 'lean'] as const; // yaw apart
 
+const INTRO_JUMP_AT = INTRO_JUMP_AT_MS / 1000;
+const INTRO_CHEER_AT = INTRO_CHEER_AT_MS / 1000;
+// Loop clock offset per kind, so the intro hands over to the loop without a seam.
+const WINNER_LOOP_AT = INTRO_JUMP_AT + INTRO_JUMP_SEC;
+
 const restPoint = (points: readonly StandPoint[], pid: string): StandPoint => {
   const idx = usePresentation.getState().displayed.positions[pid] ?? 0;
   return points[idx] ?? points[0];
 };
 
-export default function Character({ pid, animal, seed, points, slot, isCurrent, isLeader }: CharacterProps) {
+export default function Character({
+  pid,
+  animal,
+  seed,
+  points,
+  slot,
+  isCurrent,
+  isLeader,
+  stand = null,
+  introId = 0,
+  introActive = false,
+}: CharacterProps) {
   const ground = useRef<Group>(null!);
   const rig = useMemo(createChibiRig, []);
   const faces = useMemo(() => faceSet(animal), [animal]);
@@ -96,6 +129,14 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
   const fadeT = useRef(0);
   const faceKey = useRef<FaceKey>('idle'); // ChibiModel mounts with the idle face
   const success = useRef<{ id: number; plan: SuccessPlan } | null>(null); // successPlan per stars beat
+  // Ceremony.
+  const standing = useRef(false); // a stand was applied last frame
+  const cerT = useRef(0); // s since the ceremony (or the current intro) started
+  const introSeen = useRef(-1); // intro id already started
+  const introOn = useRef(false); // the intro is playing
+  // Latest props for the frame loop (frames can run before React re-renders).
+  const cer = useRef({ stand, introId, introActive });
+  cer.current = { stand, introId, introActive };
 
   // Stand on the rest point on mount so nothing slides in from the origin.
   useLayoutEffect(() => {
@@ -105,6 +146,60 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
     // Mount only: later changes are eased in the frame loop.
   }, []);
 
+  // Ceremony frame: snap to the stand, loop the cheer, winner / joy face (08-09).
+  const standFrame = (g: Group, st: CeremonyStand, d: number) => {
+    const { introId: iid, introActive: iOn } = cer.current;
+    if (!standing.current) {
+      standing.current = true;
+      cerT.current = 0;
+    }
+    g.position.set(st.x, st.y, st.z);
+    g.scale.setScalar(st.scale);
+    if (iOn && iid !== introSeen.current) {
+      introSeen.current = iid;
+      introOn.current = true;
+      cerT.current = 0;
+    } else if (!iOn) introOn.current = false;
+    cerT.current += d;
+
+    const kind = st.winner ? 'winner' : 'joy';
+    let pose: Pose = REST;
+    if (!reduced) {
+      const t = cerT.current;
+      if (introOn.current && st.winner && t < WINNER_LOOP_AT) {
+        pose = t < INTRO_JUMP_AT ? REST : introJumpPose(t - INTRO_JUMP_AT);
+      } else if (introOn.current && !st.winner && t < INTRO_CHEER_AT) pose = REST;
+      else pose = celebratePose(kind, t - (st.winner ? WINNER_LOOP_AT : INTRO_CHEER_AT) + st.phaseSec);
+    }
+    // A switch (board → ceremony, intro start, tap skip) blends out the gap between the pose shown
+    // last frame and the new curve, so nothing snaps; an intro that already reached the loop has no
+    // gap (the loop clock is offset to match), so it needs no blend.
+    const src = introOn.current ? `intro:${introSeen.current}` : 'ceremony';
+    if (src !== source.current) {
+      source.current = src;
+      for (const f of BLEND_FIELDS) fadeFrom.current[f] = last.current[f] - pose[f] + REST[f];
+      fadeFrom.current.yaw = 0;
+      fadeT.current = 0;
+    }
+    fadeT.current += d;
+
+    const out = last.current;
+    Object.assign(out, pose);
+    if (!reduced) {
+      const w = Math.exp(-SETTLE_RATE * fadeT.current);
+      if (w > FADE_MIN) for (const f of BLEND_FIELDS) out[f] += (fadeFrom.current[f] - REST[f]) * w;
+    }
+    yaw.current = 0;
+    out.yaw = 0;
+    applyPose(rig, out);
+
+    const key = faceKeyFor(st.winner ? 'winner' : 'joy', false);
+    if (key !== faceKey.current && rig.face.current) {
+      faceKey.current = key;
+      rig.face.current.geometry = faces[key];
+    }
+  };
+
   useFrame((_, delta) => {
     const g = ground.current;
     if (!g) return;
@@ -113,6 +208,19 @@ export default function Character({ pid, animal, seed, points, slot, isCurrent, 
     const cur = store.current;
     const beat = cur && cur.kind === 'hop' && cur.pid === pid && cur.path.length > 0 ? cur : null;
     clock.current += d;
+
+    const st = cer.current.stand;
+    if (st) {
+      standFrame(g, st, d);
+      return;
+    }
+    if (standing.current) {
+      // Restart: straight back to the displayed rest point + slot (UI-SPEC §F7 snap).
+      standing.current = false;
+      const p = restPoint(points, pid);
+      g.position.set(p.x + slot.dx, p.y, p.z + slot.dz);
+      g.scale.setScalar(slot.scale);
+    }
 
     // 1) Hop beat: ground group along the path, body pose of the current tile.
     let hop: Pose | null = null;

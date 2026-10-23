@@ -8,6 +8,9 @@
 //   - no shadow maps and no post-processing: one static ContactShadows (frames=1, rendered once)
 //     under the board base plus the blob shadows under pawns (D-04)
 //   - no pointer interaction: tapping the board does nothing (D-21); touch-action blocks double-tap zoom
+// Ceremony (08-09, D-11, RESEARCH Pattern 6): the ContactShadows sits in a group that only turns
+// invisible during the ceremony. drei creates its two render targets in useMemo and never disposes
+// them, so it must never be unmounted or re-keyed — its shadow render targets are never recreated.
 // Context loss (D-27): onCreated registers watchContextLoss on the WebGL canvas and reports
 // onReady once; the watcher is removed on unmount. three already prevents default on the lost
 // event and R3F disposes the renderer on unmount; GameStage remounts only from the user's
@@ -85,16 +88,18 @@ export default function GameCanvas({ visible, onReady, onLost, ...scene }: GameC
       onCreated={handleCreated}
     >
       <SceneContents {...scene} />
-      <ContactShadows
-        frames={1}
-        position={[0, SHADOW_Y, 0]}
-        scale={shadowScale}
-        opacity={0.35}
-        blur={2.5}
-        far={1.5}
-        resolution={512}
-        color={SCENE_COLOR.shadow}
-      />
+      <group visible={!scene.ceremony}>
+        <ContactShadows
+          frames={1}
+          position={[0, SHADOW_Y, 0]}
+          scale={shadowScale}
+          opacity={0.35}
+          blur={2.5}
+          far={1.5}
+          resolution={512}
+          color={SCENE_COLOR.shadow}
+        />
+      </group>
     </Canvas>
   );
 }
