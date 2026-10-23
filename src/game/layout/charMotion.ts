@@ -10,6 +10,11 @@
 // early (watchdog / skipAll) is eased back to REST by the consumer at SETTLE_RATE.
 // Segment values and easings follow the UI-SPEC C4 curve table. Reduced motion (D-16) is applied by
 // the consumer, which then holds REST: faces and blinks still change, bodies do not move.
+// PHASE 8 (D-01, D-03, D-04, Pitfall 6): stars beats grew to 1600–2200 ms, so the success jump of a
+// stars beat no longer runs on u: successBeatPose(tMs, timing) plays the Phase 7 jump over
+// [0, timing.landMs] (the instant the confetti / burst / rings start) at the tier height
+// timing.jumpHeight, then holds an arms-up joy pose that eases back to REST at timing.ms. The u-based
+// successPose stays for the gallery and actPose.
 //
 // Pose fields (UI-SPEC C4): y = jump height · yaw = body heading (0 = toward the camera) ·
 // squashY = vertical scale (the consumer widens xz by (1 − squashY)·0.5) · headPitch = added to
@@ -88,6 +93,47 @@ export function successPose(u: number): Pose {
     return pose({ yaw: TAU, squashY: 1 - 0.15 * w, armL: arm, armR: arm });
   }
   return pose({ yaw: TAU, squashY: 0.85 + 0.15 * easeInOutSine(seg(t, 0.88, 1)) });
+}
+
+// Phase 8 tiered success beat (D-01, D-03, D-04): timing is the successPlan slice it needs.
+export interface SuccessTiming {
+  ms: number; // beat length
+  landMs: number; // touchdown (successPlan: 35 % of ms)
+  jumpHeight: number; // apex height, world units (⭐1 0.55 · ⭐2 0.65 · ⭐3 0.75)
+}
+
+export const SUCCESS_SQUASH_MS = 120; // landing squash recovery after touchdown
+export const SUCCESS_RELAX_MS = 250; // ease from the joy hold back to REST at the beat end
+const SUCCESS_JUMP_U = 0.75; // successPose touches down at u = 0.75
+const SUCCESS_BASE_Y = 0.55; // successPose apex
+const JOY_ARMS = 1.6; // arms-up joy hold
+const JOY_BOB = 0.04; // gentle bob during the hold
+const JOY_BOB_MS = 500; // bob period
+
+// Success jump of a stars beat at tMs from the beat start (Pitfall 6: the jump runs on landMs and
+// never stretches with the longer beat). REST at 0, touchdown (y 0, yaw 2π) at landMs, REST with
+// yaw 2π at ms and after.
+export function successBeatPose(tMs: number, timing: Readonly<SuccessTiming>): Pose {
+  const ms = Math.max(0, timing.ms);
+  const landMs = Math.min(Math.max(0, timing.landMs), ms);
+  if (!(tMs > 0)) return pose({});
+  if (tMs >= ms) return pose({ yaw: TAU });
+  if (tMs < landMs) {
+    const p = successPose((SUCCESS_JUMP_U * tMs) / landMs);
+    p.y *= timing.jumpHeight / SUCCESS_BASE_Y;
+    return p;
+  }
+  // After touchdown: squash recovery → joy hold (arms up, gentle bob) → ease to REST at ms.
+  const squashEnd = Math.min(landMs + SUCCESS_SQUASH_MS, ms);
+  const relaxStart = Math.max(squashEnd, ms - SUCCESS_RELAX_MS);
+  if (tMs < squashEnd) {
+    const k = seg(tMs, landMs, squashEnd);
+    const arm = 2 - (2 - JOY_ARMS) * easeOutCubic(k);
+    return pose({ yaw: TAU, squashY: 1 - 0.15 * Math.sin(Math.PI * k), armL: arm, armR: arm });
+  }
+  const bob = JOY_BOB * Math.sin((Math.PI * (tMs - squashEnd)) / JOY_BOB_MS) ** 2;
+  const keep = tMs < relaxStart ? 1 : 1 - easeInOutSine(seg(tMs, relaxStart, ms));
+  return pose({ y: bob * keep, yaw: TAU, armL: JOY_ARMS * keep, armR: JOY_ARMS * keep });
 }
 
 // Disappointed slump (miss 700 ms / backward event 1000 ms): head down, arms in, ears droop, a sigh.

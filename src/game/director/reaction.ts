@@ -17,6 +17,7 @@ export interface Reaction {
   act: Act;
   beatId: number | null; // null = no beat-driven act (situation reaction)
   ms: number;
+  stars?: number; // stars beats only: the star count picks the tiered success jump (Phase 8 D-04)
 }
 
 // The face that belongs to each act (UI-SPEC C4 table; 'rest' shows the idle face when it is not
@@ -45,7 +46,7 @@ export function reactionFor(pid: string, beat: Beat | null, isCurrent: boolean):
   const r = (expression: Expression, act: Act): Reaction => ({ expression, act, beatId: beat.id, ms: beat.ms });
   switch (beat.kind) {
     case 'stars':
-      return r('joy', 'success');
+      return { ...r('joy', 'success'), stars: beat.stars };
     case 'startBonus':
       return r('joy', 'bonus');
     case 'miss':
