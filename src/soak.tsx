@@ -5,11 +5,16 @@
 // Imports no three / @react-three itself (source guard (d)); the render metrics come from the
 // DEV-only window.__pjRenderInfo that GameCanvas installs.
 //
-// Query: ?games=5&players=8&rounds=1&skip=0.3
+// Query: ?games=5&players=8&rounds=1&skip=0.3[&seed=7]
 //   games   — games to play in a row (default 5)
 //   players — solo participants, 1..8 (default 8)
 //   rounds  — rounds per game (default 1)
 //   skip    — 0..1 probability of a page tap 500 ms into a success beat (default 0.3)
+//   seed    — optional: every game replays the SAME game (board, dice, verdicts, skip taps). The page
+//             reseeds crypto.getRandomValues (the engine's only randomness, systemRng) and its own
+//             verdict picks before each game, so first-use GPU uploads (e.g. a face expression shown
+//             for the first time) happen in game 1 only and games 2..N must match game 1 exactly.
+//             Without it every game is random (the default soak).
 // The auto player presses the visible buttons like a teacher every TICK_MS (🎲 → ✅ / ❌ at random →
 // 다음 ➡️ / 🔁 한 번 더 하기 / 🏆 결과 보기). Per game it records, at the ceremony (after the intro, a
 // forced gc when exposed): renderer geometries / textures / programs, the idle draw calls of the
@@ -23,6 +28,7 @@ import './game/styles/game.css';
 import App from './App';
 import { useGameStore } from './harness/useGameStore';
 import { buildParticipants, MAX_PARTICIPANTS } from './engine/setup';
+import { mulberry32 } from './engine/rng';
 import { usePresentation } from './game/usePresentation';
 import { activeNodeCount } from './game/sfx/sfx';
 import { CEREMONY_INTRO_MS } from './game/layout/podiumLayout';
@@ -46,6 +52,7 @@ declare global {
     __soakResult?: SoakRow[];
     __soakDone?: boolean;
     __soakError?: string;
+    __soakStarted?: boolean;
     gc?: () => void;
   }
 }
@@ -72,6 +79,24 @@ function probParam(q: URLSearchParams, key: string, def: number): number {
   return Math.min(1, Math.max(0, n));
 }
 const SKIP = probParam(query, 'skip', 0.3);
+const SEED = query.has('seed') ? intParam(query, 'seed', 1, 0, 2147483647) : null;
+
+// ---- randomness: Math.random by default; with ?seed every game replays the same sequence ----
+let pick: () => number = Math.random;
+const nativeGetRandomValues = crypto.getRandomValues.bind(crypto);
+
+function reseed(): void {
+  if (SEED === null) return;
+  const own = mulberry32(SEED);
+  const engine = mulberry32(SEED ^ 0x5bd1e995);
+  pick = () => own.next();
+  const seeded = <T extends ArrayBufferView | null>(arr: T): T => {
+    if (!(arr instanceof Uint32Array)) return nativeGetRandomValues(arr as never) as T;
+    for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(engine.next() * 4294967296);
+    return arr;
+  };
+  Object.defineProperty(crypto, 'getRandomValues', { value: seeded, configurable: true, writable: true });
+}
 
 // ---- results store (tiny external store for the table) ----
 const rows: SoakRow[] = [];
@@ -155,10 +180,10 @@ async function playOneGame(game: number): Promise<SoakRow> {
     const ok = visibleButton('✅ 성공');
     const fail = visibleButton('❌ 실패');
     if (ok && fail) {
-      const success = Math.random() < 0.6;
+      const success = pick() < 0.6;
       (success ? ok : fail).click();
       lastClick = performance.now();
-      if (success && Math.random() < SKIP) {
+      if (success && pick() < SKIP) {
         setTimeout(() => {
           if (usePresentation.getState().current?.kind === 'stars') document.body.click();
         }, SKIP_TAP_DELAY_MS);
@@ -198,6 +223,7 @@ async function playOneGame(game: number): Promise<SoakRow> {
 
 async function run(): Promise<void> {
   requestAnimationFrame(frame);
+  reseed();
   useGameStore.getState().startGame({
     mode: 'solo',
     participants: buildParticipants('solo', PLAYERS, [], []),
@@ -211,7 +237,11 @@ async function run(): Promise<void> {
   for (let game = 1; game <= GAMES; game++) {
     if (game > 1) {
       const again = visibleButton('🔁 다시 하기');
-      if (!again) throw new Error(`game ${game}: no 🔁 다시 하기 in the ceremony`);
+      if (!again) {
+        const seen = [...document.querySelectorAll('#root button')].map((b) => b.textContent?.trim()).join(' | ');
+        throw new Error(`game ${game}: no 🔁 다시 하기 in the ceremony (buttons: ${seen})`);
+      }
+      reseed(); // the restart builds the new board synchronously inside this click
       again.click();
       await waitUntil(() => !inCeremony(), 'the play stage after 🔁 다시 하기');
     }
@@ -257,7 +287,7 @@ function SoakTable() {
   return (
     <div className="soak-table" style={TABLE_STYLE}>
       <div>
-        soak · {GAMES}판 × {PLAYERS}명 × {ROUNDS}라운드 · skip {SKIP} · {status}
+        soak · {GAMES}판 × {PLAYERS}명 × {ROUNDS}라운드 · skip {SKIP} · seed {SEED ?? '없음'} · {status}
       </div>
       <table>
         <thead>
@@ -285,21 +315,29 @@ function SoakTable() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-    <SoakTable />
-  </StrictMode>,
-);
+// A hot update must never start a second root and a second auto player on the same page (two
+// players would press each other's buttons): a re-executed entry reloads the page instead.
+if (window.__soakStarted) window.location.reload();
+else start();
 
-window.__soakDone = false;
-run()
-  .catch((e: unknown) => {
-    window.__soakError = e instanceof Error ? e.message : String(e);
-    setStatus(`오류: ${window.__soakError}`);
-  })
-  .finally(() => {
-    window.__soakResult = [...rows];
-    window.__soakDone = true;
-    emit();
-  });
+function start(): void {
+  window.__soakStarted = true;
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+      <SoakTable />
+    </StrictMode>,
+  );
+
+  window.__soakDone = false;
+  run()
+    .catch((e: unknown) => {
+      window.__soakError = e instanceof Error ? e.message : String(e);
+      setStatus(`오류: ${window.__soakError}`);
+    })
+    .finally(() => {
+      window.__soakResult = [...rows];
+      window.__soakDone = true;
+      emit();
+    });
+}
