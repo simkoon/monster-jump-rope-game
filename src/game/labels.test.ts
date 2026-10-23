@@ -6,6 +6,7 @@ import {
   CTX_COPY,
   DIFF_LABEL,
   FAIL_RULE_LABEL,
+  MISS_COPY,
   REDRAW_LABEL,
   ROUND_DOTS_MAX,
   RULES_HINT,
@@ -301,12 +302,23 @@ describe('bannerCopy (D-23, D-24, UI-SPEC S6b)', () => {
     });
   });
 
-  it('stars and finalRound', () => {
-    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 3, ms: 600 })).toMatchObject({
-      top: '🎉 성공!',
+  it('stars (Phase 8 FX-02, UI-SPEC F4) and finalRound', () => {
+    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 2, ms: 1900 })).toEqual({
+      top: '퀘스트 성공!',
+      big: '⭐+2',
+      sub: null,
+      tone: 'grass',
+      label: '',
+      tier: 2,
+    });
+    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 3, ms: 2200 })).toMatchObject({
+      top: '퀘스트 성공!',
       big: '⭐+3',
       tone: 'grass',
+      tier: 3,
     });
+    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 1, ms: 1600 })?.tier).toBe(1);
+    expect(bannerCopy({ kind: 'stars', pid: 'p1', stars: 5, ms: 2200 })?.tier).toBe(3); // clamped
     expect(bannerCopy({ kind: 'finalRound', ms: 1500 })).toMatchObject({
       big: '🔔 마지막 라운드!',
       sub: '이번 라운드가 마지막이에요',
@@ -314,11 +326,34 @@ describe('bannerCopy (D-23, D-24, UI-SPEC S6b)', () => {
     });
   });
 
-  it('non-banner beats → null (the miss beat is timed but has no copy, D-13)', () => {
+  it('non-banner beats → null', () => {
     expect(bannerCopy({ kind: 'dice', pid: 'p1', face: 3, ms: 1000 })).toBeNull();
     expect(bannerCopy({ kind: 'preview', pid: 'p1', path: [1], ms: 500 })).toBeNull();
     expect(bannerCopy({ kind: 'hop', pid: 'p1', path: [1], by: 'dice', ms: 250 })).toBeNull();
-    expect(bannerCopy({ kind: 'miss', pid: 'p1', ms: 700 })).toBeNull();
+  });
+
+  it('miss → the soft one-liner: retry vs last (Phase 8 D-09, FX-05, UI-SPEC F6a)', () => {
+    expect(bannerCopy({ kind: 'miss', pid: 'p1', retry: true, ms: 700 })).toEqual({
+      top: '괜찮아! 다시 해 보자 💪',
+      big: null,
+      sub: null,
+      tone: 'soft',
+      label: '',
+    });
+    expect(bannerCopy({ kind: 'miss', pid: 'p1', retry: false, ms: 700 })).toMatchObject({
+      top: '다음엔 꼭! 💪',
+      big: null,
+      tone: 'soft',
+    });
+    // absent retry = false
+    expect(bannerCopy({ kind: 'miss', pid: 'p1', ms: 700 })?.top).toBe('다음엔 꼭! 💪');
+  });
+
+  it('miss copy never scolds: no ❌ / ✕ / X / 틀렸어요 / 실패! (D-09)', () => {
+    expect(MISS_COPY).toEqual({ retry: '괜찮아! 다시 해 보자 💪', last: '다음엔 꼭! 💪' });
+    for (const text of Object.values(MISS_COPY)) {
+      expect(text).not.toMatch(/❌|✕|✖|X|x|틀렸어요|실패!/);
+    }
   });
 
   it('win: one winner → 🏆 우승! with the animal emoji only (D-14, UI-SPEC C7d)', () => {

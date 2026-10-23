@@ -1,6 +1,7 @@
 // src/game/hud/hud6.test.tsx — Phase 6 DOM HUD parts (06-04: D-21~D-25, D-27, HUD-01~04, ROUND-02, STAB-02).
 // Props-only parts render directly; the Banner reads the beat queue store, so both stores are reset
 // before every test and the Banner tests run on fake timers (beat length = banner time).
+// Phase 8 (08-02): the delayed tiered success banner, the soft miss banner and the 08-02 CSS block.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import StatusChips from './StatusChips';
@@ -18,6 +19,11 @@ import { EMPTY_DISPLAYED } from '../director/displayed';
 import type { BeatSpec } from '../director/timeline';
 import type { JudgementResult, MoveResult } from '../../engine/state';
 import type { Event } from '../../schema';
+import { prefersReducedMotion } from '../reducedMotion';
+import gameCss from '../styles/game.css?raw';
+
+vi.mock('../reducedMotion', () => ({ prefersReducedMotion: vi.fn(() => false) }));
+const reducedMock = vi.mocked(prefersReducedMotion);
 
 const ev = (eff: Event['eff'], steps: number, name: string, label: Event['label'] = ''): Event => ({
   id: `e-${name}`,
@@ -53,6 +59,7 @@ afterEach(() => {
     usePresentation.getState().reset(EMPTY_DISPLAYED, null);
   });
   vi.useRealTimers();
+  reducedMock.mockReturnValue(false);
 });
 
 describe('StatusChips (D-23, UI-SPEC S6a)', () => {
@@ -128,29 +135,85 @@ describe('Banner (D-23, D-24, D-25, UI-SPEC S6b)', () => {
     render(<Banner />);
     play([
       { kind: 'finalRound', ms: 1500 },
-      { kind: 'stars', pid: 'p1', stars: 3, ms: 600 },
+      { kind: 'stars', pid: 'p1', stars: 3, ms: 2200 },
     ]);
     expect(screen.getByRole('status')).toHaveClass('beat-banner--final');
     expect(screen.getByText('🔔 마지막 라운드!')).toBeInTheDocument();
     expect(screen.getByText('이번 라운드가 마지막이에요')).toHaveClass('beat-banner-sub');
     tick(1500);
-    expect(screen.getByText('🎉 성공!')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).toBeNull(); // the success banner waits for bannerMs
+    tick(660);
+    expect(screen.getByText('퀘스트 성공!')).toBeInTheDocument();
     expect(screen.getByText('⭐+3')).toBeInTheDocument();
-    tick(600);
+    tick(2200 - 660);
     expect(usePresentation.getState().busy).toBe(false);
   });
 
-  it('miss beat (07-01, D-13): no DOM, completed by the Banner at exactly 700 ms', () => {
+  it.each([
+    [1, 1600, 480, 1.04],
+    [2, 1900, 570, 1.08],
+    [3, 2200, 660, 1.12],
+  ] as const)(
+    '⭐%i stars beat (FX-02, D-03, D-04): hidden until bannerMs, tier class + --banner-pop, done at ms from the beat start',
+    (stars, ms, bannerMs, pop) => {
+      vi.useFakeTimers();
+      render(<Banner />);
+      play([{ kind: 'stars', pid: 'p1', stars, ms }]);
+      expect(screen.queryByRole('status')).toBeNull();
+      tick(bannerMs - 1);
+      expect(screen.queryByRole('status')).toBeNull();
+      tick(1);
+      const banner = screen.getByRole('status');
+      expect(banner).toHaveClass('beat-banner', 'beat-banner--grass', `beat-banner--tier${stars}`);
+      expect(banner).toHaveTextContent('퀘스트 성공!');
+      expect(screen.getByText(`⭐+${stars}`)).toHaveClass('beat-banner-big');
+      expect(banner.style.getPropertyValue('--banner-pop')).toBe(String(pop));
+      expect(banner.style.getPropertyValue('--beat-ms')).toBe(`${ms}ms`);
+      // T-08-30: completion is timed from the beat start, not from the banner entry.
+      tick(ms - bannerMs - 1);
+      expect(usePresentation.getState().current?.kind).toBe('stars');
+      tick(1);
+      expect(usePresentation.getState().busy).toBe(false);
+      expect(screen.queryByRole('status')).toBeNull();
+    },
+  );
+
+  it('reduced motion (D-08): the stars banner renders at 0 ms with no pop and completes at 1200 ms', () => {
+    reducedMock.mockReturnValue(true);
     vi.useFakeTimers();
-    const { container } = render(<Banner />);
-    play([{ kind: 'miss', pid: 'p1', ms: 700 }]);
-    expect(container.innerHTML).toBe('');
-    tick(699);
-    expect(usePresentation.getState().current?.kind).toBe('miss');
-    tick(1); // the Banner timer, not the 1200 ms watchdog
+    render(<Banner />);
+    play([{ kind: 'stars', pid: 'p1', stars: 3, ms: 1200 }]);
+    const banner = screen.getByRole('status');
+    expect(banner).toHaveClass('beat-banner--tier3');
+    expect(banner).toHaveTextContent('퀘스트 성공!');
+    expect(banner.style.getPropertyValue('--banner-pop')).toBe('1');
+    tick(1199);
+    expect(usePresentation.getState().current?.kind).toBe('stars');
+    tick(1);
     expect(usePresentation.getState().busy).toBe(false);
-    expect(container.innerHTML).toBe('');
   });
+
+  it.each([
+    [true, '괜찮아! 다시 해 보자 💪'],
+    [false, '다음엔 꼭! 💪'],
+  ] as const)(
+    'miss beat retry=%s (D-09, FX-05): soft banner at 0 ms, completed by the Banner at exactly 700 ms',
+    (retry, text) => {
+      vi.useFakeTimers();
+      render(<Banner />);
+      play([{ kind: 'miss', pid: 'p1', retry, ms: 700 }]);
+      const banner = screen.getByRole('status');
+      expect(banner).toHaveClass('beat-banner', 'beat-banner--soft');
+      expect(banner).not.toHaveClass('beat-banner--coral');
+      expect(banner).toHaveTextContent(text);
+      expect(banner.textContent).not.toMatch(/❌|✕|X/);
+      tick(699);
+      expect(usePresentation.getState().current?.kind).toBe('miss');
+      tick(1); // the Banner timer, not the 1200 ms watchdog
+      expect(usePresentation.getState().busy).toBe(false);
+      expect(screen.queryByRole('status')).toBeNull();
+    },
+  );
 
   it('win beat (07-01, D-14, UI-SPEC C7d): gold win banner with the emoji row, done at 1500 ms', () => {
     vi.useFakeTimers();
@@ -494,5 +557,51 @@ describe('ControlsBar v2 (HUD-03, HUD-04, D-21, D-25, UI-SPEC S5)', () => {
     expect(container.querySelector('.game-judge-result')).toBeNull();
     rerender(<ControlsBar {...props} phase="turnResolved" judgement={ok} hidden />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('game.css Phase 8 banner block (08-02, UI-SPEC F4 / F6a / §Color)', () => {
+  const MARK = 'Phase 8: banners (08-02)';
+  const start = gameCss.indexOf(MARK);
+  const next = gameCss.indexOf('=== Phase 8:', start + MARK.length);
+  const block = start < 0 ? '' : gameCss.slice(start, next < 0 ? undefined : next);
+  const keyframes = (name: string) => {
+    const i = block.indexOf(`@keyframes ${name}`);
+    if (i < 0) return '';
+    let depth = 0;
+    for (let j = block.indexOf('{', i); j < block.length; j++) {
+      if (block[j] === '{') depth++;
+      else if (block[j] === '}' && --depth === 0) return block.slice(i, j + 1);
+    }
+    return '';
+  };
+
+  it('exists once with the tier and soft rules', () => {
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(gameCss.indexOf(MARK, start + 1)).toBe(-1);
+    for (const sel of ['.beat-banner--tier1', '.beat-banner--tier2', '.beat-banner--tier3', '.beat-banner--soft']) {
+      expect(block).toContain(sel);
+    }
+  });
+
+  it('uses tokens and color-mix only: no hex literal, no coral', () => {
+    expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(block).not.toContain('--coral');
+    expect(block).toContain('color-mix(');
+  });
+
+  it('the success pop scales through --banner-pop; the soft entry has no scale', () => {
+    expect(keyframes('hud8-banner-pop')).toContain('var(--banner-pop');
+    const soft = keyframes('hud8-soft-in');
+    expect(soft).not.toBe('');
+    expect(soft).not.toContain('scale');
+    expect(soft).toContain('translate');
+  });
+
+  it('its own reduced-motion block turns off hud8-banner-pop and hud8-soft-in', () => {
+    const i = block.indexOf('@media (prefers-reduced-motion: reduce)');
+    expect(i).toBeGreaterThanOrEqual(0);
+    const media = block.slice(i);
+    expect(media).toMatch(/\.beat-banner--tier1[^{]*\.beat-banner--tier2[^{]*\.beat-banner--tier3[^{]*\.beat-banner--soft[^{]*\{[^}]*animation:\s*none/);
   });
 });
