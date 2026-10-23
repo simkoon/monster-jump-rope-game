@@ -3,7 +3,7 @@
 // scoreboard dots can never drift apart.
 import css from '../styles/index.css?raw';
 import { ANIMALS } from '../engine/animals';
-import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, DIFF_COLOR, EVENT_COLOR, LIGHTS, SCENE_COLOR } from './palette';
+import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, DIFF_COLOR, EVENT_COLOR, FX_COLOR, LIGHTS, SCENE_COLOR } from './palette';
 
 // First occurrence of `--name:#HEX` = the light :root block (the dark block comes later).
 function token(name: string): string {
@@ -140,5 +140,58 @@ describe('EVENT_COLOR / SCENE_COLOR / LIGHTS', () => {
     expect(LIGHTS.hemi).toEqual({ sky: '#FFFFFF', ground: '#CFE4F5', intensity: 1.4 });
     expect(LIGHTS.key).toEqual({ color: '#FFF6E0', intensity: 1.6, position: [5, 10, 7] });
     expect(LIGHTS.rim).toEqual({ color: '#8FD0FF', intensity: 0.5, position: [-6, 6, -6] });
+  });
+});
+
+describe('FX_COLOR (Phase 8 3D effects, UI-SPEC "3D 효과 색")', () => {
+  // Every hex in index.css (light + dark blocks), upper-cased.
+  const cssHexes = new Set([...css.matchAll(/#[0-9A-Fa-f]{6}\b/g)].map((m) => up(m[0])));
+  const all = (): string[] =>
+    Object.values(FX_COLOR).flatMap((v) => (Array.isArray(v) ? (v as readonly string[]) : [v as string]));
+
+  it('uses only existing index.css token hexes (no new hex)', () => {
+    const values = all();
+    expect(values.length).toBeGreaterThan(10);
+    for (const v of values) {
+      expect(v).toMatch(HEX);
+      expect(cssHexes.has(up(v)), v).toBe(true);
+    }
+  });
+
+  it('puff equals the --line token (the one value new to palette.ts)', () => {
+    expect(up(FX_COLOR.puff)).toBe(token('line'));
+    expect(up(FX_COLOR.puffAlt)).toBe(token('panel'));
+  });
+
+  it('confetti = sun, pink, grass, grape, normal, panel in equal shares; never sky or coral', () => {
+    expect(FX_COLOR.confetti.map(up)).toEqual(
+      ['sun', 'pink', 'grass', 'grape', 'normal', 'panel'].map((t) => token(t)),
+    );
+    const banned = [token('sky'), token('sky-deep'), token('coral')];
+    for (const c of [...FX_COLOR.confetti, ...FX_COLOR.confettiGold]) expect(banned).not.toContain(up(c));
+  });
+
+  it('confettiGold = 40 % sun / sun-deep + 60 % the confetti set', () => {
+    const g = FX_COLOR.confettiGold.map(up);
+    expect(g).toHaveLength(10);
+    const sunDeep = g.filter((c) => c === token('sun-deep')).length;
+    const sun = g.filter((c) => c === token('sun')).length;
+    // 4 gold slots (2 sun + 2 sun-deep) + the 6 confetti colors (one of which is sun).
+    expect(sunDeep).toBe(2);
+    expect(sun).toBe(3);
+    const rest = [...g];
+    for (const c of FX_COLOR.confetti.map(up)) rest.splice(rest.indexOf(c), 1);
+    expect(rest.sort()).toEqual([token('sun'), token('sun'), token('sun-deep'), token('sun-deep')].sort());
+  });
+
+  it('burst / ring / sparkle / podium values follow the UI-SPEC', () => {
+    expect(up(FX_COLOR.burst)).toBe(token('sun'));
+    expect(up(FX_COLOR.burstAlt)).toBe(token('panel'));
+    expect(up(FX_COLOR.ring)).toBe(token('panel'));
+    expect(up(FX_COLOR.ringGold)).toBe(token('sun'));
+    expect(FX_COLOR.sparkle.map(up)).toEqual([token('sun'), token('panel')]);
+    expect(up(FX_COLOR.podium)).toBe(token('sun'));
+    expect(up(FX_COLOR.podiumEmissive)).toBe(token('sun-deep'));
+    expect(up(FX_COLOR.podiumGround)).toBe(token('candy-mint'));
   });
 });
