@@ -38,7 +38,7 @@ export function CeremonyHead({ game }: { game: GameState }) {
   return (
     <div className="ceremony-head">
       <h1 className="ceremony-title">{CEREMONY_TITLE}</h1>
-      {game.endReason && <p className="ceremony-reason">{endReasonCopy(game.endReason, game.config.rules.rounds)}</p>}
+      {game.endReason && <p className="ceremony-reason">{game.config.rules.nomination ? '모은 별로 우승을 정했어요!' : endReasonCopy(game.endReason, game.config.rules.rounds)}</p>}
     </div>
   );
 }

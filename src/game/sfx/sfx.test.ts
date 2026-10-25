@@ -399,7 +399,7 @@ describe('sfx resume / iOS recovery (D-21)', () => {
 describe('sfx default export + CC0 notice (D-17)', () => {
   it('bundles the one interface', () => {
     expect(Object.keys(sfx).sort()).toEqual(
-      ['activeNodeCount', 'activeVoiceCount', 'play', 'resume', 'setEnabled', 'stopAll', 'stopGroup', 'unlock'].sort(),
+      ['activeNodeCount', 'activeVoiceCount', 'play', 'resume', 'setEnabled', 'stopAll', 'stopGroup', 'testSound', 'unlock'].sort(),
     );
   });
 

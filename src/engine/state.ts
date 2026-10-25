@@ -8,7 +8,7 @@ import type { Mission, Event, Effect, Difficulty } from '../schema';
 import type { AnimalId } from './animals';
 import type { Tile, TileKind } from './board';
 
-export type Phase = 'awaitingRoll' | 'awaitingJudgement' | 'turnResolved' | 'gameOver';
+export type Phase = 'awaitingNomination' | 'awaitingRoll' | 'awaitingJudgement' | 'turnResolved' | 'gameOver';
 export type EndReason = 'rounds-complete' | 'manual';
 export type FailRule = 'retrySame' | 'retryNew' | 'noStar';
 export type StartBonus = 0 | 1 | 2;
@@ -27,6 +27,7 @@ export interface Participant {
 }
 
 export interface GameRules {
+  nomination?: boolean; // Teacher-selected, no round limit.
   rounds: number;
   failRule: FailRule;
   startBonus: StartBonus;

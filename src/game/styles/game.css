@@ -1608,3 +1608,14 @@
   .dom-podium-champ { animation: none; }
   .sound-toggle { transition: none; }
 }
+
+/* Teacher-controlled opportunities */
+.nomination-panel { padding: 16px; border: 2px solid #c9dcff; border-radius: 18px; background: #f2f7ff; color: #18335a; }
+.nomination-panel h2 { font-size: 18px; margin: 0 0 8px; }
+.nomination-panel p { font-size: 14px; line-height: 1.5; margin: 8px 0; }
+.nomination-choices { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+.nomination-choices button { min-height: 48px; background: white; color: #18335a; border: 2px solid #8caee5; }
+
+.sound-check { position: absolute; top: 72px; right: 8px; z-index: 4; text-align: right; max-width: 250px; }
+.sound-check button { background: var(--panel); color: var(--ink); min-height: 36px; }
+.sound-check p { background: var(--panel); color: var(--ink); border: 1px solid var(--toy-edge); border-radius: 10px; padding: 8px; font-size: 12px; line-height: 1.5; }

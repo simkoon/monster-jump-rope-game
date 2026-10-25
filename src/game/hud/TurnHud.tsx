@@ -33,6 +33,8 @@ interface TurnHudProps {
   next: NextUpView | null;
   onEndNow: () => void;
   over?: boolean;
+  nomination?: boolean;
+  waiting?: boolean;
 }
 
 const dotStyle = (animal: AnimalId) => ({ '--pc': ANIMAL_COLOR[animal] }) as CSSProperties;
@@ -48,6 +50,8 @@ export default function TurnHud({
   next,
   onEndNow,
   over = false,
+  nomination = false,
+  waiting = false,
 }: TurnHudProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isFinal = round >= totalRounds;
@@ -57,7 +61,7 @@ export default function TurnHud({
     <header className="game-topbar">
       {/* Turn change is announced to assistive tech. */}
       <div className="game-turn-pill" aria-live="polite">
-        {over ? (
+        {waiting ? <span className="game-turn-name">선생님 지목 대기</span> : over ? (
           <span key="over" className="turn-pill-content">
             <span className="game-turn-name">{GAME_OVER_PILL}</span>
           </span>
@@ -66,7 +70,7 @@ export default function TurnHud({
             <span className="turn-dot" style={dotStyle(animal)} aria-hidden="true" />
             <span className="game-turn-name">
               {ANIMAL_EMOJI[animal]} {name}
-              <span className="suffix"> 차례</span>
+              <span className="suffix">{nomination ? ' · 1회 기회' : ' 차례'}</span>
             </span>
             {isExtra && <span className="game-event-chip extra">🔁 한 번 더</span>}
             {isTeam && <span className="game-turn-member">이번엔 {activeMember} 님이 도전!</span>}
@@ -74,7 +78,7 @@ export default function TurnHud({
         )}
       </div>
 
-      <div
+      {!nomination && <div
         className={isFinal ? 'game-round is-final' : 'game-round'}
         role="group"
         aria-label={roundAria(round, totalRounds)}
@@ -90,9 +94,9 @@ export default function TurnHud({
           </span>
         )}
         <span className="value">{`${round}/${totalRounds}`}</span>
-      </div>
+      </div>}
 
-      {!over && (
+      {!nomination && !over && (
         <div className="turn-next">
           <span className="label">다음</span>
           <span className="turn-next-row">

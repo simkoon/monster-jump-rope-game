@@ -10,11 +10,13 @@
 //   title say what a tap will do (no aria-pressed, the label already changes).
 // Placement (canvas cell top-right, GameStage) and styling (game.css, 08-10); `is-off` only picks
 // the flat off background.
+import { useState } from 'react';
 import { useSettings } from '../../settings';
 import { SOUND_TOGGLE_EMOJI, soundToggleLabel } from '../labels';
 import sfx from '../sfx/sfx';
 
 export default function SoundToggle() {
+  const [testResult, setTestResult] = useState('');
   const soundOn = useSettings((s) => s.soundOn);
   const setSoundOn = useSettings((s) => s.setSoundOn);
   const label = soundToggleLabel(soundOn);
@@ -25,7 +27,17 @@ export default function SoundToggle() {
     if (next) sfx.unlock();
   };
 
+  async function checkSound() {
+    setSoundOn(true);
+    setTestResult('소리 확인 중…');
+    const result = await sfx.testSound();
+    setTestResult(result.voices > 0
+      ? '확인음을 재생했어요. 안 들리면 볼륨과 출력 장치를 확인해 주세요.'
+      : '오디오가 열리지 않았어요 (' + result.state + '). 소리 확인을 다시 눌러 주세요.');
+  }
+
   return (
+    <>
     <button
       type="button"
       className={soundOn ? 'sound-toggle' : 'sound-toggle is-off'}
@@ -36,5 +48,10 @@ export default function SoundToggle() {
     >
       {soundOn ? SOUND_TOGGLE_EMOJI.on : SOUND_TOGGLE_EMOJI.off}
     </button>
+    <div className="sound-check" data-skip-ignore>
+      <button type="button" className="game-btn--sm" onClick={checkSound}>소리 확인</button>
+      {testResult && <p role="status">{testResult}</p>}
+    </div>
+    </>
   );
 }

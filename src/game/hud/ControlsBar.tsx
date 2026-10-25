@@ -23,6 +23,7 @@ const NEXT_LABEL: Record<NextKind, string> = {
 interface ControlsBarProps {
   phase: Phase;
   hidden?: boolean;
+  nomination?: boolean;
   canUndo: boolean;
   nextKind: NextKind;
   judgement: JudgementResult | null;
@@ -34,6 +35,7 @@ interface ControlsBarProps {
 export default function ControlsBar({
   phase,
   hidden = false,
+  nomination = false,
   canUndo,
   nextKind,
   judgement,
@@ -54,7 +56,7 @@ export default function ControlsBar({
   } else if (phase === 'turnResolved') {
     primary = (
       <button type="button" className="game-btn game-btn--neutral" onClick={onNext}>
-        {NEXT_LABEL[nextKind]}
+        {nomination ? '지목 대기로' : NEXT_LABEL[nextKind]}
       </button>
     );
     if (judgement?.success) {
@@ -66,7 +68,7 @@ export default function ControlsBar({
     } else if (judgement && !judgement.retry) {
       result = (
         <p className="game-judge-result miss" aria-live="polite">
-          아쉬워요! 이번엔 별 없이 다음 차례
+          {nomination ? '이번에는 별을 얻지 못했어요. 다음 지목을 기다려요.' : '아쉬워요! 이번엔 별 없이 다음 차례'}
         </p>
       );
     }

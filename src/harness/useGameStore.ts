@@ -15,6 +15,7 @@ import type { Mission, Event } from '../schema';
 import type { GameState, Participant } from '../engine/state';
 import {
   createGame,
+  nominate,
   rollDice,
   judge as engineJudge,
   undoJudgement,
@@ -28,6 +29,7 @@ export interface GameSetup {
   mode: 'solo' | 'team';
   participants: Participant[];
   rounds: number;
+  nomination?: boolean;
 }
 
 interface ContentOverride {
@@ -41,6 +43,7 @@ interface GameStoreState {
   startBlockedReason: string | null;
 
   startGame: (setup: GameSetup, contentOverride?: ContentOverride) => void;
+  nominate: (pid: string) => void;
   roll: () => void;
   judge: (success: boolean) => void;
   undo: () => void;
@@ -74,9 +77,14 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       return;
     }
     const { failRule, startBonus, boardSize } = useSettings.getState();
-    const rules = { rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
+    const rules = { nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
     const game = createGame({ mode: setup.mode, participants: setup.participants, rules }, content, systemRng());
     set({ game, startBlockedReason: null });
+  },
+
+  nominate: (pid) => {
+    const g = get().game;
+    if (g) set({ game: nominate(g, pid) });
   },
 
   // TURN-01/05/06/07: roll, move around the ring, resolve the landed tile.
@@ -123,6 +131,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       mode: g.config.mode,
       participants: g.config.participants,
       rounds: g.config.rules.rounds,
+      nomination: g.config.rules.nomination,
     });
   },
 

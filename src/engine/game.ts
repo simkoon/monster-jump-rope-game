@@ -120,7 +120,7 @@ export function createGame(config: GameConfig, content: GameContent, rng: Rng): 
     decks[d] = shuffle(pool[d], rng);
   }
   const base: GameState = {
-    phase: 'awaitingRoll',
+    phase: rules.nomination ? 'awaitingNomination' : 'awaitingRoll',
     config: { ...config, participants, rules },
     board,
     pool,
@@ -137,7 +137,7 @@ export function createGame(config: GameConfig, content: GameContent, rng: Rng): 
     undo: null,
     log: { seq: 0, events: [] },
   };
-  return { ...base, log: { seq: 1, events: [{ t: 'gameStarted' }, turnStartedEvent(base)] } };
+  return { ...base, log: { seq: 1, events: rules.nomination ? [{ t: 'gameStarted' }] : [{ t: 'gameStarted' }, turnStartedEvent(base)] } };
 }
 
 // TURN-01/02/05/06/07: roll, move around the ring, resolve the landed tile once.
@@ -184,7 +184,7 @@ export function rollDice(state: GameState, rng: Rng): GameState {
   const ev = landedTile.kind === 'event' ? landedTile.event : null;
   if (ev) {
     if (ev.eff === 'extra') {
-      extraSuppressed = turn.isExtra; // D-08: at most one extra in a row
+      extraSuppressed = !!state.config.rules.nomination || turn.isExtra; // D-08: at most one extra in a row
       if (!extraSuppressed) turn.extraGranted = true;
       events.push({ t: 'eventApplied', pid, eff: ev.eff, steps: ev.steps, suppressed: extraSuppressed });
     } else {
@@ -361,6 +361,12 @@ function finish(state: GameState, reason: EndReason): GameState {
 export function advanceTurn(state: GameState): GameState {
   if (state.phase !== 'turnResolved') return state;
   const cleared = { card: null, lastMove: null, lastJudgement: null };
+  if (state.config.rules.nomination) {
+    const p = currentParticipant(state);
+    const rotated = withParticipant(state, state.currentIndex, { memberTurnIndex: (p.memberTurnIndex + 1) % p.memberNames.length });
+    return { ...rotated, ...cleared, phase: 'awaitingNomination', undo: null,
+      turn: { ...FRESH_TURN }, log: { seq: state.log.seq + 1, events: [] } };
+  }
 
   // Extra branch FIRST: same participant and member, not counted as a round (D-08). The last
   // participant of the last round is allowed too — the game ends after the extra turn (D-18).
@@ -412,7 +418,21 @@ export function canUndo(state: GameState): boolean {
 // True when the next advanceTurn will end the game (last regular turn of the last round,
 // with no pending extra turn).
 export function willEndOnAdvance(state: GameState): boolean {
-  if (state.phase !== 'turnResolved' || state.turn.extraGranted) return false;
+  if (state.config.rules.nomination || state.phase !== 'turnResolved' || state.turn.extraGranted) return false;
   const n = state.config.participants.length;
   return (state.currentIndex + 1) % n === 0 && state.round >= state.config.rules.rounds;
+}
+
+// A teacher nomination opens exactly one roll. Cannot interrupt a pending verdict.
+export function nominate(state: GameState, pid: string): GameState {
+  if (!state.config.rules.nomination || !['awaitingNomination', 'turnResolved'].includes(state.phase)) return state;
+  const index = state.config.participants.findIndex((p) => p.id === pid);
+  if (index < 0) return state;
+  const leaving = currentParticipant(state);
+  const next = state.phase === 'turnResolved'
+    ? withParticipant(state, state.currentIndex, { memberTurnIndex: (leaving.memberTurnIndex + 1) % leaving.memberNames.length })
+    : state;
+  const selected: GameState = { ...next, currentIndex: index, phase: 'awaitingRoll',
+    turn: { ...FRESH_TURN }, card: null, lastMove: null, lastJudgement: null, undo: null };
+  return { ...selected, log: { seq: state.log.seq + 1, events: [turnStartedEvent(selected)] } };
 }

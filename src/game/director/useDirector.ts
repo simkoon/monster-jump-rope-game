@@ -15,7 +15,7 @@ import { buildTimeline, type TimelineCtx } from './timeline';
 
 export function timelineCtx(game: GameState): TimelineCtx {
   return {
-    totalRounds: game.config.rules.rounds,
+    totalRounds: game.config.rules.nomination ? Number.POSITIVE_INFINITY : game.config.rules.rounds,
     firstPid: game.config.participants[0].id,
     reducedMotion: prefersReducedMotion(),
     lastEvent: game.lastMove?.event ?? null,

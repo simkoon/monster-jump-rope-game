@@ -6,21 +6,18 @@
 // notices (informational only — D-13) and the empty-library guard (the only start blocker).
 // The form state lives in the useSetupDraft store, not in component state, so following the
 // RULES_HINT to the 편집기 and back keeps everything typed in (WR-03).
-import { useState } from 'react';
 import { useStore } from '../../store';
-import { useSettings, ROUNDS_MIN, ROUNDS_MAX } from '../../settings';
+import { useSettings } from '../../settings';
 import { useGameStore } from '../../harness/useGameStore';
 import SegmentedControl from '../../components/SegmentedControl';
 import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import AnimalPicker from './AnimalPicker';
 import { useSetupDraft, type SetupMode } from '../useSetupDraft';
-import { analyzeContent, buildParticipants, estimateMinutes, MAX_PARTICIPANTS } from '../../engine/setup';
+import { analyzeContent, buildParticipants, MAX_PARTICIPANTS } from '../../engine/setup';
 import { assignAnimals, type AnimalId } from '../../engine/animals';
 import {
   ANIMAL_EMOJI,
   RULES_HINT,
-  estimateBasis,
-  estimateLine,
   missingNotices,
   rulesSummary,
 } from '../labels';
@@ -52,15 +49,7 @@ export default function SetupView() {
   const names = useSetupDraft((s) => s.names);
   const members = useSetupDraft((s) => s.members);
   const picks = useSetupDraft((s) => s.picks);
-  const draftRounds = useSetupDraft((s) => s.rounds);
   const patch = useSetupDraft((s) => s.patch);
-  // D-19: read the instructor default once on mount; this game's value is never saved back.
-  // Until the stepper is touched the draft keeps no value, so a default changed in ⚙️ 설정 shows
-  // up after coming back (WR-03); a change made while this screen is open does not move it.
-  const [defaultRounds] = useState<number>(() => useSettings.getState().defaultRounds);
-  const rounds = draftRounds ?? defaultRounds;
-  const stepRounds = (delta: number) =>
-    patch((d) => ({ rounds: Math.min(ROUNDS_MAX, Math.max(ROUNDS_MIN, (d.rounds ?? defaultRounds) + delta)) }));
   const setMode = (m: Mode) => patch({ mode: m });
 
   const clampedCount = clampCount(count);
@@ -92,7 +81,7 @@ export default function SetupView() {
       : undefined;
     const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
     const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
-    useGameStore.getState().startGame({ mode, participants, rounds });
+    useGameStore.getState().startGame({ mode, participants, rounds: 1, nomination: true });
     // The draft is consumed once a game is running; 처음으로 then opens a fresh start screen.
     if (useGameStore.getState().game) useSetupDraft.getState().reset();
   }
@@ -100,7 +89,7 @@ export default function SetupView() {
   return (
     <div className="game-setup">
       <PowerJumpingLogo as="h1" variant="hero" subtitle="신나는 줄넘기 미션" className="game-setup-logo" />
-      <p className="game-setup-sub">게임을 설정하고 시작하세요.</p>
+      <p className="game-setup-sub">수업을 잘 들은 친구를 선생님이 지목해 기회를 주세요.</p>
 
       {/* Plain containers, not label elements: a label wrapping buttons forwards a caption tap to its
           first button (− / 개인전) and would silently change the setting (WR-02). */}
@@ -177,35 +166,7 @@ export default function SetupView() {
         ))}
       </ul>
 
-      <div className="game-setup-field">
-        <span>라운드</span>
-        <span className="game-count-ctl">
-          <button
-            type="button"
-            aria-label="라운드 줄이기"
-            disabled={rounds <= ROUNDS_MIN}
-            onClick={() => stepRounds(-1)}
-          >
-            −
-          </button>
-          <output aria-label="라운드 수" aria-live="polite">
-            {rounds}
-          </output>
-          <button
-            type="button"
-            aria-label="라운드 늘리기"
-            disabled={rounds >= ROUNDS_MAX}
-            onClick={() => stepRounds(1)}
-          >
-            +
-          </button>
-        </span>
-      </div>
-
-      <p className="setup-estimate" aria-live="polite">
-        {estimateLine(estimateMinutes(clampedCount, rounds))}
-      </p>
-      <p className="setup-estimate-basis">{estimateBasis(mode, clampedCount, rounds)}</p>
+      <section className="nomination-panel"><h2>선생님 지목 방식</h2><p>지목한 친구만 주사위를 한 번 돌려요. 자동으로 차례가 넘어가지 않고, 같은 친구를 여러 번 지목할 수 있어요.</p><p>라운드 제한 없이 별을 누적하고, 수업이 끝나면 별이 가장 많은 친구가 우승해요.</p></section>
 
       <p className="setup-rules">{rulesSummary({ boardSize, startBonus, failRule })}</p>
       <p className="setup-rules">{RULES_HINT}</p>

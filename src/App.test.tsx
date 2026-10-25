@@ -53,10 +53,10 @@ describe('App shell — default 게임 entry (D-10)', () => {
     // ...and no editor MissionTab content (a seed mission name) is rendered.
     expect(screen.queryByText('양발 모아뛰기')).toBeNull();
     // The reskinned game view (SetupView, GameApp with no active game) is what mounts:
-    // the original Phase 4 파워점핑 logo + the --tap 게임 시작 button. The header logo's
-    // aria-label is composed as '파워점핑 {context} {subtitle}' (PowerJumpingLogo).
-    expect(screen.getAllByText('파워점핑').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByLabelText('파워점핑 게임 주사위를 굴리고 줄넘기 미션으로 별을 모아요')).toBeInTheDocument();
+    // the original Phase 4 파워점핑 신월점 logo + the --tap 게임 시작 button. The header logo's
+    // aria-label is composed as '파워점핑 신월점 {context} {subtitle}' (PowerJumpingLogo).
+    expect(screen.getAllByText('파워점핑 신월점').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText('파워점핑 신월점 게임 주사위를 굴리고 줄넘기 미션으로 별을 모아요')).toBeInTheDocument();
     expect(document.querySelector('.app--game')).not.toBeNull();
     expect(document.querySelector('.panel--game-shell')).not.toBeNull();
     expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
@@ -70,49 +70,40 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(container.querySelector('.game-stage')).not.toBeNull();
   });
 
-  it('plays one full game from 게임 시작 to the ceremony, then 🔁 다시 하기 (Phase 5 goal, Phase 8 D-11)', async () => {
-    useSettings.setState({ defaultRounds: 1, boardSize: 16, failRule: 'noStar' });
+  it('opens one nominated opportunity, returns to teacher selection and ends manually', async () => {
     const { container } = render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
-    expect(container.querySelector('.game-stage.stage')).not.toBeNull();
-    expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
-    await waitForCanvas(); // the lazy 3D chunk (fake) resolves on real timers
-
-    const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
-    const findBtn = () => labels.map((name) => screen.queryByRole('button', { name })).find((b) => b !== null);
-    let clicks = 0;
-    vi.useFakeTimers(); // real taps are further apart than the double-tap input lock (CR-01)
-    try {
-      while (!screen.queryByText('게임 끝!') && clicks < 40) {
-        let btn = findBtn();
-        if (!btn) {
-          settle(); // beats still running: the controls are hidden until they end (HUD-03)
-          if (screen.queryByText('게임 끝!')) break; // the win beat hid every button (07-01, D-14)
-          btn = findBtn();
-        }
-        expect(btn).toBeTruthy();
-        fireEvent.click(btn!);
-        act(() => {
-          vi.advanceTimersByTime(INPUT_LOCK_MS);
-        });
-        clicks++;
-      }
-    } finally {
-      vi.useRealTimers();
+    await waitForCanvas();
+    expect(screen.queryByRole('button', {name:'🎲 주사위 굴리기'})).toBeNull();
+    expect(container.querySelector('.game-round')).toBeNull();
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole('button', {name:'플레이어 2 지목하기'}));
+    act(() => { vi.advanceTimersByTime(INPUT_LOCK_MS); });
+    expect(useGameStore.getState().game!.currentIndex).toBe(1);
+    expect(screen.queryByRole('button', {name:'플레이어 1 지목하기'})).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name:'🎲 주사위 굴리기'}));
+    settle();
+    if (screen.queryByRole('button', {name:'✅ 성공'})) {
+      act(() => { vi.advanceTimersByTime(INPUT_LOCK_MS); });
+      fireEvent.click(screen.getByRole('button', {name:'✅ 성공'}));
+      settle();
     }
+    expect(screen.queryByRole('button', {name:'🎲 주사위 굴리기'})).toBeNull();
+    expect(screen.getByRole('button', {name:'플레이어 2 지목하기'})).toBeInTheDocument();
+    act(() => { vi.advanceTimersByTime(INPUT_LOCK_MS); });
+    fireEvent.click(screen.getByRole('button', {name:'플레이어 2 지목하기'}));
+    expect(useGameStore.getState().game!.currentIndex).toBe(1);
+    fireEvent.click(screen.getByRole('button', {name:'지금 끝내기'}));
+    fireEvent.click(screen.getByRole('button', {name:'게임 끝내기'}));
     expect(screen.getByText('게임 끝!')).toBeInTheDocument();
-    expect(screen.getByText('1라운드를 모두 마쳤어요!')).toBeInTheDocument();
-    expect(screen.getByText(/^🏆 (공동 )?우승! /)).toBeInTheDocument();
-    // The ceremony is a mode of the same stage on the same canvas (Phase 8 D-11).
-    expect(container.querySelector('.game-stage.stage')).toHaveClass('stage--ceremony');
-    expect(screen.getByRole('list', { name: '모두의 별' })).toBeInTheDocument();
+    expect(screen.getByText('모은 별로 우승을 정했어요!')).toBeInTheDocument();
     expect(fakeCanvas.mounts).toBe(1);
-
-    fireEvent.click(screen.getByRole('button', { name: '🔁 다시 하기' }));
-    expect(container.querySelector('.stage--ceremony')).toBeNull();
-    expect(container.querySelector('.game-round')!.textContent).toBe('마지막 라운드1/1');
+    act(() => { vi.advanceTimersByTime(INPUT_LOCK_MS); });
+    fireEvent.click(screen.getByRole('button', {name:'🔁 다시 하기'}));
+    expect(screen.getByText('선생님 지목 대기')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name:'🎲 주사위 굴리기'})).toBeNull();
     expect(fakeCanvas.mounts).toBe(1);
-    expect(useGameStore.getState().game!.board.length).toBe(16);
+    vi.useRealTimers();
   });
 
   it('keeps the 편집기 reachable via the mode switch', () => {
@@ -134,7 +125,7 @@ describe('App shell — the start-screen draft survives the 편집기 (WR-03)', 
     fireEvent.click(modeSwitch().getByRole('button', { name: '🎮 게임' }));
   }
 
-  it('keeps mode, count, names, members, animal picks and rounds across 편집기 → 게임', () => {
+  it('keeps mode, count, names, members and animal picks across 편집기 → 게임', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: '팀전' }));
     fireEvent.click(screen.getByRole('button', { name: '늘리기' }));
@@ -142,7 +133,6 @@ describe('App shell — the start-screen draft survives the 편집기 (WR-03)', 
     fireEvent.change(screen.getByLabelText('팀 1 멤버 이름'), { target: { value: '민수, 지아' } });
     fireEvent.change(screen.getByLabelText('팀 3 이름'), { target: { value: '숲' } });
     fireEvent.click(within(screen.getByRole('group', { name: '팀 2 동물' })).getByRole('button', { name: '판다' }));
-    fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
 
     enterEditor();
     expect(screen.queryByRole('button', { name: '게임 시작' })).toBeNull();
@@ -157,12 +147,12 @@ describe('App shell — the start-screen draft survives the 편집기 (WR-03)', 
       'aria-pressed',
       'true',
     );
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('6');
+    expect(screen.queryByLabelText('라운드 수')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
     const g = useGameStore.getState().game!;
     expect(g.config.mode).toBe('team');
-    expect(g.config.rules.rounds).toBe(6);
+    expect(g.config.rules.nomination).toBe(true);
     expect(g.config.participants.map((p) => [p.name, p.animal])).toEqual([
       ['하늘', 'bear'],
       ['팀 2', 'panda'],
@@ -171,24 +161,17 @@ describe('App shell — the start-screen draft survives the 편집기 (WR-03)', 
     expect(g.config.participants[0].memberNames).toEqual(['민수', '지아']);
   });
 
-  it('an untouched round count follows the default changed in ⚙️ 설정 (the hint flow); a touched one is kept', () => {
+  it('keeps teacher selection even after changing legacy round defaults in settings', () => {
     render(<App />);
-    fireEvent.change(screen.getByLabelText('플레이어 1 이름'), { target: { value: '하늘' } });
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('5');
-
+    fireEvent.change(screen.getByLabelText('플레이어 1 이름'), {target:{value:'하늘'}});
     enterEditor();
-    fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
-    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
+    fireEvent.click(screen.getByRole('tab', {name:'⚙️ 설정'}));
+    fireEvent.click(screen.getByRole('button', {name:'라운드 늘리기'}));
     enterGame();
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('8');
     expect(screen.getByLabelText('플레이어 1 이름')).toHaveValue('하늘');
-
-    fireEvent.click(screen.getByRole('button', { name: '라운드 줄이기' })); // this game: 7
-    enterEditor();
-    fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
-    fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' })); // default: 9
-    enterGame();
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('7');
+    expect(screen.queryByLabelText('라운드 수')).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    expect(useGameStore.getState().game!.phase).toBe('awaitingNomination');
   });
 
   it('starting a game consumes the draft: 처음으로 opens a fresh start screen', () => {

@@ -66,7 +66,7 @@ describe('SetupView — field captions are inert (WR-02)', () => {
   it('the captions are not <label> elements', () => {
     const { container } = render(<SetupView />);
     expect(container.querySelector('label.game-setup-field')).toBeNull();
-    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(3); // 모드, 인원 수, 라운드
+    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(2); // 모드, 인원 수
   });
 });
 
@@ -126,41 +126,13 @@ describe('SetupView — animals (D-24, SETUP-07)', () => {
   });
 });
 
-describe('SetupView — rounds + estimate (D-19, D-20, SETUP-08)', () => {
+describe('SetupView — teacher nomination', () => {
   beforeEach(resetAll);
-
-  it('the stepper starts at the settings default and later settings changes do not move it', () => {
-    useSettings.setState({ defaultRounds: 7 });
+  it('explains nomination without automatic rounds or time estimates', () => {
     render(<SetupView />);
-    const out = screen.getByLabelText('라운드 수');
-    expect(out.textContent).toBe('7');
-    useSettings.setState({ defaultRounds: 3 });
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('7');
-  });
-
-  it('clamps to 1..20 with the end buttons disabled', () => {
-    useSettings.setState({ defaultRounds: 1 });
-    const { unmount } = render(<SetupView />);
-    expect(screen.getByRole('button', { name: '라운드 줄이기' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: '라운드 늘리기' }));
-    expect(screen.getByLabelText('라운드 수').textContent).toBe('2');
-    unmount();
-    useSetupDraft.getState().reset(); // a fresh start screen (the touched 2 would otherwise be kept — WR-03)
-    useSettings.setState({ defaultRounds: 20 });
-    render(<SetupView />);
-    expect(screen.getByRole('button', { name: '라운드 늘리기' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '라운드 줄이기' })).toBeEnabled();
-  });
-
-  it('estimate: 2×5 → 8분, 3 players → 12분; team basis uses 팀', () => {
-    render(<SetupView />);
-    expect(screen.getByText('⏱️ 약 8분')).toHaveClass('setup-estimate');
-    expect(screen.getByText('2명 × 5라운드 기준')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '늘리기' }));
-    expect(screen.getByText('⏱️ 약 12분')).toBeInTheDocument();
-    expect(screen.getByText('3명 × 5라운드 기준')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '팀전' }));
-    expect(screen.getByText('3팀 × 5라운드 기준')).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name:'선생님 지목 방식'})).toBeInTheDocument();
+    expect(screen.queryByLabelText('라운드 수')).toBeNull();
+    expect(screen.queryByText(/라운드 기준/)).toBeNull();
   });
 });
 
@@ -210,12 +182,11 @@ describe('SetupView — rules summary + notices + guard (D-13, D-25, SETUP-09)',
 describe('SetupView — start (SETUP-07/08)', () => {
   beforeEach(resetAll);
 
-  it('starts a game with the picked animals, typed names and the stepper rounds', () => {
+  it('starts locked with the picked animals and typed names', () => {
     render(<SetupView />);
     fireEvent.change(screen.getByLabelText('플레이어 1 이름'), { target: { value: '하늘' } });
     fireEvent.change(screen.getByLabelText('플레이어 2 이름'), { target: { value: '바다' } });
     fireEvent.click(within(group('플레이어 2 동물')).getByRole('button', { name: '판다' }));
-    fireEvent.click(screen.getByRole('button', { name: '라운드 줄이기' }));
     fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
     const g = useGameStore.getState().game!;
     expect(g).not.toBeNull();
@@ -223,7 +194,8 @@ describe('SetupView — start (SETUP-07/08)', () => {
       ['하늘', 'bear'],
       ['바다', 'panda'],
     ]);
-    expect(g.config.rules.rounds).toBe(4);
+    expect(g.config.rules.nomination).toBe(true);
+    expect(g.phase).toBe('awaitingNomination');
   });
 
   it('team mode parses the comma member list; empty names fall back to the placeholder', () => {

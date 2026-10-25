@@ -77,7 +77,7 @@ import { CeremonyHead, CeremonyPanel } from './hud/CeremonyView';
 import { useCeremonyIntro } from './hud/useCeremonyIntro';
 import { useInputLock } from './useInputLock';
 import { useSkipOnTap } from './useSkipOnTap';
-import { boardAria, nextUpView, podiumAria } from './labels';
+import { ANIMAL_EMOJI, boardAria, nextUpView, podiumAria } from './labels';
 
 // UI-SPEC S7: a canvas that is not ready within 8 s shows the recovery overlay.
 export const READY_TIMEOUT_MS = 8000;
@@ -165,6 +165,8 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
 
   const { phase, card, lastMove, lastJudgement, turn, config } = game;
   const cur = currentParticipant(game);
+  const nomination = !!config.rules.nomination;
+  const waiting = phase === 'awaitingNomination';
   // D-14a: during the win beat the DOM HUD shows the finished game, like the 3D scene does.
   const over = phase === 'gameOver';
   // D-11: the ceremony starts once the win / end beats are over.
@@ -188,7 +190,9 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
   };
   const canvasAria = ceremony
     ? podiumAria(participants.filter((p) => game.winners.includes(p.id)).map((p) => p.name))
-    : boardAria(game.board.length, cur.name, over);
+    : nomination && (waiting || phase === 'turnResolved')
+      ? `${game.board.length}칸 순환 보드, 선생님 지목 대기`
+      : boardAria(game.board.length, cur.name, over);
 
   // UI-SPEC C7e: at gameOver (the win beat) the engine's endGame is a no-op, so 지금 끝내기 skips
   // the beats instead and the ceremony shows at once (T-07-03).
@@ -208,6 +212,8 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
         <CeremonyHead game={game} />
       ) : (
         <TurnHud
+          nomination={nomination}
+          waiting={waiting || (nomination && phase === 'turnResolved')}
           animal={cur.animal}
           name={cur.name}
           isTeam={config.mode === 'team'}
@@ -263,7 +269,24 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
         <CeremonyPanel game={game} introActive={intro.introActive} />
       ) : (
         <div className="stage-bottom">
+          {nomination && !over && controlsVisible && (waiting || phase === 'turnResolved') && (
+            <section className="nomination-panel" aria-label="선생님 지목">
+              <h2>누구에게 기회를 줄까요?</h2>
+              <p>선생님이 이름을 누르면 그 친구만 한 번 돌릴 수 있어요. 같은 친구를 다시 지목해도 돼요.</p>
+              <div className="nomination-choices">
+                {participants.map((p) => (
+                  <button type="button" className="game-btn--sm" key={p.id}
+                    onClick={() => guard(() => useGameStore.getState().nominate(p.id))}
+                    aria-label={p.name + ' 지목하기'}>
+                    {ANIMAL_EMOJI[p.animal]} {p.name} 지목
+                  </button>
+                ))}
+              </div>
+              <p>별은 계속 누적돼요. 수업을 마칠 때 ‘지금 끝내기’를 눌러 우승을 확인하세요.</p>
+            </section>
+          )}
           <ControlsBar
+            nomination={nomination}
             phase={phase}
             hidden={!controlsVisible}
             canUndo={canUndo(game)}
@@ -275,7 +298,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           />
           <Scoreboard
             entries={entries}
-            currentId={over ? null : cur.id}
+            currentId={over || (nomination && (waiting || phase === 'turnResolved')) ? null : cur.id}
             crownIds={over ? game.winners : undefined}
             hitId={hitId}
           />
