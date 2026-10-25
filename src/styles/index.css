@@ -97,6 +97,16 @@ body { margin:0; font-family:var(--font); color:var(--ink); -webkit-text-size-ad
     0 8px 0 color-mix(in srgb, var(--grape) 54%, var(--logo-drop)),
     0 12px 18px rgba(74,159,216,.22);
 }
+/* Two-line wordmark: "파워점핑" / "보드 대모험" — each line keeps its own gradient and never breaks mid-word. */
+.pj-logo__line {
+  display:block;
+  white-space:nowrap;
+  word-break:keep-all;
+  background:inherit;
+  -webkit-background-clip:text;
+  background-clip:text;
+}
+.pj-logo__line + .pj-logo__line { margin-top:.08em; }
 .pj-logo__rope {
   position:absolute;
   z-index:0;

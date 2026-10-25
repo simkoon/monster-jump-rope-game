@@ -66,7 +66,7 @@ describe('SetupView — field captions are inert (WR-02)', () => {
   it('the captions are not <label> elements', () => {
     const { container } = render(<SetupView />);
     expect(container.querySelector('label.game-setup-field')).toBeNull();
-    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(2); // 모드, 인원 수
+    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(3); // 진행 방식, 모드, 인원 수
   });
 });
 
@@ -213,3 +213,56 @@ describe('SetupView — start (SETUP-07/08)', () => {
 
 // The temporary result screen (S4) became the Phase 8 ceremony: its tests moved to
 // hud/ceremony.test.tsx (parts) and stage.test.tsx (routing, same canvas) — 08-10, RESEARCH Pitfall 1.
+
+
+describe('SetupView — selectable play order', () => {
+  beforeEach(resetAll);
+  it('defaults to teacher nomination and only exposes round controls for sequential play', () => {
+    render(<SetupView />);
+    expect(screen.getByRole('button', {name:'선생님 지목'})).toHaveAttribute('aria-pressed','true');
+    expect(screen.queryByLabelText('라운드 수')).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    expect(screen.getByLabelText('라운드 수')).toHaveTextContent('5');
+    expect(screen.getByText('2명 × 5라운드 기준')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    const game = useGameStore.getState().game!;
+    expect(game.config.rules.nomination).toBe(false);
+    expect(game.config.rules.rounds).toBe(5);
+    expect(game.phase).toBe('awaitingRoll');
+    expect(game.currentIndex).toBe(0);
+  });
+  it('preserves names, selected rounds and play order across mode switches and remounts', () => {
+    const view = render(<SetupView />);
+    fireEvent.change(screen.getByLabelText('플레이어 1 이름'),{target:{value:'하늘'}});
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    fireEvent.click(screen.getByRole('button', {name:'라운드 늘리기'}));
+    fireEvent.click(screen.getByRole('button', {name:'선생님 지목'}));
+    expect(screen.queryByLabelText('라운드 수')).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    expect(screen.getByLabelText('라운드 수')).toHaveTextContent('6');
+    view.unmount();
+    render(<SetupView />);
+    expect(screen.getByRole('button', {name:'한 명씩 차례대로'})).toHaveAttribute('aria-pressed','true');
+    expect(screen.getByLabelText('라운드 수')).toHaveTextContent('6');
+    expect(screen.getByLabelText('플레이어 1 이름')).toHaveValue('하늘');
+  });
+  it('clamps sequential rounds to 1 through 20 and does not persist them to settings', () => {
+    useSettings.setState({defaultRounds:1});
+    render(<SetupView />);
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    expect(screen.getByRole('button', {name:'라운드 줄이기'})).toBeDisabled();
+    for (let i=0;i<25;i++) fireEvent.click(screen.getByRole('button', {name:'라운드 늘리기'}));
+    expect(screen.getByLabelText('라운드 수')).toHaveTextContent('20');
+    expect(screen.getByRole('button', {name:'라운드 늘리기'})).toBeDisabled();
+    expect(useSettings.getState().defaultRounds).toBe(1);
+  });
+  it('switching back to nomination keeps the game locked regardless of chosen rounds', () => {
+    render(<SetupView />);
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    fireEvent.click(screen.getByRole('button', {name:'라운드 늘리기'}));
+    fireEvent.click(screen.getByRole('button', {name:'선생님 지목'}));
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    expect(useGameStore.getState().game!.phase).toBe('awaitingNomination');
+    expect(useGameStore.getState().game!.config.rules.nomination).toBe(true);
+  });
+});

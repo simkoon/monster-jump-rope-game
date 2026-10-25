@@ -53,10 +53,10 @@ describe('App shell — default 게임 entry (D-10)', () => {
     // ...and no editor MissionTab content (a seed mission name) is rendered.
     expect(screen.queryByText('양발 모아뛰기')).toBeNull();
     // The reskinned game view (SetupView, GameApp with no active game) is what mounts:
-    // the original Phase 4 파워점핑 신월점 logo + the --tap 게임 시작 button. The header logo's
-    // aria-label is composed as '파워점핑 신월점 {context} {subtitle}' (PowerJumpingLogo).
-    expect(screen.getAllByText('파워점핑 신월점').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByLabelText('파워점핑 신월점 게임 주사위를 굴리고 줄넘기 미션으로 별을 모아요')).toBeInTheDocument();
+    // the original Phase 4 파워점핑 보드 대모험 logo + the --tap 게임 시작 button. The header logo's
+    // aria-label is composed as '파워점핑 보드 대모험 {context} {subtitle}' (PowerJumpingLogo).
+    expect(screen.getAllByText((_, el) => el?.classList.contains('pj-logo__word') === true && el.textContent?.replace(/\s+/g, ' ').trim() === '파워점핑 보드 대모험').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText('파워점핑 보드 대모험 게임 주사위를 굴리고 줄넘기 미션으로 별을 모아요')).toBeInTheDocument();
     expect(document.querySelector('.app--game')).not.toBeNull();
     expect(document.querySelector('.panel--game-shell')).not.toBeNull();
     expect(screen.getByRole('button', { name: '게임 시작' })).toBeInTheDocument();
@@ -103,6 +103,33 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(screen.getByText('선생님 지목 대기')).toBeInTheDocument();
     expect(screen.queryByRole('button', {name:'🎲 주사위 굴리기'})).toBeNull();
     expect(fakeCanvas.mounts).toBe(1);
+    vi.useRealTimers();
+  });
+
+  it('runs sequential play through all participants and ends at the selected round', async () => {
+    useSettings.setState({defaultRounds:1, failRule:'noStar'});
+    const {container} = render(<App />);
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    await waitForCanvas();
+    expect(screen.queryByRole('button', {name:'플레이어 1 지목하기'})).toBeNull();
+    expect(container.querySelector('.game-round')).toHaveTextContent('1/1');
+    const participants = new Set<string>();
+    const labels = ['🎲 주사위 굴리기', '✅ 성공', '🔁 한 번 더 하기', '다음 ➡️', '🏆 결과 보기'];
+    vi.useFakeTimers();
+    for (let i=0;i<40 && useGameStore.getState().game!.phase !== 'gameOver';i++) {
+      settle();
+      const game = useGameStore.getState().game!;
+      if (game.phase === 'awaitingRoll') participants.add(game.config.participants[game.currentIndex].id);
+      act(() => {vi.advanceTimersByTime(INPUT_LOCK_MS);});
+      const button = labels.map(name=>screen.queryByRole('button',{name})).find(Boolean);
+      expect(button).toBeTruthy();
+      fireEvent.click(button!);
+    }
+    settle();
+    expect(participants.size).toBe(2);
+    expect(useGameStore.getState().game!.endReason).toBe('rounds-complete');
+    expect(screen.getByText('1라운드를 모두 마쳤어요!')).toBeInTheDocument();
     vi.useRealTimers();
   });
 

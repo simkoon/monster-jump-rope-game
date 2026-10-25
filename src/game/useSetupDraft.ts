@@ -12,8 +12,10 @@ import { DEFAULT_PARTICIPANT_COUNT } from '../engine/setup';
 import type { AnimalId } from '../engine/animals';
 
 export type SetupMode = 'solo' | 'team';
+export type PlayOrder = 'nomination' | 'sequential';
 
 export interface SetupDraft {
+  playOrder: PlayOrder;
   mode: SetupMode;
   // Raw stepper/input value (may be NaN while the number field is being edited); SetupView clamps it.
   count: number;
@@ -31,7 +33,7 @@ interface SetupDraftState extends SetupDraft {
 }
 
 export function initialSetupDraft(): SetupDraft {
-  return { mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
+  return { playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
 }
 
 export const useSetupDraft = create<SetupDraftState>((set) => ({

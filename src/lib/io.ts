@@ -9,7 +9,7 @@ import { showToast } from '../components/Toast';
 
 // T-01-06 DoS guard: a class device should never freeze on a giant file.
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024; // ~5MB
-const EXPORT_FILENAME = '파워점핑 신월점-콘텐츠.json';
+const EXPORT_FILENAME = '파워점핑 보드 대모험-콘텐츠.json';
 
 // DATA-02: serialize the current library to a pretty JSON Blob and trigger a
 // browser download, then release the object URL. Fires a success toast.

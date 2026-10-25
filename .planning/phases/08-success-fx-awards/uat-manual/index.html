@@ -1,0 +1,394 @@
+<title>파워점핑 UAT 매뉴얼</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a field manual — one checklist column of test cards, each card = steps + pass rule + the real screens, with a sticky result bar. */
+:root {
+  --bg: #F3F8FD;
+  --panel: #FFFFFF;
+  --panel-2: #E8F1FA;
+  --ink: #17324D;
+  --muted: #56708A;
+  --line: #D8EAF8;
+  --sky: #1E9BE8;
+  --sun: #FFB81F;
+  --sun-ink: #6B4A00;
+  --grass: #1FA971;
+  --coral: #E5566B;
+  --lav: #7C6AE0;
+  --shadow: 0 1px 2px rgba(23,50,77,.06), 0 6px 18px rgba(23,50,77,.06);
+  --f-display: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1B28; --panel: #172636; --panel-2: #1F3247; --ink: #E4EEF7; --muted: #9CB2C7; --line: #2A4058;
+  --sky: #4DB4F2; --sun: #FFC54D; --sun-ink: #FFE3A3; --grass: #43C68E; --coral: #F07A8B; --lav: #A193F0;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1B28; --panel: #172636; --panel-2: #1F3247; --ink: #E4EEF7; --muted: #9CB2C7; --line: #2A4058;
+  --sky: #4DB4F2; --sun: #FFC54D; --sun-ink: #FFE3A3; --grass: #43C68E; --coral: #F07A8B; --lav: #A193F0;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 18px rgba(0,0,0,.25); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(30px, 5vw, 44px); color: var(--sky); }
+h2 { font-size: 26px; }
+h3 { font-size: 21px; }
+p { margin: 0; }
+code, .mono { font-family: var(--f-mono); font-size: .88em; background: var(--panel-2); padding: 1px 6px; border-radius: 6px; word-break: break-all; }
+a { color: var(--sky); }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+
+.hero { display: grid; gap: 14px; margin-bottom: 26px; }
+.eyebrow { font-size: 13px; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.lede { max-width: 68ch; color: var(--muted); }
+
+.setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 30px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.box h3 { font-size: 18px; }
+.box ul, .box ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.url { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.copy { font: 600 12px var(--f-body); border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 3px 9px; cursor: pointer; }
+
+nav.toc { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+nav.toc a { text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 14px; }
+nav.toc a span { color: var(--muted); font-weight: 400; margin-left: 4px; }
+
+section.group { display: grid; gap: 16px; margin-top: 34px; }
+.group-head { display: grid; gap: 4px; }
+.group-head p { color: var(--muted); max-width: 72ch; }
+
+article.item { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; display: grid; gap: 14px; scroll-margin-top: 16px; }
+article.item[data-state="pass"] { border-color: var(--grass); }
+article.item[data-state="issue"] { border-color: var(--coral); }
+.item-head { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.num { font-family: var(--f-display); font-size: 20px; min-width: 48px; height: 40px; padding: 0 10px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2); color: var(--sky); font-variant-numeric: tabular-nums; }
+.item-title { flex: 1 1 280px; min-width: 0; display: grid; gap: 6px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--panel-2); color: var(--muted); }
+.chip.dev { background: color-mix(in srgb, var(--lav) 16%, transparent); color: var(--lav); }
+
+.body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; }
+@media (max-width: 820px) { .body { grid-template-columns: 1fr; } }
+.steps { display: grid; gap: 12px; align-content: start; }
+.steps ol { margin: 0; padding-left: 22px; display: grid; gap: 5px; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+.pass { background: color-mix(in srgb, var(--grass) 11%, transparent); border-radius: 12px; padding: 10px 12px; }
+.pass .label { color: var(--grass); }
+.note { background: color-mix(in srgb, var(--sun) 18%, transparent); border-radius: 12px; padding: 10px 12px; color: var(--ink); }
+.note .label { color: var(--sun-ink); }
+
+.shots { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; align-items: flex-start; min-width: 0; }
+figure { margin: 0; flex: 0 0 auto; display: grid; gap: 6px; }
+figure img { display: block; border-radius: 12px; border: 1px solid var(--line); cursor: zoom-in; background: var(--panel-2); }
+figure.phone img { width: 168px; height: auto; }
+figure.wide img { width: 340px; height: auto; max-width: 78vw; }
+figcaption { font-size: 12.5px; color: var(--muted); max-width: 340px; }
+figure.phone figcaption { max-width: 168px; }
+.shots.none { color: var(--muted); font-size: 13.5px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 14px; }
+
+.result { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--line); padding-top: 12px; }
+.result button { font: 600 14px var(--f-body); border-radius: 10px; padding: 7px 14px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; min-height: 40px; }
+.result button[aria-pressed="true"][data-v="pass"] { background: var(--grass); border-color: var(--grass); color: #fff; }
+.result button[aria-pressed="true"][data-v="issue"] { background: var(--coral); border-color: var(--coral); color: #fff; }
+.result button[aria-pressed="true"][data-v="skip"] { background: var(--muted); border-color: var(--muted); color: var(--panel); }
+.result button[aria-pressed="true"][data-v="opt1"], .result button[aria-pressed="true"][data-v="opt2"] { background: var(--sky); border-color: var(--sky); color: #fff; }
+.result textarea { flex: 1 1 260px; min-width: 0; min-height: 40px; font: 14px var(--f-body); color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; resize: vertical; }
+
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: color-mix(in srgb, var(--panel) 94%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--line);
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); z-index: 5; }
+.bar-in { max-width: 1120px; margin: 0 auto; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tally { display: flex; gap: 12px; font-variant-numeric: tabular-nums; font-weight: 600; flex-wrap: wrap; }
+.tally .p { color: var(--grass); } .tally .i { color: var(--coral); } .tally .w { color: var(--muted); }
+.bar .go { margin-left: auto; font: 700 14px var(--f-body); background: var(--sky); color: #fff; border: 0; border-radius: 10px; padding: 9px 16px; cursor: pointer; min-height: 40px; }
+.copied { font-size: 13px; color: var(--grass); }
+#out { width: 100%; min-height: 120px; font: 13px var(--f-mono); background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+
+table.soak { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+table.soak th, table.soak td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: right; white-space: nowrap; }
+table.soak th:first-child, table.soak td:first-child { text-align: left; }
+.tablewrap { overflow-x: auto; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
+dialog::backdrop { background: rgba(10,20,30,.78); }
+dialog img { max-width: 96vw; max-height: 88vh; display: block; border-radius: 12px; }
+dialog p { color: #fff; text-align: center; margin-top: 8px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">PHASE 8 · 퀘스트 성공 연출 & 시상식 & 마감 · 사람 확인 25건</p>
+    <h1>파워점핑 UAT 매뉴얼</h1>
+    <p class="lede">기계로 확인할 수 있는 것은 모두 통과했습니다(테스트 1562개, 빌드 통과). 이 매뉴얼은 사람이 직접 보고 판단해야 하는 25가지를 순서대로 안내합니다. 각 항목에 확인 방법, 합격 기준, 헤드리스 Chrome으로 찍은 실제 화면을 붙였습니다. 결과 버튼을 누르면 이 기기 브라우저에 저장되고, 맨 아래 <b>결과 복사</b>로 한 번에 Claude에게 붙여 넣을 수 있습니다.</p>
+  </header>
+
+  <div class="setup">
+    <div class="box">
+      <h3>1. 게임 열기</h3>
+      <p>노트북에서 dev 서버가 켜져 있어야 합니다.</p>
+      <div class="url"><code id="u-local">http://localhost:5174/monster-jump-rope-game/</code><button class="copy" type="button" data-copy="u-local">복사</button></div>
+      <p>아이폰·아이패드(같은 Wi-Fi):</p>
+      <div class="url"><code id="u-lan">http://192.168.219.50:5174/monster-jump-rope-game/</code><button class="copy" type="button" data-copy="u-lan">복사</button></div>
+      <p style="color:var(--muted);font-size:13px">서버가 꺼졌으면 프로젝트 폴더에서 <code>npx vite --host --port 5174</code>. IP는 바뀔 수 있으니 터미널의 Network 주소를 쓰세요.</p>
+    </div>
+    <div class="box">
+      <h3>2. 함께 쓰는 dev 화면</h3>
+      <ul>
+        <li><code>gallery.html</code> 캐릭터 8종 × 표정 갤러리</li>
+        <li><code>soak.html?games=5</code> 5판 자동 연속 플레이 + 수치 표 (<code>&amp;seed=7</code>을 붙이면 같은 판 되풀이)</li>
+        <li>노트북 Chrome 콘솔에서 <code>window.__loseContext()</code> 3D 화면 강제 끄기(11번)</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>3. 기기 3종</h3>
+      <ul>
+        <li>iPhone Safari (세로·가로)</li>
+        <li>iPad Safari (교실 태블릿)</li>
+        <li>노트북 Chrome</li>
+      </ul>
+      <p style="color:var(--muted);font-size:13px">항목마다 필요한 기기를 칩으로 표시했습니다. 아이폰은 무음 스위치를 끈 상태에서 시작하세요(13번에서 따로 봅니다).</p>
+    </div>
+  </div>
+
+  <nav class="toc" aria-label="항목 묶음">
+    <a href="#g-success">성공 연출 <span>1–6</span></a>
+    <a href="#g-soft">실패·보너스 <span>7–8</span></a>
+    <a href="#g-ceremony">시상식 <span>9–11, 15</span></a>
+    <a href="#g-sound">효과음 <span>12–14</span></a>
+    <a href="#g-stab">5판 연속·결정 <span>16, 25</span></a>
+    <a href="#g-carry">Phase 6·7 이월 <span>17–24</span></a>
+  </nav>
+
+  <main id="groups"></main>
+</div>
+
+<div class="bar" role="region" aria-label="결과 요약">
+  <div class="bar-in">
+    <div class="tally" aria-live="polite"><span class="p" id="t-pass">통과 0</span><span class="i" id="t-issue">문제 0</span><span class="w" id="t-left">남음 25</span></div>
+    <span class="copied" id="copied" hidden>복사했어요. Claude 대화창에 붙여 넣으세요.</span>
+    <button type="button" class="go" id="copyAll">결과 복사</button>
+  </div>
+</div>
+<dialog id="zoom"><img id="zoomImg" alt=""><p id="zoomCap"></p></dialog>
+
+<script>
+const S = (f) => 'shots/' + f + '.jpg';
+const P = (f, cap) => ({ f, cap, kind: 'phone' });
+const W = (f, cap) => ({ f, cap, kind: 'wide' });
+const DEV = { ip: 'iPhone Safari', pad: 'iPad Safari', lap: '노트북 Chrome' };
+
+const groups = [
+ { id: 'g-success', title: '성공 연출', desc: '퀘스트 카드의 난이도가 별 등급입니다. 쉬움 = ⭐1, 보통 = ⭐2, 어려움 = ⭐3. 세 등급을 모두 볼 때까지 ✅ 성공을 누르며 진행하세요. 연출 길이는 ⭐1 1.6초, ⭐2 1.9초, ⭐3 2.2초입니다.', items: [
+  { n: 'U1', no: 1, t: '⭐1 · ⭐2 · ⭐3 성공이 신나고 등급 차이가 보이는가', d: ['ip','pad','lap'],
+    steps: ['게임 시작 → 🎲 주사위 굴리기 → 퀘스트 카드가 뜨면 난이도 배지(쉬움/보통/어려움)를 확인합니다.', '✅ 성공을 누르고 캐릭터 점프·회전, 컨페티, 별 버스트, 바닥 충격파 링을 봅니다.', '세 등급을 모두 한 번씩 봅니다. ⭐3은 컨페티가 가장 많고 금색이 섞이며 화면이 살짝 흔들립니다.'],
+    pass: '아이와 강사가 "⭐3이 제일 크다"를 바로 느낀다.',
+    shots: [P('p-quest','퀘스트 카드(쉬움 = ⭐1)'), P('p-success1-a','⭐1 착지 순간'), P('p-success2-a','⭐2 착지 순간'), P('p-success3-a','⭐3 착지 순간: 컨페티·링이 가장 큼')] },
+  { n: 'U2', no: 2, t: '2.5초 안에 끝나 답답하지 않은가, 별 비행 곡선과 속도가 자연스러운가', d: ['ip','pad','lap'],
+    steps: ['✅ 성공을 누른 순간부터 다음 버튼(🎲 또는 다음 ➡️)이 다시 나올 때까지 속으로 셉니다.', '"퀘스트 성공! ⭐+N" 배너가 뜬 뒤 큰 별이 캐릭터 머리 위에서 점수판으로 포물선을 그리며 날아가는지 봅니다.'],
+    pass: '기다림이 길다는 느낌이 없다(⭐3도 2.5초 안).',
+    shots: [P('p-success3-b','⭐3 배너 "퀘스트 성공! ⭐+3"'), P('p-success3-c','⭐3 별이 점수판으로 비행'), W('l-success2-c','가로 화면 ⭐2 별 비행')] },
+  { n: 'U3', no: 3, t: '별이 정확히 그 참가자의 점수판 칸에 내려앉는가', d: ['ip','pad'],
+    steps: ['아이폰 세로와 가로에서 각각 성공을 봅니다.', '성공 직후 기기를 돌려 보고, 아이폰 주소창이 커졌다 작아질 때도 봅니다.', '별이 도착하는 순간 그 참가자 칸의 숫자가 오르고 칸이 반짝이는지 봅니다.'],
+    pass: '별이 내려앉는 자리의 어긋남이 아바타 반지름 이내다.',
+    shots: [P('p-success1-c','세로: 지우 칸으로 비행'), W('l-success1-c','가로: 오른쪽 점수판으로 비행')] },
+  { n: 'U4', no: 4, t: '⭐3 화면 흔들림이 어지럽지 않은가', d: ['pad','lap'],
+    steps: ['어려움(⭐3) 퀘스트에 성공해 착지 순간의 짧은 흔들림(0.35초 이하)을 봅니다.', '기기에서 "동작 줄이기"를 켜면 흔들림·점프 없이 표정과 배너만 나오는지도 확인할 수 있습니다.'],
+    pass: '불편하다는 말이 없다.',
+    shots: [W('l-success3-a','가로 ⭐3 착지: 금색 컨페티 + 흔들림 시작'), W('l-success3-b','가로 ⭐3 배너')] },
+  { n: 'U5', no: 5, t: '첫 성공에서 끊김(셰이더 컴파일)이 없는가', d: ['pad'],
+    steps: ['아이패드에서 페이지를 새로고침한 뒤 첫 판의 첫 성공을 봅니다.', '23번(첫 표정 끊김)과 같이 봅니다. 결과가 25번 결정에 쓰입니다.'],
+    pass: '눈에 띄는 멈춤이 없다.',
+    note: '헤드리스 측정에서 첫 판 시작 때 한 번 150~167ms 프레임이 있었고, 2판부터는 16.8ms(60fps)였습니다.',
+    shots: [] },
+  { n: 'U6', no: 6, t: '탭 건너뛰기: 알 수 있는가, 연타해도 넘어가지 않는가, 🔊 탭이 축하를 끊지 않는가', d: ['ip','pad','lap'],
+    steps: ['성공 연출 중 화면 아무 곳이나 한 번 탭합니다(노트북은 Esc). 연출이 바로 끝나고 별은 그대로 올라가야 합니다.', '연출 중 빠르게 여러 번 탭해 봅니다. 다음 차례 주사위가 저절로 굴러가면 안 됩니다.', '연출 중 오른쪽 위 🔊 버튼을 탭합니다. 소리만 꺼지고 축하는 계속되어야 합니다.', '게임 화면에는 건너뛰기 안내가 없고, 설정 탭 효과음 아래에만 "한 번 톡 치면 바로 넘어가요" 힌트가 있습니다.'],
+    pass: '힌트 없이도 불편하지 않다. 불편하면 게임 화면에 힌트를 넣을지 정한다.',
+    shots: [P('p-settings-sound','설정 탭: 건너뛰기 힌트는 효과음 아래')] }
+ ]},
+ { id: 'g-soft', title: '실패·출발 보너스·이벤트', desc: '실패는 1초 안의 다정한 반응만 나와야 합니다. 빨간 X와 버저음은 없습니다.', items: [
+  { n: 'U7', no: 7, t: '실패 반응이 다정한가 (문구·색·소리)', d: ['ip','pad','lap'],
+    steps: ['퀘스트에서 ❌ 실패를 누릅니다. 재도전이 이어지면 "괜찮아! 다시 해 보자 💪", 마지막 실패면 "다음엔 꼭! 💪"가 연보라색으로 뜹니다.', '캐릭터가 고개를 숙이고 아쉬운 표정을 짓는지, 소리가 낮고 부드러운지 봅니다.'],
+    pass: '아이가 위축되지 않는다.',
+    shots: [P('p-miss-retry','재도전 실패: 연보라 응원 배너')] },
+  { n: 'U8', no: 8, t: '출발 보너스·이벤트 연출이 짧고 귀여운가, 함정이 무섭지 않은가', d: ['ip','pad','lap'],
+    steps: ['출발 칸을 지나거나 멈추면 "🏁 출발 보너스 ⭐+N" 배너와 발밑 금색 반짝이가 나옵니다.', '보라색 육각 이벤트 칸에 멈춰 보너스(반짝이)와 함정(작은 연기 퍼프)을 각각 봅니다.'],
+    pass: '짧고 귀엽다. 함정 칸도 무섭지 않다.',
+    shots: [P('p-event-bonus','이벤트(보너스): 한 번 더!'), P('p-event-trap','이벤트(함정): 뒤로 2칸')] }
+ ]},
+ { id: 'g-ceremony', title: '시상식', desc: '정한 라운드를 다 마치면 우승 환호(1.5초) 뒤 시상식이 나옵니다. "끝내기"로 일찍 끝내면 바로 시상식으로 갑니다. 빨리 보려면 시작 화면에서 라운드를 1로 줄이세요.', items: [
+  { n: 'U9', no: 9, t: '꼴찌가 민망하지 않은가, 배지가 이해되는가, 8명이 아이폰 세로에서 잘리지 않는가, 팀전 이름', d: ['ip','pad'],
+    steps: ['개인전 8명 · 1라운드로 끝까지 진행합니다.', '아이폰 세로에서 "다시 하기 / 처음으로" 줄이 화면 안에 다 보이는지, 별 카드 목록이 위아래로 스크롤되는지 봅니다.', '등수 숫자는 우승자(🏆)에게만 있고, 나머지 카드는 같은 모양인지 봅니다.', '배지(도전왕·끈기왕·여행왕·고수왕·행운왕·응원왕)가 아이들에게 이해되는지 봅니다.', '팀전으로 한 판 더 해서 팀 이름이 카드에 잘 보이는지 확인합니다.'],
+    pass: '가로 스크롤과 잘림이 없다. 누가 꼴찌인지 눈에 띄지 않는다.',
+    note: '1라운드 8명 판에서는 모두 도전 횟수가 같아 8명 전원이 "도전왕"을 받았습니다. 배지가 덜 특별해 보이는지 판단해 주세요. 라운드를 늘리면 배지가 고르게 나뉩니다(4명 3라운드 판: 고수왕·끈기왕·행운왕·여행왕·응원왕).',
+    shots: [P('p-ceremony','4명 3라운드: 배지가 고르게 나뉨'), P('p8-ceremony','8명 1라운드: 전원 도전왕'), P('se-ceremony','작은 아이폰(375×548): 버튼 화면 안, 카드 스크롤'), W('l-ceremony','가로: 오른쪽 패널')] },
+  { n: 'U10', no: 10, t: '시상식 등장 중에도 다시 하기·처음으로가 바로 눌리는가', d: ['ip','pad','lap'],
+    steps: ['시상식이 나오자마자(금색 컨페티·팡파르가 나오는 약 1.8초 동안) 🔁 다시 하기를 한 번 탭합니다.', '다시 시상식까지 가서 이번에는 등장 중에 처음으로를 탭합니다. 팡파르도 함께 멈춰야 합니다.'],
+    pass: '한 번 탭하면 동작한다.',
+    shots: [P('p-win','우승 환호 비트: "🏆 우승!"'), P('p-ceremony-intro','시상식 등장 연출 중')] },
+  { n: 'U11', no: 11, t: 'DOM 대체 시상대 모양 (3D를 꺼서 강제)', d: ['lap'], devonly: true,
+    steps: ['노트북 Chrome으로 시상식까지 갑니다.', '개발자 도구 콘솔에 window.__loseContext() 를 입력합니다.', '3D 시상대 자리에 이모지 원과 금색 단으로 된 대체 시상대가 나오고, 🔄 화면 다시 그리기를 누르면 3D가 돌아오는지 봅니다.'],
+    pass: '3D 시상대와 같은 정보를 보여 주고 어색하지 않다.',
+    note: '헤드리스 Chrome에서는 꺼진 3D 캔버스 자리가 흰 바탕으로 남고, 왼쪽 위에 브라우저 기본 "슬픈 얼굴" 그림이 보였습니다. 실제 기기에서도 그렇게 보이면 어색한지 알려 주세요(대체 시상대 뒤에 캔버스를 숨기는 수정으로 해결 가능).',
+    shots: [P('p8-dompodium','DOM 대체 시상대(왼쪽 위 흰 상자 주목)')] },
+  { n: 'U15', no: 15, t: '다크 테마에서 실패 배너, 우승 카드, 배지 칩이 읽히는가', d: ['lap'],
+    steps: ['시작 화면 위쪽 🌙 버튼으로 다크 테마를 켭니다.', '실패 배너, 시상식의 우승 카드와 배지 칩 글자가 읽히는지 봅니다.'],
+    pass: '모두 읽힌다.',
+    shots: [P('p8-ceremony-dark','다크 테마 시상식')] }
+ ]},
+ { id: 'g-sound', title: '효과음', desc: '효과음은 파일 없이 코드로 만든 소리입니다. 주사위, 칸 이동, 퀘스트 성공, 별 도착, 실패, 출발 보너스, 이벤트, 시상식 팡파르에 나옵니다.', items: [
+  { n: 'U12', no: 12, t: '🔊/🔇가 연출 중과 시상식에서 보이고 눌리는가, 설정 탭과 상태가 같은가', d: ['ip','pad','lap'],
+    steps: ['게임 화면·성공 연출 중·시상식에서 오른쪽 위 🔊 버튼이 계속 보이는지 봅니다.', '🔇로 끈 뒤 편집기 → ⚙️ 설정 탭의 효과음이 "끄기"로 바뀌어 있는지, 반대로도 같은지 봅니다.'],
+    pass: '언제나 보이고 눌린다. 두 곳의 상태가 같다.',
+    shots: [P('p-board','게임 화면 오른쪽 위 🔊'), P('p-ceremony','시상식 오른쪽 위 🔊'), P('p-settings-sound','설정 탭 효과음 켜기/끄기')] },
+  { n: 'U13', no: 13, t: 'iOS 무음 스위치, 백그라운드 복귀 뒤 소리', d: ['ip','pad'],
+    steps: ['무음 스위치를 끈 상태에서 게임 시작 버튼을 누르고 소리가 나는지 봅니다.', '무음 스위치를 켜면 소리가 나지 않는 것이 현재 동작입니다(아이폰 기본 규칙을 따름).', '게임 중 다른 앱에 다녀오거나 화면을 잠갔다가 돌아와 첫 탭 뒤 소리가 다시 나는지 봅니다.'],
+    pass: '강사가 판단해 지금 방식(무음 스위치 따름)을 유지하거나, 무음 모드에서도 소리가 나는 옵션을 추가할지 정한다.',
+    shots: [] },
+  { n: 'U14', no: 14, t: '음량이 교실 스피커에서 편안하고 찌그러지지 않는가', d: ['pad','lap'],
+    steps: ['교실 스피커나 태블릿 스피커로 ⭐3 성공과 시상식 팡파르를 들어 봅니다.'],
+    pass: '편안하고 찌그러지지 않는다.',
+    shots: [] }
+ ]},
+ { id: 'g-stab', title: '5판 연속과 남은 결정', desc: '새로고침 없이 여러 판을 해도 느려지지 않는지 실기기에서 확인하고, 기준 문구 변경을 정합니다.', items: [
+  { n: 'U16', no: 16, t: '5판 연속(새로고침 없이) 느려짐·멈춤 없음', d: ['ip','pad','lap'], devonly: true,
+    steps: ['기기마다 soak.html?games=5 를 열고 자동 5판이 끝날 때까지 둡니다(8명 기준 몇 분). 화면 왼쪽 아래 표를 사진으로 찍어 두세요.', '이어서 일반 게임 화면에서 직접 5판을 해 봅니다(🔁 다시 하기로 이어서).'],
+    pass: 'textures·programs가 그대로이고, 드로우콜은 100 이하, fx 별 0, 오디오 노드 2. 직접 해도 느려지거나 멈추지 않는다. geometries는 처음 보이는 표정 때문에 조금 늘 수 있다(25번).',
+    table: true,
+    shots: [W('soak','soak.html 표(이번 촬영: 2판 × 4명)')] },
+  { n: '결정', no: 25, t: '5판 기준 문구 변경 승인 (STAB-01)', d: [], decision: true,
+    steps: ['자동 측정에서 geometries만 무작위 판 126 → 142로 늘었고, 같은 판을 되풀이하면 2판부터 129로 고정됐습니다. 다른 지표는 모두 그대로였습니다.', '원인은 표정 72개(8종 × 9)를 처음 그릴 때 한 번씩 GPU에 올리는 것으로 보입니다. 판마다 새는 누수가 아닙니다.', '5번·23번에서 첫 표정 끊김이 보였는지 보고 고르세요.'],
+    pass: '① 승인: 기준을 "같은 판 되풀이에서 2판부터 증가 없음 + 무작위 판은 1판 대비 +72 이내"로 바꾼다. ② 거절: 게임 시작 때 표정 72개를 미리 올리도록 고치고 다시 측정한다. 끊김이 보였다면 ②가 낫다.',
+    shots: [] }
+ ]},
+ { id: 'g-carry', title: 'Phase 6·7에서 이월된 확인', desc: '캐릭터 귀여움, 표정, 같은 칸 여러 마리, 보드 읽기 등 이전 단계에서 미뤄 둔 사람 확인입니다.', items: [
+  { n: '#17', no: 17, t: '갤러리와 게임에서 치비 동물이 기본 도형 견본보다 확실히 귀여운가', d: ['ip'], devonly: true,
+    steps: ['휴대폰으로 gallery.html 을 열어 8종 × 표정을 봅니다.', '게임 화면의 캐릭터와 함께 2026-10-22 비교 데모(기본 도형 치비) 기억과 비교합니다.'],
+    pass: '확실히 더 귀엽다.',
+    shots: [W('gallery','캐릭터 갤러리')] },
+  { n: '#18', no: 18, t: '아이가 8종을 3초 안에 구분하는가', d: ['ip','pad'],
+    steps: ['아이에게 갤러리나 8명 게임 화면을 3초쯤 보여 주고 동물 이름을 말해 보게 합니다.', '강아지 귀가 여전히 늘어진 귀로 보이는지 봅니다.'],
+    pass: '곰·토끼·고양이·강아지·판다·여우·돼지·병아리를 귀·주둥이·꼬리·부리로 구분한다.',
+    shots: [P('p8-board','8명 출발 칸')] },
+  { n: '#19', no: 19, t: '표정 6종이 폰에서 구분되는가', d: ['ip'],
+    steps: ['휴대폰으로 대기·내 차례·✅·❌·앞/뒤 이벤트·라운드 종료까지 한 판을 합니다.', '기본·두근·기쁨(^^)·아쉬움·놀람·우승 표정을 봅니다.'],
+    pass: '표정 6종이 구분된다(기본/두근, 아쉬움/기본은 폰에서 비슷할 수 있음).',
+    shots: [P('p-success2-b','기쁨 표정'), P('p-miss-retry','아쉬움 표정')] },
+  { n: '#20', no: 20, t: '동작 길이가 신나고 길지 않은가', d: ['ip','pad','lap'],
+    steps: ['마지막 라운드까지 진행하며 성공(1.6/1.9/2.2초), 아쉬움(0.7초), 우승 환호(1.5초) 뒤 시상식을 봅니다.', '"끝내기"를 누르면 환호 없이 바로 시상식으로 가는지 봅니다.', '우승 연출 중 차례 바가 "🏁 게임 끝"이고 점수판 왕관이 3D 왕관과 같은 사람에게 있는지 봅니다.'],
+    pass: '신나고 길지 않다.',
+    shots: [P('p-finalround','마지막 라운드 배너'), P('p-win','우승 연출 중 "🏁 게임 끝"')] },
+  { n: '#21', no: 21, t: '8명 게임과 이웃 칸 무리에서 모든 얼굴이 보이는가', d: ['ip','pad'],
+    steps: ['8명으로 시작해(세로·가로, 강아지를 3번째로도) 출발 칸 3줄 배치를 봅니다.', '진행하면서 이웃한 두 칸에 3+2, 4+4, 1+7, 2+6처럼 모일 때 무리가 자기 칸으로 읽히는지 봅니다.'],
+    pass: '모든 얼굴이 보이고 무리마다 자기 칸으로 읽힌다.',
+    shots: [P('p8-board','8명 출발 3줄 배치')] },
+  { n: '#22', no: 22, t: '칸 위 별 줄이 깜빡이지 않는가', d: ['ip','pad'],
+    steps: ['퀘스트 칸들을 지나 이동하고, 사람이 있는 칸 앞에 혼자 착지해 봅니다.'],
+    pass: '이동 경로의 별 줄이 사라졌다가 착지하면 돌아오고, 뒤 칸에 사람이 있으면 앞 칸 별 줄이 숨는다. 버그처럼 깜빡이지 않는다.',
+    shots: [P('p-dice','이동 직전 칸 위 별 줄')] },
+  { n: '#23', no: 23, t: '교실 태블릿에서 첫 성공·첫 ❌·첫 깜빡임에 끊김이 없는가', d: ['pad'],
+    steps: ['새로고침 후 첫 판에서 첫 성공, 첫 실패, 첫 눈 깜빡임을 봅니다(5번과 함께).'],
+    pass: '표정이 처음 바뀔 때 끊김이 없다.',
+    shots: [] },
+  { n: '#24', no: 24, t: 'Phase 6 실기기 확인 8건', d: ['ip','pad','lap'],
+    steps: ['아이폰 세로 2명 게임: 판 전체가 차례 바와 🎲·점수판 사이에 들어오고 스크롤되지 않는다.', '아이에게 3초 보여 주기: 금색 출발 아치, 시계 방향 화살표, 퀘스트 색과 별 개수, 보라 육각 이벤트, 1등 왕관, 지금 차례를 짚는다.', '판 전체가 귀엽고 반짝이는 3D 장난감 보드게임으로 보인다.', '연출 순서: 주사위가 구르고 숫자 칩과 같은 면으로 멈춘 뒤, 점과 링으로 도착 칸을 미리 보여 주고, 칸마다 뛰어 이동한 다음에야 버튼이나 퀘스트 카드가 나온다. 마지막 라운드 시작에 "🔔 마지막 라운드!"가 나온다.', '색 일치: 퀘스트 칸 색 = 편집기·점수판 난이도 색, 캐릭터 색 = 점수판 아바타 색.', '아이폰·아이패드에서 다른 앱에 30초 다녀오기: 화면이 꺼졌으면 🔄 화면 다시 그리기가 나오고, 누르면 별·위치·차례가 그대로 돌아온다.', '앱을 한 번 연 뒤 비행기 모드로 게임 시작: 글자와 3D 판이 모두 나온다.', '아이패드 가로·노트북: 점수판과 버튼이 오른쪽 패널에 있고 판이 들어온다.'],
+    pass: '8건 모두 위처럼 보인다.',
+    shots: [P('p-board','아이폰 세로 게임 화면'), W('l-board','가로: 오른쪽 패널')] }
+ ]}
+];
+
+const KEY = 'pj-uat8-results';
+let store = {};
+try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { store = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const soakTable = `<div class="tablewrap"><table class="soak"><caption class="label" style="text-align:left;padding-bottom:4px">헤드리스 Chrome 자동 기록(8명 × 5판)</caption>
+<thead><tr><th>판</th><th>geometries 무작위</th><th>geometries 되풀이</th><th>textures</th><th>programs</th><th>드로우콜</th><th>heap MB</th></tr></thead>
+<tbody>${[[1,126,126,81,84.4],[2,136,129,81,84.9],[3,138,129,81,85.3],[4,139,129,83,85.7],[5,142,129,80,85.9]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>3</td><td>15</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}</tbody></table></div>`;
+
+function render() {
+  const root = document.getElementById('groups');
+  root.innerHTML = groups.map((g) => `
+  <section class="group" id="${g.id}" aria-labelledby="${g.id}-h">
+    <div class="group-head"><h2 id="${g.id}-h">${esc(g.title)}</h2><p>${esc(g.desc)}</p></div>
+    ${g.items.map((it) => {
+      const key = 'i' + it.no;
+      const st = store[key] || {};
+      const opts = it.decision ? [['opt1','① 승인'],['opt2','② 거절(미리 올리기)'],['skip','나중에']] : [['pass','통과'],['issue','문제 있음'],['skip','건너뜀']];
+      const chips = it.d.map((k) => `<span class="chip">${DEV[k]}</span>`).join('') + (it.devonly ? '<span class="chip dev">dev 화면</span>' : '') + (it.decision ? '<span class="chip dev">결정</span>' : '');
+      const shots = it.shots.length ? `<div class="shots">${it.shots.map((s) => `<figure class="${s.kind}"><img src="${S(s.f)}" alt="${esc(s.cap)}" loading="lazy" data-cap="${esc(s.cap)}"><figcaption>${esc(s.cap)}</figcaption></figure>`).join('')}</div>`
+        : `<div class="shots none">실기기에서만 확인할 수 있는 항목이라 스크린샷이 없습니다.</div>`;
+      return `<article class="item" id="item-${it.no}" data-state="${st.v === 'pass' || st.v === 'opt1' || st.v === 'opt2' ? 'pass' : st.v === 'issue' ? 'issue' : ''}">
+        <div class="item-head"><div class="num">${esc(it.no)}</div><div class="item-title"><h3>${esc(it.t)}</h3><div class="chips"><span class="chip">${esc(it.n)}</span>${chips}</div></div></div>
+        <div class="body">
+          <div class="steps">
+            <div><p class="label">확인 방법</p><ol>${it.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol></div>
+            <div class="pass"><p class="label">${it.decision ? '고를 것' : '합격 기준'}</p><p>${esc(it.pass)}</p></div>
+            ${it.note ? `<div class="note"><p class="label">스크린샷에서 본 점</p><p>${esc(it.note)}</p></div>` : ''}
+            ${it.table ? soakTable : ''}
+          </div>
+          ${shots}
+        </div>
+        <div class="result" data-key="${key}">
+          ${opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${st.v === v}">${l}</button>`).join('')}
+          <label class="sr" for="note-${it.no}" style="position:absolute;left:-9999px">메모</label>
+          <textarea id="note-${it.no}" rows="1" placeholder="메모 (문제가 있으면 무엇이 어땠는지)">${esc(st.note || '')}</textarea>
+        </div>
+      </article>`;
+    }).join('')}
+  </section>`).join('');
+  tally();
+}
+
+function tally() {
+  let p = 0, i = 0, done = 0;
+  for (let n = 1; n <= 25; n++) { const v = store['i' + n]?.v; if (v) done++; if (v === 'pass' || v === 'opt1' || v === 'opt2') p++; if (v === 'issue') i++; }
+  document.getElementById('t-pass').textContent = '통과·결정 ' + p;
+  document.getElementById('t-issue').textContent = '문제 ' + i;
+  document.getElementById('t-left').textContent = '남음 ' + (25 - done);
+}
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.result button');
+  if (b) {
+    const box = b.closest('.result'); const key = box.dataset.key;
+    const cur = store[key] || {}; cur.v = cur.v === b.dataset.v ? undefined : b.dataset.v; store[key] = cur; save();
+    box.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === cur.v)));
+    const art = box.closest('article');
+    art.dataset.state = cur.v === 'pass' || cur.v === 'opt1' || cur.v === 'opt2' ? 'pass' : cur.v === 'issue' ? 'issue' : '';
+    tally(); return;
+  }
+  const img = e.target.closest('figure img');
+  if (img) { const d = document.getElementById('zoom'); document.getElementById('zoomImg').src = img.src; document.getElementById('zoomImg').alt = img.alt; document.getElementById('zoomCap').textContent = img.dataset.cap; d.showModal(); return; }
+  if (e.target.id === 'zoom' || e.target.closest('#zoom')) { document.getElementById('zoom').close(); return; }
+  const c = e.target.closest('.copy');
+  if (c) { const t = document.getElementById(c.dataset.copy).textContent; navigator.clipboard?.writeText(t).then(() => { c.textContent = '복사됨'; }, () => selectText(c.dataset.copy)); }
+});
+document.addEventListener('input', (e) => {
+  if (e.target.matches('.result textarea')) { const key = e.target.closest('.result').dataset.key; store[key] = { ...(store[key] || {}), note: e.target.value }; save(); }
+});
+function selectText(id) { const r = document.createRange(); r.selectNodeContents(document.getElementById(id)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+document.getElementById('copyAll').addEventListener('click', () => {
+  const lab = { pass: '통과', issue: '문제', skip: '건너뜀', opt1: '① 승인', opt2: '② 거절(표정 미리 올리기)' };
+  const lines = ['Phase 8 UAT 결과'];
+  for (const g of groups) for (const it of g.items) {
+    const st = store['i' + it.no] || {};
+    lines.push(`${it.no}. ${it.t} — ${st.v ? lab[st.v] : '미확인'}${st.note ? ' / 메모: ' + st.note.replace(/\s+/g, ' ').trim() : ''}`);
+  }
+  const text = lines.join('\n');
+  const done = () => { const m = document.getElementById('copied'); m.hidden = false; setTimeout(() => (m.hidden = true), 3500); };
+  const fallback = () => { let o = document.getElementById('out'); if (!o) { o = document.createElement('textarea'); o.id = 'out'; o.readOnly = true; document.querySelector('.bar-in').appendChild(o); } o.value = text; o.focus(); o.select(); };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+});
+
+render();
+</script>
