@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 8 (퀘스트 성공 연출 & 시상식 & 마감) — EXECUTING
 Plan: 11 of 11
 Status: Phase complete — ready for verification
-Last activity: 2026-10-23 — Phase 8 execution started
+Last activity: 2026-10-25 — Completed quick task 261025-pmt: 파스텔 마카롱 팔레트
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -220,6 +220,7 @@ v1.0 시기의 항목(요구사항 개수 표기, 이벤트 확률 UX, R3F vs �
 | Date | Slug | Outcome |
 |------|------|---------|
 | 2026-07-26 | design-asset-request | `.planning/ASSET-REQUEST.md` — Phase 4(ART-01/02/03/05) 디자인 에셋 요구사항서. 코드 실측 규격 고정, 표정=2×2 텍스처 아틀라스 계약, `Outfit` 슬롯 tint 계약, 미확정 7건 회신 대기 |
+| 2026-10-25 | [261025-pmt-pastel-macaron-theme](./quick/261025-pmt-pastel-macaron-theme/) | 라이트 테마 파스텔 마카롱 팔레트 적용 (CSS 토큰 + 3D palette.ts + --on-accent 글자), b1b294c |
 | 2026-07-26 | 260726-lbq-move-destination | 주사위 확정 → 토큰 이동 전 목적지 하이라이트(LOOP-05/06/07). `planHighlight` 순수 모델 + `MoveHighlight` 씬 레이어(경유 점·목적지 링·이벤트 핀·칸 라벨) + `PlayView` `preview` 비트. 182 tests green. 브라우저 human-check 5건 대기 |
 
 ## Deferred Items
