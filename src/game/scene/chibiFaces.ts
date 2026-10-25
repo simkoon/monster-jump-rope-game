@@ -6,8 +6,8 @@
 // no canvas texture — the face is code geometry too (D-09).
 // Parts sit on the head ellipsoid's front surface (head-center frame, chibiParts `onSurface`) with
 // a small lift so nothing z-fights: eyes below the head center with white highlights, pink cheeks
-// on every key, small mouths (D-03). Animals whose ANIMAL_EYE is white (dog, panda) get sclera eyes,
-// and their line eyes are white so they read on the blue head and the ink patches. Lines and
+// on every key, small mouths (D-03). Only the panda (white ANIMAL_EYE) gets sclera eyes, and its
+// line eyes are white so they read on its ink eye patches; every other animal uses ink. Lines and
 // highlights stay ≥ LINE_R_MIN / HIGHLIGHT_R_MIN (phone legibility). TorusGeometry with arc π is the
 // ∩ arch (^^ eyes, sad mouth) and turned by π it is the ∪ smile; CircleGeometry(r, n, π, π) is the
 // lower half-disc open mouth.
@@ -211,12 +211,11 @@ function eyesParts(animal: AnimalId, eyes: Eyes): BufferGeometry[] {
 
 function browParts(animal: AnimalId, brows: 'sad' | 'up'): BufferGeometry[] {
   const [ex0, ey0] = animal === 'pig' ? PIG_EYE : [EYE_X, EYE_Y];
-  const hex = animal === 'dog' ? WHITE : INK;
   const y = ey0 + (brows === 'sad' ? BROW.sadDy : BROW.upDy) + (animal === 'panda' ? PANDA_BROW_UP : 0);
   return SIDES.map((s) =>
     part(
       new CapsuleGeometry(Math.max(BROW.r, LINE_R_MIN), BROW.len, 4, 10),
-      hex,
+      INK,
       // Horizontal; on the sad face the inner ends (toward the nose) are raised.
       onSurface(HEAD_E, s * ex0, y, -0.004, 1, 1, 1, Math.PI / 2 + (brows === 'sad' ? -s * BROW.tilt : 0)),
     ),
