@@ -393,17 +393,5 @@ export function __resetSfxForTests(): void {
   stuck = 0;
 }
 
-// Explicit teacher gesture: wait for resume before the test tone, unlike fire-and-forget beats.
-export async function testSound(): Promise<{ state: string; voices: number }> {
-  setEnabled(true);
-  unlock();
-  const c = ctx;
-  if (!c) return { state: 'unavailable', voices: 0 };
-  try {
-    if (String(c.state) !== 'running') await c.resume();
-  } catch { return { state: String(c.state), voices: 0 }; }
-  return { state: String(c.state), voices: play('success2', { group: 'sound-test', delaySec: FADE_SEC }) };
-}
-
-const sfx = { testSound, unlock, resume, play, stopGroup, stopAll, setEnabled, activeVoiceCount, activeNodeCount };
+const sfx = { unlock, resume, play, stopGroup, stopAll, setEnabled, activeVoiceCount, activeNodeCount };
 export default sfx;

@@ -22,7 +22,8 @@ function resetAll() {
   localStorage.clear();
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS });
-  useSetupDraft.getState().reset(); // the start-screen draft lives outside the component (WR-03)
+  useSetupDraft.getState().reset();
+  useSetupDraft.getState().patch({ targetJumps: 3 }); // the start-screen draft lives outside the component (WR-03)
   setContent(ALL_DIFFS);
 }
 
@@ -264,5 +265,28 @@ describe('SetupView — selectable play order', () => {
     fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
     expect(useGameStore.getState().game!.phase).toBe('awaitingNomination');
     expect(useGameStore.getState().game!.config.rules.nomination).toBe(true);
+  });
+});
+
+
+describe('SetupView — one fixed jump count before the game', () => {
+  beforeEach(() => { resetAll(); useSetupDraft.getState().patch({ targetJumps: null }); });
+  it('blocks game start until the target roll has completed', () => {
+    render(<SetupView />);
+    expect(screen.getByRole('button', {name:'게임 시작'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    expect(useGameStore.getState().game).toBeNull();
+    expect(screen.getByRole('button', {name:'오늘의 횟수 주사위 굴리기'})).toBeEnabled();
+  });
+  it('keeps the decided count across play-order changes and editor remounts', () => {
+    useSetupDraft.getState().patch({targetJumps:5});
+    const view = render(<SetupView />);
+    fireEvent.click(screen.getByRole('button', {name:'한 명씩 차례대로'}));
+    expect(screen.getByText('오늘은 5번 넘기!')).toBeInTheDocument();
+    view.unmount(); render(<SetupView />);
+    expect(screen.getByRole('button', {name:'이 게임의 횟수 확정'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+    expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(5);
+    expect(useSetupDraft.getState().targetJumps).toBeNull();
   });
 });

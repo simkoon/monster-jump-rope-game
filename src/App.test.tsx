@@ -19,7 +19,8 @@ function resetToSeed() {
   localStorage.clear();
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS }); // settings changed by one test never leak into another
-  useSetupDraft.getState().reset(); // the start-screen draft lives outside the component (WR-03)
+  useSetupDraft.getState().reset();
+  useSetupDraft.getState().patch({ targetJumps: 3 }); // the start-screen draft lives outside the component (WR-03)
   usePresentation.getState().reset(EMPTY_DISPLAYED, null); // no beats leak between tests
   fakeCanvas.reset();
   const s = seedContent();
@@ -51,7 +52,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(modeSwitch().getByRole('button', { name: '🎮 게임' }).className).toContain('active');
     expect(modeSwitch().getByRole('button', { name: '✏️ 편집기' }).className).not.toContain('active');
     // ...and no editor MissionTab content (a seed mission name) is rendered.
-    expect(screen.queryByText('양발 모아뛰기')).toBeNull();
+    expect(screen.queryByText(seedContent().missions[0].name)).toBeNull();
     // The reskinned game view (SetupView, GameApp with no active game) is what mounts:
     // the original Phase 4 파워점핑 보드 대모험 logo + the --tap 게임 시작 button. The header logo's
     // aria-label is composed as '파워점핑 보드 대모험 {context} {subtitle}' (PowerJumpingLogo).
@@ -139,7 +140,7 @@ describe('App shell — default 게임 entry (D-10)', () => {
     expect(modeSwitch().getByRole('button', { name: '✏️ 편집기' }).className).toContain('active');
     expect(document.querySelector('.app--editor')).not.toBeNull();
     expect(document.querySelector('.panel--editor-shell')).not.toBeNull();
-    expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
+    expect(screen.getByText(seedContent().missions[0].name)).toBeInTheDocument();
   });
 });
 
@@ -215,14 +216,14 @@ describe('App shell — the start-screen draft survives the 편집기 (WR-03)', 
 describe('App shell (two-tab read-only viewer)', () => {
   beforeEach(resetToSeed);
 
-  it('renders all 6 seed mission names and a count pill of 6', () => {
+  it('renders every current seed mission and its count pill', () => {
     render(<App />);
     enterEditor();
-    for (const name of ['양발 모아뛰기', '번갈아뛰기', '엇걸어풀기 (X자)', '뒤로뛰기', '이중뛰기', '십자뛰기']) {
+    for (const name of seedContent().missions.map((mission) => mission.name)) {
       expect(screen.getByText(name)).toBeInTheDocument();
     }
     const missionTab = screen.getByRole('tab', { name: /미션/ });
-    expect(within(missionTab).getByText('6')).toBeInTheDocument();
+    expect(within(missionTab).getByText(String(seedContent().missions.length))).toBeInTheDocument();
   });
 
   it('switches to the 이벤트 tab, showing the 4 seed events and a pill of 4', () => {
@@ -276,9 +277,33 @@ describe('편집기 ⚙️ 설정 탭 (D-23)', () => {
   it('⚙️ 설정 탭을 누르면 게임 설정 화면이 보이고 미션 목록은 사라진다', () => {
     render(<App />);
     enterEditor();
-    expect(screen.getByText('양발 모아뛰기')).toBeInTheDocument();
+    expect(screen.getByText(seedContent().missions[0].name)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: '⚙️ 설정' }));
     expect(screen.getByRole('heading', { name: '⚙️ 게임 설정' })).toBeVisible();
-    expect(screen.queryByText('양발 모아뛰기')).toBeNull();
+    expect(screen.queryByText(seedContent().missions[0].name)).toBeNull();
+  });
+});
+
+
+describe('opening target die and game rules', () => {
+  beforeEach(resetToSeed);
+  it('requires the opening roll and locks its result into the running game', () => {
+    useSetupDraft.getState().patch({targetJumps:null});
+    render(<App />);
+    vi.useFakeTimers();
+    try {
+      expect(screen.getByRole('button', {name:'게임 시작'})).toBeDisabled();
+      fireEvent.click(screen.getByRole('button', {name:'오늘의 횟수 주사위 굴리기'}));
+      act(() => {vi.advanceTimersByTime(1000);});
+      const target = useSetupDraft.getState().targetJumps!;
+      expect(target).toBeGreaterThanOrEqual(1);
+      expect(target).toBeLessThanOrEqual(6);
+      expect(screen.getByRole('button', {name:'이 게임의 횟수 확정'})).toBeDisabled();
+      fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
+      expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(target);
+      expect(screen.getByLabelText('이 게임의 넘기 횟수')).toHaveTextContent('오늘은 '+target+'번 넘기!');
+      expect(screen.queryByRole('button', {name:'오늘의 횟수 주사위 굴리기'})).toBeNull();
+      expect(screen.queryByRole('button', {name:'소리 확인'})).toBeNull();
+    } finally {vi.useRealTimers();}
   });
 });

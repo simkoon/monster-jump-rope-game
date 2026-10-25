@@ -1,7 +1,7 @@
 // src/game/hud/soundToggle.test.tsx — the 🔊 / 🔇 toggle (Phase 8 08-08; AUDIO-02, D-20, D-21,
 // UI-SPEC F8 / Copywriting). jsdom + FakeAudio.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import SoundToggle from './SoundToggle';
 import { SETTINGS_KEY, useSettings } from '../../settings';
 import { SOUND_TOGGLE_EMOJI } from '../labels';
@@ -42,13 +42,10 @@ afterEach(() => {
 });
 
 describe('SoundToggle (AUDIO-02, D-20)', () => {
-  it('plays a test independently and turns sound on', async () => {
-    useSettings.setState({ soundOn: false });
+  it('does not show the removed sound-test button', () => {
     render(<SoundToggle />);
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '소리 확인' })); });
-    expect(useSettings.getState().soundOn).toBe(true);
-    expect(screen.getByRole('status')).toHaveTextContent('확인음을 재생했어요');
-    expect(sfx.activeVoiceCount()).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: '소리 확인' })).toBeNull();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
   it('soundOn true → 🔊 with aria-label and title 효과음 끄기', () => {
     render(<SoundToggle />);

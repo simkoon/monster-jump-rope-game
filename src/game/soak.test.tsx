@@ -190,6 +190,7 @@ function resetToSeed() {
   useGameStore.getState().reset();
   useSettings.setState({ ...DEFAULT_SETTINGS, defaultRounds: 1, boardSize: 16, failRule: 'noStar' });
   useSetupDraft.getState().reset();
+  useSetupDraft.getState().patch({ targetJumps: 3, playOrder: 'sequential' });
   usePresentation.getState().reset(EMPTY_DISPLAYED, null);
   fakeCanvas.reset();
   const s = seedContent();

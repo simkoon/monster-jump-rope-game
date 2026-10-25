@@ -358,3 +358,13 @@ describe('fixtures', () => {
     expect(advanceTurn(done).currentIndex).toBe(1);
   });
 });
+
+
+describe('fixed jump target on the game screen', () => {
+  it('shows the same count in the top bar and the mission card', async () => {
+    setGame(atJudgement({rules:{targetJumps:5}}));
+    await renderPlay();
+    expect(screen.getByLabelText('이 게임의 넘기 횟수')).toHaveTextContent('오늘은 5번 넘기!');
+    expect(screen.getByText('이 기술은 5번 넘기!')).toBeInTheDocument();
+  });
+});

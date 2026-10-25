@@ -221,6 +221,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           isExtra={turn.isExtra}
           round={game.round}
           totalRounds={config.rules.rounds}
+          targetJumps={config.rules.targetJumps}
           next={nextUpView(game)}
           onEndNow={endNow}
           over={over}
@@ -240,6 +241,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
 
         {!ceremony && controlsVisible && phase === 'awaitingJudgement' && card && (
           <MissionOverlay
+            targetJumps={config.rules.targetJumps}
             mission={card.mission}
             diff={card.diff}
             stars={card.stars}

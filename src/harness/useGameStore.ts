@@ -26,6 +26,7 @@ import { analyzeContent } from '../engine/setup';
 import { systemRng } from '../engine/rng';
 
 export interface GameSetup {
+  targetJumps?: number;
   mode: 'solo' | 'team';
   participants: Participant[];
   rounds: number;
@@ -77,7 +78,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       return;
     }
     const { failRule, startBonus, boardSize } = useSettings.getState();
-    const rules = { nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
+    const targetJumps = setup.targetJumps === undefined ? {} : {
+      targetJumps: Math.min(6, Math.max(1, Number.isFinite(setup.targetJumps) ? Math.round(setup.targetJumps) : 1)),
+    };
+    const rules = { ...targetJumps, nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
     const game = createGame({ mode: setup.mode, participants: setup.participants, rules }, content, systemRng());
     set({ game, startBlockedReason: null });
   },
@@ -132,6 +136,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       participants: g.config.participants,
       rounds: g.config.rules.rounds,
       nomination: g.config.rules.nomination,
+      targetJumps: g.config.rules.targetJumps,
     });
   },
 

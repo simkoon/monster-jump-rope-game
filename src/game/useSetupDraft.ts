@@ -15,6 +15,7 @@ export type SetupMode = 'solo' | 'team';
 export type PlayOrder = 'nomination' | 'sequential';
 
 export interface SetupDraft {
+  targetJumps: number | null;
   playOrder: PlayOrder;
   mode: SetupMode;
   // Raw stepper/input value (may be NaN while the number field is being edited); SetupView clamps it.
@@ -33,7 +34,7 @@ interface SetupDraftState extends SetupDraft {
 }
 
 export function initialSetupDraft(): SetupDraft {
-  return { playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
+  return { targetJumps: null, playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
 }
 
 export const useSetupDraft = create<SetupDraftState>((set) => ({

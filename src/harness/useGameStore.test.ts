@@ -157,3 +157,25 @@ describe('useGameStore — v2 seam', () => {
     expect(useGameStore.getState().startBlockedReason).toBeNull();
   });
 });
+
+
+describe('fixed target jump count', () => {
+  beforeEach(resetAll);
+  it('snapshots the count and never changes it after moves, judgements, undo or restart', () => {
+    useGameStore.getState().startGame(setup({targetJumps:5, nomination:true}));
+    const store = useGameStore.getState();
+    const pid = store.game!.config.participants[0].id;
+    store.nominate(pid); store.roll(); store.judge(true); store.undo();
+    expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(5);
+    store.endNow(); store.restart();
+    expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(5);
+    store.reset();
+    expect(useGameStore.getState().game).toBeNull();
+  });
+  it('clamps explicit target counts to a six-sided die range', () => {
+    for (const [input,expected] of [[0,1],[99,6],[4.4,4],[NaN,1]]) {
+      useGameStore.getState().startGame(setup({targetJumps:input}));
+      expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(expected);
+    }
+  });
+});

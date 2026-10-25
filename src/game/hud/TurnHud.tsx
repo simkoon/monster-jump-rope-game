@@ -35,6 +35,7 @@ interface TurnHudProps {
   over?: boolean;
   nomination?: boolean;
   waiting?: boolean;
+  targetJumps?: number;
 }
 
 const dotStyle = (animal: AnimalId) => ({ '--pc': ANIMAL_COLOR[animal] }) as CSSProperties;
@@ -52,6 +53,7 @@ export default function TurnHud({
   over = false,
   nomination = false,
   waiting = false,
+  targetJumps,
 }: TurnHudProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isFinal = round >= totalRounds;
@@ -105,6 +107,10 @@ export default function TurnHud({
           </span>
         </div>
       )}
+
+      {targetJumps !== undefined && <div className="game-target-count" aria-label="이 게임의 넘기 횟수">
+        오늘은 <strong>{targetJumps}번</strong> 넘기!
+      </div>}
 
       <span className="spacer" />
 

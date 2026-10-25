@@ -13,6 +13,7 @@ import { useGameStore } from '../../harness/useGameStore';
 import SegmentedControl from '../../components/SegmentedControl';
 import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import AnimalPicker from './AnimalPicker';
+import TargetRoll from './TargetRoll';
 import { useSetupDraft, type SetupMode, type PlayOrder } from '../useSetupDraft';
 import { analyzeContent, buildParticipants, estimateMinutes, MAX_PARTICIPANTS } from '../../engine/setup';
 import { assignAnimals, type AnimalId } from '../../engine/animals';
@@ -47,6 +48,7 @@ export default function SetupView() {
   const analysis = analyzeContent(missions, events);
   const notices = missingNotices(analysis);
 
+  const targetJumps = useSetupDraft((s) => s.targetJumps);
   const playOrder = useSetupDraft((s) => s.playOrder);
   const nomination = playOrder === 'nomination';
   const draftRounds = useSetupDraft((s) => s.rounds);
@@ -82,6 +84,7 @@ export default function SetupView() {
   }
 
   function handleStart() {
+    if (targetJumps === null) return;
     const memberNamesPerParticipant = isTeam
       ? rows.map((i) =>
           (members[i] ?? '')
@@ -92,7 +95,7 @@ export default function SetupView() {
       : undefined;
     const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
     const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
-    useGameStore.getState().startGame({ mode, participants, rounds: nomination ? 1 : rounds, nomination });
+    useGameStore.getState().startGame({ mode, participants, rounds: nomination ? 1 : rounds, nomination, targetJumps });
     // The draft is consumed once a game is running; 처음으로 then opens a fresh start screen.
     if (useGameStore.getState().game) useSetupDraft.getState().reset();
   }
@@ -103,6 +106,8 @@ export default function SetupView() {
       <p className="game-setup-sub">{nomination
         ? '수업을 잘 들은 친구를 선생님이 지목해 기회를 주세요.'
         : '등록한 순서대로 한 명씩 도전하고 별을 모아요.'}</p>
+
+      <TargetRoll value={targetJumps} onDecide={(value) => patch({ targetJumps: value })} />
 
       <div className="game-setup-field">
         <span>진행 방식</span>
@@ -231,10 +236,10 @@ export default function SetupView() {
         </div>
       )}
 
-      {/* The only start blocker: an empty mission library (D-13). */}
+      {/* Start requires both mission content and one decided target-count roll. */}
       {!analysis.ok && <p className="game-setup-guard">{analysis.reason}</p>}
 
-      <button type="button" className="game-btn game-setup-start" disabled={!analysis.ok} onClick={handleStart}>
+      <button type="button" className="game-btn game-setup-start" disabled={!analysis.ok || targetJumps === null} onClick={handleStart}>
         게임 시작
       </button>
     </div>

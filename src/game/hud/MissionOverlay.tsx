@@ -10,15 +10,17 @@ interface MissionOverlayProps {
   diff: Difficulty;
   stars: number;
   attempt: 1 | 2;
+  targetJumps?: number;
   onJudge: (success: boolean) => void;
 }
 
-export default function MissionOverlay({ mission, diff, stars, attempt, onJudge }: MissionOverlayProps) {
+export default function MissionOverlay({ mission, diff, stars, attempt, targetJumps, onJudge }: MissionOverlayProps) {
   return (
     <div className="game-quest-card" role="group" aria-label="미션 판정">
       <div className="game-mission-card">
         {attempt === 2 && <span className="game-event-chip extra">🔁 한 번 더 도전!</span>}
         <h2 className="game-mission-name">{mission.name}</h2>
+        {targetJumps !== undefined && <p className="mission-target-count">이 기술은 {targetJumps}번 넘기!</p>}
         {mission.desc && <p className="game-mission-desc">{mission.desc}</p>}
         <div className="game-quest-meta">
           <span className={`game-diff-badge ${diff}`}>{DIFF_LABEL[diff]}</span>
