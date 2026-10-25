@@ -28,7 +28,7 @@ export default function EventCard({ event, pct, onEdit, onDelete }: EventCardPro
         className="tag"
         style={{
           borderColor: 'transparent',
-          color: '#fff',
+          color: 'var(--on-accent)',
           background: event.label === '함정' ? 'var(--coral)' : 'var(--grape)',
         }}
       >
