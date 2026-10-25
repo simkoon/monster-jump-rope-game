@@ -19,9 +19,13 @@ const event = (id: string, weight: number): Event => ({
 describe('store seed defaults', () => {
   beforeEach(resetToSeed);
 
-  it('seeds 6 missions, 4 events, and the 3 default categories', () => {
+  it('seeds 21 missions (9 easy / 8 normal / 4 hard), 4 events, and the 3 default categories', () => {
     const seed = seedContent();
-    expect(seed.missions.length).toBe(6);
+    expect(seed.missions.length).toBe(21);
+    expect(seed.missions.filter((m) => m.diff === 'easy')).toHaveLength(9);
+    expect(seed.missions.filter((m) => m.diff === 'normal')).toHaveLength(8);
+    expect(seed.missions.filter((m) => m.diff === 'hard').map((m) => m.name)).toEqual(['OO', 'SO', 'CO', 'CC']);
+    expect(seed.missions.every((m) => m.desc === '')).toBe(true);
     expect(seed.events.length).toBe(4);
     expect(seed.categories).toEqual(['기초', '응용', '고난도']);
   });

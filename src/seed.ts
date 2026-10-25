@@ -1,5 +1,5 @@
-// src/seed.ts — default content library, ported verbatim from 01-PROTOTYPE.html seed().
-// 3 categories, 6 missions, 4 events. Each record gets a fresh id via uid().
+// src/seed.ts — default content library: the instructor's jump-rope curriculum (2026-10-25).
+// 3 categories, 21 missions (9 easy / 8 normal / 4 hard, names only — no desc), 4 events. Each record gets a fresh id via uid().
 import { SCHEMA_VERSION, type Content } from './schema';
 
 export function uid(): string {
@@ -11,12 +11,27 @@ export function seedContent(): Content {
     version: SCHEMA_VERSION,
     categories: ['기초', '응용', '고난도'],
     missions: [
-      { id: uid(), name: '양발 모아뛰기', desc: '두 발을 모아 가볍게 콩콩!', diff: 'easy', cats: ['기초'] },
-      { id: uid(), name: '번갈아뛰기', desc: '뛰기 발을 좌우로 번갈아요.', diff: 'easy', cats: ['기초'] },
-      { id: uid(), name: '엇걸어풀기 (X자)', desc: '팔을 X자로 걸었다 풀어요.', diff: 'normal', cats: ['응용'] },
-      { id: uid(), name: '뒤로뛰기', desc: '줄을 뒤로 돌리며 뛰어요.', diff: 'normal', cats: ['기초', '응용'] },
-      { id: uid(), name: '이중뛰기', desc: '한 번 뛸 때 줄을 두 번!', diff: 'hard', cats: ['고난도'] },
-      { id: uid(), name: '십자뛰기', desc: '앞뒤좌우 십자로 이동하며 뛰어요.', diff: 'hard', cats: ['고난도', '응용'] },
+      { id: uid(), name: '양발모아뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '번갈아뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '좌우벌려뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '번갈아2박자', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '앞흔들어뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '옆흔들어뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '좌우앞뒤뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '뒤들어모아뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '앞들어모아뛰기', desc: '', diff: 'easy', cats: ['기초'] },
+      { id: uid(), name: '2박자 엇걸어풀어뛰기', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '연속 엇걸어풀어뛰기', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '2박자 엇걸어뛰기', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '연속 엇걸어뛰기', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '2박자 스윙오픈', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '연속 스윙오픈', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '2박자 스윙크로스', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: '연속 스윙크로스', desc: '', diff: 'normal', cats: ['응용'] },
+      { id: uid(), name: 'OO', desc: '', diff: 'hard', cats: ['고난도'] },
+      { id: uid(), name: 'SO', desc: '', diff: 'hard', cats: ['고난도'] },
+      { id: uid(), name: 'CO', desc: '', diff: 'hard', cats: ['고난도'] },
+      { id: uid(), name: 'CC', desc: '', diff: 'hard', cats: ['고난도'] },
     ],
     events: [
       { id: uid(), name: '슈퍼 점프!', eff: 'forward', steps: 3, weight: 3, label: '보너스' },
