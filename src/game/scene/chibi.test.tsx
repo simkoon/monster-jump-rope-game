@@ -42,13 +42,13 @@ const box = (g: BufferGeometry) => {
 
 describe('chibiParts', () => {
   it('part: non-indexed, no uv, linear vertex color with itemSize 3', () => {
-    const g = part(new SphereGeometry(0.1, 8, 6), '#9C6644');
+    const g = part(new SphereGeometry(0.1, 8, 6), '#C49A78');
     expect(g.index).toBeNull();
     expect(keys(g)).toEqual(['color', 'normal', 'position']);
     expect(g.attributes.color.itemSize).toBe(3);
-    const lin = new Color('#9C6644');
+    const lin = new Color('#C49A78');
     expect(g.attributes.color.getX(0)).toBeCloseTo(lin.r, 6);
-    expect(g.attributes.color.getX(0)).toBeCloseTo(0.3325, 3); // linear, not 0x9C / 255 = 0.61
+    expect(g.attributes.color.getX(0)).toBeCloseTo(0.552, 3); // linear, not 0xC4 / 255 = 0.77
     expect(g.attributes.color.count).toBe(g.attributes.position.count);
   });
 
@@ -62,7 +62,7 @@ describe('chibiParts', () => {
     expect(p1.y).toBeCloseTo(p0.y * 2 + 2, 6);
     expect(p1.z).toBeCloseTo(p0.z * 2 + 3, 6);
 
-    const a = part(src, '#123A58', undefined, 0.22);
+    const a = part(src, '#2E4466', undefined, 0.22);
     expect(a.attributes.color.itemSize).toBe(4);
     const arr = a.attributes.color.array as Float32Array;
     for (let i = 3; i < arr.length; i += 4) expect(arr[i]).toBeCloseTo(0.22, 6);
@@ -70,7 +70,7 @@ describe('chibiParts', () => {
 
   it('hull: grown copy with reversed winding, negated normals and ink color', () => {
     const p = part(new SphereGeometry(0.2, 10, 8), '#FFFFFF');
-    const h = hull(p, 1.05, '#173A57');
+    const h = hull(p, 1.05, '#26385A');
     expect(h.attributes.position.count).toBe(p.attributes.position.count);
     p.computeBoundingSphere();
     h.computeBoundingSphere();
@@ -95,7 +95,7 @@ describe('chibiParts', () => {
     const hf = tri(h);
     if (pf.lengthSq() > 1e-12) expect(pf.dot(hf)).toBeLessThan(0);
 
-    const ink = new Color('#173A57');
+    const ink = new Color('#26385A');
     const col = h.attributes.color.array as Float32Array;
     for (let i = 0; i < col.length; i += 3) {
       expect(col[i]).toBeCloseTo(ink.r, 6);
@@ -114,7 +114,7 @@ describe('chibiParts', () => {
 
   it('bake: merges matching parts and throws a named error on a mismatch', () => {
     const a = part(new SphereGeometry(0.1, 8, 6), '#FFFFFF');
-    const b = part(new SphereGeometry(0.05, 6, 4), '#173A57', M(0.2, 0, 0));
+    const b = part(new SphereGeometry(0.05, 6, 4), '#26385A', M(0.2, 0, 0));
     const g = bake('x', [a, b]);
     expect(g.attributes.position.count).toBe(a.attributes.position.count + b.attributes.position.count);
     expect(keys(g)).toEqual(['color', 'normal', 'position']);
@@ -241,7 +241,7 @@ describe('chibiFaces (D-03, D-07, D-09, CHAR-02)', () => {
     }
   });
 
-  it('D-03-2: eyes sit in the lower half of the face; dog and panda get sclera eyes', () => {
+  it('D-03-2: eyes sit in the lower half of the face; only the panda gets sclera eyes', () => {
     for (const a of ANIMALS) {
       const g = faceGeo(a, 'idle');
       if (ANIMAL_EYE[a] === CHAR_COLOR.white) {
@@ -257,7 +257,7 @@ describe('chibiFaces (D-03, D-07, D-09, CHAR-02)', () => {
     }
   });
 
-  it('line eyes use ANIMAL_EYE (white on the dog and the panda)', () => {
+  it('line eyes use ANIMAL_EYE (white on the panda only)', () => {
     for (const a of ANIMALS) {
       expect(hasColor(faceGeo(a, 'idleBlink'), ANIMAL_EYE[a]), a).toBe(true);
       expect(hasColor(faceGeo(a, 'joy'), ANIMAL_EYE[a]), a).toBe(true);

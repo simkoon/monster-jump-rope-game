@@ -199,7 +199,7 @@ describe('FxPools — stars beat (FX-01, FX-04, D-03, D-04)', () => {
       conf.getColorAt(i, c);
       hexes.add(`#${c.getHexString().toUpperCase()}`);
     }
-    expect(hexes.has('#FF9F1C')).toBe(true);
+    expect(hexes.has('#FFB86B')).toBe(true);
     burst.getColorAt(1, c);
     expect(`#${c.getHexString().toUpperCase()}`).toBe(FX_COLOR.burstAlt);
   });
@@ -216,7 +216,7 @@ describe('FxPools — stars beat (FX-01, FX-04, D-03, D-04)', () => {
     const conf = pool(r, 'fx-confetti');
     for (let i = 0; i < 40; i++) {
       conf.getColorAt(i, c);
-      expect(`#${c.getHexString().toUpperCase()}`).not.toBe('#FF9F1C');
+      expect(`#${c.getHexString().toUpperCase()}`).not.toBe('#FFB86B');
     }
     await completeCurrent();
 

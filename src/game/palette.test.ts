@@ -1,6 +1,6 @@
 // palette.ts is the single hex source for DOM + 3D (D-14, HUD-01, RESEARCH Pitfall 5).
-// These tests pin it to the LIGHT theme tokens in index.css so the 3D pawns and the
-// scoreboard dots can never drift apart.
+// These tests pin it to the LIGHT theme tokens in index.css (pastel macaron palette) so the 3D
+// pawns and the scoreboard dots can never drift apart.
 import css from '../styles/index.css?raw';
 import { ANIMALS } from '../engine/animals';
 import { ANIMAL_COLOR, ANIMAL_EYE, CHAR_COLOR, DIFF_COLOR, EVENT_COLOR, FX_COLOR, LIGHTS, SCENE_COLOR } from './palette';
@@ -17,7 +17,7 @@ const HEX = /^#[0-9A-F]{6}$/i;
 
 describe('DIFF_COLOR', () => {
   it('has the UI-SPEC hex values', () => {
-    expect(DIFF_COLOR).toEqual({ easy: '#25D6A0', normal: '#FFB020', hard: '#FF5C7A' });
+    expect(DIFF_COLOR).toEqual({ easy: '#6FD6B0', normal: '#FFCB6B', hard: '#FF8A9B' });
   });
 
   it('equals the --easy / --normal / --hard light tokens', () => {
@@ -30,26 +30,26 @@ describe('DIFF_COLOR', () => {
 describe('ANIMAL_COLOR', () => {
   it('has the UI-SPEC hex values', () => {
     expect(ANIMAL_COLOR).toEqual({
-      bear: '#9C6644',
+      bear: '#C49A78',
       rabbit: '#FFFFFF',
-      cat: '#9A7DFF',
-      dog: '#1183D6',
-      panda: '#173A57',
-      fox: '#FF9F1C',
-      pig: '#FF80B5',
-      chick: '#FFCB2E',
+      cat: '#B49CFF',
+      dog: '#7DB4E6',
+      panda: '#3E4C6E',
+      fox: '#FFB86B',
+      pig: '#FFA6C9',
+      chick: '#FFD966',
     });
   });
 
-  it('reuses the light tokens for 7 of 8 animals (bear is the one new color)', () => {
+  it('reuses the light tokens for 5 of 8 animals (bear, dog and panda are the new colors)', () => {
     expect(up(ANIMAL_COLOR.rabbit)).toBe(token('panel'));
     expect(up(ANIMAL_COLOR.cat)).toBe(token('grape'));
-    expect(up(ANIMAL_COLOR.dog)).toBe(token('sky-deep'));
-    expect(up(ANIMAL_COLOR.panda)).toBe(token('ink'));
     expect(up(ANIMAL_COLOR.fox)).toBe(token('sun-deep'));
     expect(up(ANIMAL_COLOR.pig)).toBe(token('pink'));
     expect(up(ANIMAL_COLOR.chick)).toBe(token('sun'));
-    expect(css.toUpperCase()).not.toContain(up(ANIMAL_COLOR.bear));
+    for (const a of ['bear', 'dog', 'panda'] as const) {
+      expect(css.toUpperCase(), a).not.toContain(up(ANIMAL_COLOR[a]));
+    }
   });
 
   it('covers every animal with 8 pairwise-distinct colors', () => {
@@ -60,9 +60,9 @@ describe('ANIMAL_COLOR', () => {
 });
 
 describe('ANIMAL_EYE', () => {
-  it('is white on the dark bodies (dog, panda) and ink elsewhere', () => {
+  it('is white on the panda only (ink eye patches) and ink elsewhere', () => {
     for (const a of ANIMALS) {
-      expect(ANIMAL_EYE[a]).toBe(a === 'dog' || a === 'panda' ? '#FFFFFF' : '#173A57');
+      expect(ANIMAL_EYE[a], a).toBe(a === 'panda' ? '#FFFFFF' : '#26385A');
     }
   });
 });
@@ -70,21 +70,21 @@ describe('ANIMAL_EYE', () => {
 describe('CHAR_COLOR (Phase 7 chibi parts)', () => {
   it('has the UI-SPEC hex values', () => {
     expect(CHAR_COLOR).toEqual({
-      ink: '#173A57',
+      ink: '#26385A',
       white: '#FFFFFF',
-      cheek: '#FF9EC4',
-      cheekPig: '#FF5C7A',
-      mouth: '#C2304F',
-      tongue: '#FF80B5',
-      sweat: '#7FD3FF',
-      sparkle: '#FFCB2E',
-      bearMuzzle: '#E8C9A0',
-      dogMuzzle: '#EFF8FF',
-      dogEar: '#0C5E9A',
-      pigNose: '#F0609E',
-      cream: '#FFFDF4',
-      beak: '#FF9F1C',
-      feather: '#FFB020',
+      cheek: '#FFC2DA',
+      cheekPig: '#FF8A9B',
+      mouth: '#D9566E',
+      tongue: '#FFA6C9',
+      sweat: '#A8DDF7',
+      sparkle: '#FFD966',
+      bearMuzzle: '#EAD3BC',
+      dogMuzzle: '#F3F8FF',
+      dogEar: '#4F8CC4',
+      pigNose: '#F08AB4',
+      cream: '#FFFCF4',
+      beak: '#FFB86B',
+      feather: '#FFCB6B',
     });
   });
 
@@ -122,11 +122,11 @@ describe('CHAR_COLOR (Phase 7 chibi parts)', () => {
 describe('EVENT_COLOR / SCENE_COLOR / LIGHTS', () => {
   it('EVENT_COLOR has the UI-SPEC values', () => {
     expect(EVENT_COLOR).toEqual({
-      pad: '#9A7DFF',
-      top: '#FFFDF4',
-      forward: '#25D6A0',
-      backward: '#FF5C7A',
-      extra: '#9A7DFF',
+      pad: '#B49CFF',
+      top: '#FFFCF4',
+      forward: '#6FD6B0',
+      backward: '#FF8A9B',
+      extra: '#B49CFF',
     });
   });
 
@@ -137,9 +137,16 @@ describe('EVENT_COLOR / SCENE_COLOR / LIGHTS', () => {
   });
 
   it('LIGHTS has the UI-SPEC values', () => {
-    expect(LIGHTS.hemi).toEqual({ sky: '#FFFFFF', ground: '#CFE4F5', intensity: 1.4 });
+    expect(LIGHTS.hemi).toEqual({ sky: '#FFFFFF', ground: '#DCE8F5', intensity: 1.4 });
     expect(LIGHTS.key).toEqual({ color: '#FFF6E0', intensity: 1.6, position: [5, 10, 7] });
     expect(LIGHTS.rim).toEqual({ color: '#8FD0FF', intensity: 0.5, position: [-6, 6, -6] });
+  });
+});
+
+describe('--on-accent (text on pastel accents)', () => {
+  it('is the ink outline hex and is declared once (bare :root only, shared by both themes)', () => {
+    expect(token('on-accent')).toBe(up(SCENE_COLOR.outline));
+    expect(css.match(/--on-accent\s*:/g) ?? []).toHaveLength(1);
   });
 });
 
