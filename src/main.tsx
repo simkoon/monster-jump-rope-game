@@ -1,3 +1,4 @@
+import './resetStorage'; // must stay first: wipes old saved data before stores rehydrate
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/index.css';
