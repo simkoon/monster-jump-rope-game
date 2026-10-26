@@ -74,6 +74,7 @@ import MissionOverlay from './hud/MissionOverlay';
 import SoundToggle from './hud/SoundToggle';
 import DomPodium from './hud/DomPodium';
 import { CeremonyHead, CeremonyPanel } from './hud/CeremonyView';
+import AddParticipant from './hud/AddParticipant';
 import { useCeremonyIntro } from './hud/useCeremonyIntro';
 import { useInputLock } from './useInputLock';
 import { useSkipOnTap } from './useSkipOnTap';
@@ -225,6 +226,7 @@ export default function GameStage({ readyTimeoutMs = READY_TIMEOUT_MS }: { ready
           next={nextUpView(game)}
           onEndNow={endNow}
           over={over}
+          extraActions={<AddParticipant />}
         />
       )}
 

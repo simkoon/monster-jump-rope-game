@@ -21,6 +21,8 @@ import {
   undoJudgement,
   advanceTurn,
   endGame,
+  addParticipant as engineAddParticipant,
+  type NewParticipant,
 } from '../engine/game';
 import { analyzeContent } from '../engine/setup';
 import { systemRng, TARGET_JUMPS_MAX, TARGET_JUMPS_MIN } from '../engine/rng';
@@ -50,6 +52,7 @@ interface GameStoreState {
   undo: () => void;
   next: () => void;
   endNow: () => void;
+  addParticipant: (input: NewParticipant) => void;
   restart: () => void;
   reset: () => void;
 }
@@ -124,6 +127,13 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const g = get().game;
     if (!g) return;
     set({ game: endGame(g, 'manual') });
+  },
+
+  // A latecomer joins the running game at the start tile (engine: addParticipant).
+  addParticipant: (input) => {
+    const g = get().game;
+    if (!g) return;
+    set({ game: engineAddParticipant(g, input) });
   },
 
   // D-27 "🔁 다시 하기": same participants, animals, mode and rounds; content and settings

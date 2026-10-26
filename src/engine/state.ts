@@ -88,6 +88,7 @@ export type GameEvent =
   | { t: 'questDrawn'; pid: string; missionId: string; diff: Difficulty; stars: 1 | 2 | 3; attempt: 1 | 2 }
   | { t: 'judged'; pid: string; success: boolean; stars: number }
   | { t: 'judgementUndone' }
+  | { t: 'participantAdded'; pid: string }
   | { t: 'gameEnded'; reason: EndReason; winners: string[] };
 
 // D-15: per-participant game stats (Phase 8 praise badges). Lives only in the in-memory game

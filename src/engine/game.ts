@@ -13,6 +13,8 @@ import type { Difficulty, Mission } from '../schema';
 import { buildBoard, DIFF_ORDER, shuffle } from './board';
 import { moveBy, type RingPos } from './ring';
 import { rollDie, type Rng } from './rng';
+import { ANIMALS, leastUsedAnimal, type AnimalId } from './animals';
+import { MAX_PARTICIPANTS } from './setup';
 import { starsFor, winnersByStars } from './scoring';
 import { bumpStats, initStats, isLuckyEvent } from './stats';
 import type {
@@ -435,4 +437,54 @@ export function nominate(state: GameState, pid: string): GameState {
   const selected: GameState = { ...next, currentIndex: index, phase: 'awaitingRoll',
     turn: { ...FRESH_TURN }, card: null, lastMove: null, lastJudgement: null, undo: null };
   return { ...selected, log: { seq: state.log.seq + 1, events: [turnStartedEvent(selected)] } };
+}
+
+export interface NewParticipant {
+  name: string;
+  animal?: AnimalId;
+  memberNames?: string[]; // team mode; empty → the team name performs
+}
+
+export function canAddParticipant(state: GameState): boolean {
+  return state.phase !== 'gameOver' && state.config.participants.length < MAX_PARTICIPANTS;
+}
+
+// Join a running game at the start tile with 0 stars, at the end of the turn order. Allowed in
+// every phase but gameOver, up to MAX_PARTICIPANTS. The current turn, its card and the undo window
+// stay as they are; the undo snapshot learns the newcomer too, so an undo never removes them.
+export function addParticipant(state: GameState, input: NewParticipant): GameState {
+  if (!canAddParticipant(state)) return state;
+  const list = state.config.participants;
+  const maxId = list.reduce((m, p) => Math.max(m, Number(p.id.replace(/^p/, '')) || 0), 0);
+  const id = `p${maxId + 1}`;
+  const name = input.name.trim() || (state.config.mode === 'team' ? `팀 ${list.length + 1}` : `플레이어 ${list.length + 1}`);
+  let animal = input.animal;
+  if (!animal || !ANIMALS.includes(animal)) {
+    const used = new Map<AnimalId, number>();
+    for (const p of list) used.set(p.animal, (used.get(p.animal) ?? 0) + 1);
+    animal = leastUsedAnimal(used);
+  }
+  const members = state.config.mode === 'team' ? (input.memberNames ?? []).map((m) => m.trim()).filter(Boolean) : [];
+  const participant: Participant = {
+    id,
+    name,
+    animal,
+    memberNames: members.length > 0 ? members : [name],
+    memberTurnIndex: 0,
+    position: 0,
+    travel: 0,
+    lapsCredited: 0,
+    stars: 0,
+  };
+  const join = <T extends UndoSnapshot>(s: T): T => ({
+    ...s,
+    config: { ...s.config, participants: [...s.config.participants, participant] },
+    stats: { ...s.stats, ...initStats([id]) },
+  });
+  const joined = join(state);
+  return {
+    ...joined,
+    undo: state.undo ? join(state.undo) : null,
+    log: { seq: state.log.seq + 1, events: [{ t: 'participantAdded', pid: id }] },
+  };
 }

@@ -30,7 +30,8 @@ interface ScoreboardProps {
 }
 
 export default function Scoreboard({ entries, currentId, crownIds, hitId = null }: ScoreboardProps) {
-  const cols = Math.max(1, Math.min(entries.length, 4));
+  // Up to 8: at most 4 per row; a big class (9–20) uses 5 per row to keep the board visible.
+  const cols = Math.max(1, Math.min(entries.length, entries.length > 8 ? 5 : 4));
   return (
     <ol className="sb" aria-label="별 순위" style={{ '--sb-cols': String(cols) } as CSSProperties}>
       {rankByStars(entries).map(({ item, rank }) => {

@@ -1,6 +1,6 @@
 // src/game/hud/SetupView.tsx — the start screen (UI-SPEC S2, D-24/D-25, SETUP-07/08/09).
 // Kept from v1: logo, mode segment, participant count stepper, names, team member list parsing.
-// New: a participant card per row with an animal avatar + 8-animal picker (always distinct),
+// New: a participant card per row with an animal avatar + 8-animal picker (distinct up to 8),
 // the per-game round stepper (initial value = settings defaultRounds, read once, never written
 // back — D-19), the play-time estimate (D-20), the read-only rules summary, the 💡 missing-content
 // notices (informational only — D-13) and the empty-library guard (the only start blocker).
@@ -16,7 +16,7 @@ import AnimalPicker from './AnimalPicker';
 import TargetRoll from './TargetRoll';
 import { useSetupDraft, type SetupMode, type PlayOrder } from '../useSetupDraft';
 import { analyzeContent, buildParticipants, estimateMinutes, MAX_PARTICIPANTS } from '../../engine/setup';
-import { assignAnimals, type AnimalId } from '../../engine/animals';
+import { ANIMALS, assignAnimals, perAnimalLimit, type AnimalId } from '../../engine/animals';
 import {
   ANIMAL_EMOJI,
   RULES_HINT,
@@ -67,8 +67,13 @@ export default function SetupView() {
 
   const clampedCount = clampCount(count);
   const rows = Array.from({ length: clampedCount }, (_, i) => i);
-  // D-24: always distinct; rows without a pick get the first unused animal.
+  // D-24: distinct up to 8; beyond that each species may repeat perAnimalLimit times.
   const animals = assignAnimals(clampedCount, picks);
+  const animalLimit = perAnimalLimit(clampedCount);
+  const takenFor = (i: number) => {
+    const others = animals.filter((_, j) => j !== i);
+    return ANIMALS.filter((a) => others.filter((x) => x === a).length >= animalLimit);
+  };
 
   const isTeam = mode === 'team';
   const rowLabel = isTeam ? '팀' : '플레이어';
@@ -179,7 +184,7 @@ export default function SetupView() {
             <AnimalPicker
               groupLabel={`${rowLabel} ${i + 1} 동물`}
               value={animals[i]}
-              taken={animals.filter((_, j) => j !== i)}
+              taken={takenFor(i)}
               onChange={(a) => pickAnimal(i, a)}
             />
             {isTeam && (

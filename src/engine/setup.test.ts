@@ -12,8 +12,8 @@ import {
 import type { Difficulty as Diff5, Event as Event5, Mission } from '../schema';
 
 describe('constants', () => {
-  it('MAX_PARTICIPANTS is 8 and DEFAULT_PARTICIPANT_COUNT is 2', () => {
-    expect(MAX_PARTICIPANTS).toBe(8);
+  it('MAX_PARTICIPANTS is 20 and DEFAULT_PARTICIPANT_COUNT is 2', () => {
+    expect(MAX_PARTICIPANTS).toBe(20);
     expect(DEFAULT_PARTICIPANT_COUNT).toBe(2);
   });
 });
@@ -78,11 +78,16 @@ describe('buildParticipants — bounds (T-02-01)', () => {
     expect(ps).toHaveLength(1);
     expect(ps[0].name).toBe('플레이어 1');
   });
-  it('clamps count down to MAX_PARTICIPANTS with all-distinct animals', () => {
-    const many = Array.from({ length: 20 }, (_, i) => `p${i}`);
-    const ps = buildParticipants('solo', 20, many, []);
+  it('clamps count down to MAX_PARTICIPANTS, all 8 species used and ids unique', () => {
+    const many = Array.from({ length: 30 }, (_, i) => `p${i}`);
+    const ps = buildParticipants('solo', 30, many, []);
     expect(ps).toHaveLength(MAX_PARTICIPANTS);
-    expect(new Set(ps.map((p) => p.animal)).size).toBe(MAX_PARTICIPANTS);
+    expect(new Set(ps.map((p) => p.animal)).size).toBe(8);
+    expect(new Set(ps.map((p) => p.id)).size).toBe(MAX_PARTICIPANTS);
+  });
+  it('8 participants still get 8 distinct animals', () => {
+    const ps = buildParticipants('solo', 8, [], []);
+    expect(new Set(ps.map((p) => p.animal)).size).toBe(8);
   });
 });
 

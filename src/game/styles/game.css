@@ -1632,3 +1632,7 @@
 .mission-target-count { margin: 8px 0; padding: 8px 12px; border-radius: 12px; background: var(--candy-cream, var(--panel)); color: var(--ink); font-size: 22px; font-weight: 900; text-align: center; }
 @keyframes target-die-shake { from { transform: rotate(-12deg) translateY(-3px); } to { transform: rotate(12deg) translateY(3px); } }
 @media (prefers-reduced-motion: reduce) { .target-die.is-rolling { animation: none; } }
+
+/* ＋ 친구 추가 dialog (a latecomer joins the running game). */
+.add-participant { display: grid; gap: 12px; }
+.add-participant .add-participant-hint { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-soft); }

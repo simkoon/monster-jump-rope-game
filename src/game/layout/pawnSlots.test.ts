@@ -140,10 +140,32 @@ describe('slotTable (UI-SPEC C5)', () => {
     expect(slotTable(1, 'start')).toEqual({ s: 1, slots: [[0.25, 0.3]] });
   });
 
-  it('clamps n to 1..8 (T-07-05)', () => {
+  it('clamps n to 1..20 (T-07-05)', () => {
     expect(slotTable(0, 'z')).toEqual(slotTable(1, 'z'));
-    expect(slotTable(12, 'start')).toEqual(slotTable(8, 'start'));
+    expect(slotTable(30, 'start')).toEqual(slotTable(20, 'start'));
   });
+
+  for (const shape of SHAPES) {
+    it(`${shape} n=9..20: distinct slots inside the 8-table box, smaller size`, () => {
+      const box = slotTable(8, shape).slots;
+      const xs = box.map(([x]) => x);
+      const zs = box.map(([, z]) => z);
+      for (let n = 9; n <= 20; n++) {
+        const { s, slots } = slotTable(n, shape);
+        expect(slots).toHaveLength(n);
+        expect(new Set(slots.map(([x, z]) => `${x},${z}`)).size).toBe(n);
+        expect(s).toBeLessThan(0.65);
+        expect(s).toBeGreaterThanOrEqual(0.42);
+        for (const [x, z] of slots) {
+          expect(x).toBeGreaterThanOrEqual(Math.min(...xs) - 1e-9);
+          expect(x).toBeLessThanOrEqual(Math.max(...xs) + 1e-9);
+          expect(z).toBeGreaterThanOrEqual(Math.min(...zs) - 1e-9);
+          expect(z).toBeLessThanOrEqual(Math.max(...zs) + 1e-9);
+        }
+        for (let k = 1; k < n; k++) expect(slots[k][1]).toBeLessThanOrEqual(slots[0][1]);
+      }
+    });
+  }
 });
 
 describe('leaders (D-18)', () => {

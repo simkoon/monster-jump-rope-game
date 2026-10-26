@@ -8,7 +8,7 @@
 // default) so a stray tap never ends a game (T-05-18). No clock (D-01). Names render as JSX text only.
 // `over` (the engine's gameOver, i.e. the win beat, D-14a): the pill says `🏁 게임 끝` with no dot,
 // badge or member line, and the next block is gone; the round block and `지금 끝내기` stay (C7e).
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import type { AnimalId } from '../../engine/animals';
 import {
@@ -36,6 +36,7 @@ interface TurnHudProps {
   nomination?: boolean;
   waiting?: boolean;
   targetJumps?: number;
+  extraActions?: ReactNode; // e.g. ＋ 친구 추가, shown before 지금 끝내기
 }
 
 const dotStyle = (animal: AnimalId) => ({ '--pc': ANIMAL_COLOR[animal] }) as CSSProperties;
@@ -54,6 +55,7 @@ export default function TurnHud({
   nomination = false,
   waiting = false,
   targetJumps,
+  extraActions,
 }: TurnHudProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isFinal = round >= totalRounds;
@@ -113,6 +115,8 @@ export default function TurnHud({
       </div>}
 
       <span className="spacer" />
+
+      {extraActions}
 
       {/* data-skip-ignore: opening the end dialog must not skip a celebration (Phase 8 D-07). */}
       <button type="button" className="game-btn--sm" data-skip-ignore onClick={() => setConfirmOpen(true)}>

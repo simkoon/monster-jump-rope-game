@@ -197,10 +197,40 @@ export function tileShape(ringSize: number, i: number): { shape: SlotShape; mirr
   return { shape: 'x', mirror: side === 1 ? 1 : -1 };
 }
 
-// The slot table for n characters on a tile of this shape (unmirrored). n is clamped to 1..8
-// (MAX_PARTICIPANTS, T-07-05).
+// More than 8 on one tile (9–20 participants): a front-first grid inside the box the 8-table of
+// that shape already uses, so the D-17b EDGE rule toward ring neighbors still holds. Faces may
+// overlap a little here; the hand-tuned occlusion proof covers only the 1–8 tables.
+function crowdTable(n: number, shape: SlotShape): SlotTable {
+  const base = shape === 'start' ? START[6] : REGULAR[shape][6];
+  const xs = base.slots.map(([x]) => x);
+  const zs = base.slots.map(([, z]) => z);
+  const [x0, x1, z0, z1] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  const w = Math.max(0.1, x1 - x0);
+  const h = Math.max(0.1, z1 - z0);
+  const cols = Math.max(2, Math.min(n, Math.round(Math.sqrt((n * w) / h))));
+  const rows = Math.ceil(n / cols);
+  const slots: Slot[] = [];
+  for (let r = 0; r < rows; r++) {
+    const inRow = Math.min(cols, n - r * cols);
+    const z = rows === 1 ? (z0 + z1) / 2 : z1 - (r * h) / (rows - 1); // row 0 = front
+    const row: Slot[] = [];
+    for (let c = 0; c < inRow; c++) {
+      const x = inRow === 1 ? (x0 + x1) / 2 : x0 + (c * w) / (inRow - 1);
+      row.push([Math.round(x * 1000) / 1000, Math.round(z * 1000) / 1000]);
+    }
+    // Center first, so the current turn (k = 0) stands front-center like on the 1–8 tables.
+    const mid = (x0 + x1) / 2;
+    slots.push(...row.sort((a, b) => Math.abs(a[0] - mid) - Math.abs(b[0] - mid)));
+  }
+  const s = Math.max(0.42, Math.round(0.65 * Math.sqrt(8 / n) * 100) / 100);
+  return { s, slots };
+}
+
+// The slot table for n characters on a tile of this shape (unmirrored). n is clamped to 1..20
+// (MAX_PARTICIPANTS, T-07-05); 9+ uses the generated crowd grid.
 export function slotTable(n: number, shape: SlotShape): SlotTable {
-  const c = Number.isFinite(n) ? Math.min(8, Math.max(1, Math.floor(n))) : 1;
+  const c = Number.isFinite(n) ? Math.min(20, Math.max(1, Math.floor(n))) : 1;
+  if (c > 8) return crowdTable(c, shape);
   if (shape === 'start') return c === 1 ? START_LONE : START[c - 2];
   return c === 1 ? LONE[shape] : REGULAR[shape][c - 2];
 }
@@ -226,7 +256,7 @@ export function pawnSlots(
     const { shape, mirror } = tileShape(ringSize, tile);
     const { s, slots } = slotTable(ranked.length, shape);
     ranked.forEach((id, k) => {
-      // More than 8 on one tile cannot happen (participants ≤ 8); reuse the last slot just in case.
+      // More than 20 on one tile cannot happen (participants ≤ 20); reuse the last slot just in case.
       const [dx, dz] = slots[Math.min(k, slots.length - 1)];
       // + 0 turns a mirrored −0 into 0.
       out[id] = { dx: mirror * dx + 0, dz, scale: k === 0 && id === currentId ? 1 : s };

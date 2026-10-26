@@ -6,7 +6,7 @@ import type { Participant } from './state';
 import { assignAnimals, type AnimalId } from './animals';
 import { DIFF_ORDER } from './board';
 
-export const MAX_PARTICIPANTS = 8; // upper bound (= number of animal species, T-02-01 clamp target)
+export const MAX_PARTICIPANTS = 20; // upper bound (species repeat beyond 8, see assignAnimals; T-02-01 clamp target)
 export const DEFAULT_PARTICIPANT_COUNT = 2;
 
 function clampCount(count: number): number {
@@ -17,7 +17,7 @@ function clampCount(count: number): number {
 // Build participants. Solo → each participant is its own single-member token.
 // Team (D-01) → each team is ONE token sharing memberNames; members rotate turns (D-21).
 // count is clamped into [1, MAX_PARTICIPANTS]. Animals go through assignAnimals so every
-// participant gets a distinct species even when picks collide or are missing (SETUP-07, D-24).
+// participant gets a species even when picks collide or are missing (distinct up to 8, SETUP-07, D-24).
 export function buildParticipants(
   mode: 'solo' | 'team',
   count: number,
