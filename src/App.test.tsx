@@ -296,8 +296,8 @@ describe('opening target die and game rules', () => {
       fireEvent.click(screen.getByRole('button', {name:'오늘의 횟수 주사위 굴리기'}));
       act(() => {vi.advanceTimersByTime(1000);});
       const target = useSetupDraft.getState().targetJumps!;
-      expect(target).toBeGreaterThanOrEqual(1);
-      expect(target).toBeLessThanOrEqual(6);
+      expect(target).toBeGreaterThanOrEqual(5);
+      expect(target).toBeLessThanOrEqual(12);
       expect(screen.getByRole('button', {name:'이 게임의 횟수 확정'})).toBeDisabled();
       fireEvent.click(screen.getByRole('button', {name:'게임 시작'}));
       expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(target);

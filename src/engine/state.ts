@@ -27,7 +27,7 @@ export interface Participant {
 }
 
 export interface GameRules {
-  targetJumps?: number; // One pre-game die roll, fixed for all missions in this game.
+  targetJumps?: number; // One pre-game two-dice roll (5..12), fixed for all missions in this game.
   nomination?: boolean; // Teacher-selected, no round limit.
   rounds: number;
   failRule: FailRule;

@@ -1622,6 +1622,8 @@
 .target-roll h2 { margin: 0 0 6px; font-size: 22px; }
 .target-roll p { margin: 0; line-height: 1.5; font-size: 14px; }
 .target-die { display: grid; place-items: center; width: 82px; height: 82px; border-radius: 20px; border: 3px solid var(--sun-deep); background: var(--panel); font-size: 46px; font-weight: 900; box-shadow: 0 5px 0 var(--sun); }
+.target-dice { display: flex; align-items: center; gap: 10px; }
+.target-dice-plus { font-size: 32px; font-weight: 900; color: var(--ink-soft); }
 .target-die.is-rolling { animation: target-die-shake 160ms infinite alternate; }
 .target-roll .target-roll-result { font-size: 24px; font-weight: 900; }
 .target-roll .target-roll-hint { font-size: 12px; color: var(--ink-soft); }

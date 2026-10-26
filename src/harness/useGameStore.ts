@@ -23,7 +23,7 @@ import {
   endGame,
 } from '../engine/game';
 import { analyzeContent } from '../engine/setup';
-import { systemRng } from '../engine/rng';
+import { systemRng, TARGET_JUMPS_MAX, TARGET_JUMPS_MIN } from '../engine/rng';
 
 export interface GameSetup {
   targetJumps?: number;
@@ -79,7 +79,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     }
     const { failRule, startBonus, boardSize } = useSettings.getState();
     const targetJumps = setup.targetJumps === undefined ? {} : {
-      targetJumps: Math.min(6, Math.max(1, Number.isFinite(setup.targetJumps) ? Math.round(setup.targetJumps) : 1)),
+      targetJumps: Math.min(TARGET_JUMPS_MAX, Math.max(TARGET_JUMPS_MIN, Number.isFinite(setup.targetJumps) ? Math.round(setup.targetJumps) : TARGET_JUMPS_MIN)),
     };
     const rules = { ...targetJumps, nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
     const game = createGame({ mode: setup.mode, participants: setup.participants, rules }, content, systemRng());

@@ -172,8 +172,8 @@ describe('fixed target jump count', () => {
     store.reset();
     expect(useGameStore.getState().game).toBeNull();
   });
-  it('clamps explicit target counts to a six-sided die range', () => {
-    for (const [input,expected] of [[0,1],[99,6],[4.4,4],[NaN,1]]) {
+  it('clamps explicit target counts to the two-dice range with a minimum of 5', () => {
+    for (const [input,expected] of [[0,5],[3,5],[99,12],[7.4,7],[NaN,5]]) {
       useGameStore.getState().startGame(setup({targetJumps:input}));
       expect(useGameStore.getState().game!.config.rules.targetJumps).toBe(expected);
     }

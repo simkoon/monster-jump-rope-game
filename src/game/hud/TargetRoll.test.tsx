@@ -12,9 +12,20 @@ function Host() {
   return <TargetRoll value={value} onDecide={setValue} />;
 }
 
+describe('two-dice target roll', () => {
+  it('never totals below 5 and stays within 12', () => {
+    const seeded = rng.mulberry32(42);
+    for (let i = 0; i < 2000; i++) {
+      const [a, b] = rng.rollTargetDice(seeded);
+      expect(a + b).toBeGreaterThanOrEqual(5);
+      expect(a + b).toBeLessThanOrEqual(12);
+    }
+  });
+});
+
 describe('one target-count roll per game', () => {
-  it('rolls one die, shows 5 jumps, and cannot roll again', () => {
-    const draw = vi.spyOn(rng, 'rollDie').mockReturnValue(5);
+  it('rolls two dice, shows their sum, and cannot roll again', () => {
+    const draw = vi.spyOn(rng, 'rollTargetDice').mockReturnValue([3, 4]);
     render(<Host />);
     const button = screen.getByRole('button', { name: '오늘의 횟수 주사위 굴리기' });
     fireEvent.click(button);
@@ -22,13 +33,13 @@ describe('one target-count roll per game', () => {
     expect(draw).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button')).toBeDisabled();
     act(() => { vi.advanceTimersByTime(TARGET_ROLL_MS); });
-    expect(screen.getByRole('status')).toHaveTextContent('오늘은 5번 넘기!');
+    expect(screen.getByRole('status')).toHaveTextContent('오늘은 7번 넘기!');
     expect(screen.getByRole('button', { name: '이 게임의 횟수 확정' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button'));
     expect(draw).toHaveBeenCalledTimes(1);
   });
   it('restores a decided count without another random draw', () => {
-    const draw = vi.spyOn(rng, 'rollDie');
+    const draw = vi.spyOn(rng, 'rollTargetDice');
     render(<TargetRoll value={2} onDecide={vi.fn()} />);
     expect(screen.getByRole('status')).toHaveTextContent('오늘은 2번 넘기!');
     expect(screen.getByRole('button')).toBeDisabled();

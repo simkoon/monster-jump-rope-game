@@ -42,6 +42,17 @@ export function rollDie(rng: Rng): number {
   return 1 + Math.floor(rng.next() * 6);
 }
 
+// Opening jump-count roll: two dice, re-rolled until the sum reaches the minimum,
+// so the faces shown always add up to the result (range 5..12).
+export const TARGET_JUMPS_MIN = 5;
+export const TARGET_JUMPS_MAX = 12;
+export function rollTargetDice(rng: Rng): [number, number] {
+  for (;;) {
+    const pair: [number, number] = [rollDie(rng), rollDie(rng)];
+    if (pair[0] + pair[1] >= TARGET_JUMPS_MIN) return pair;
+  }
+}
+
 // Weighted draw (event placement, EVENT-06). Negative/NaN weights clamp to 0.
 // Returns null when the list is empty OR total weight <= 0 (all-zero → empty square).
 // The final-item return is a float-safety fallback (T-02-04: no infinite loop / NaN).
