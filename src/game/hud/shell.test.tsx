@@ -67,7 +67,7 @@ describe('SetupView — field captions are inert (WR-02)', () => {
   it('the captions are not <label> elements', () => {
     const { container } = render(<SetupView />);
     expect(container.querySelector('label.game-setup-field')).toBeNull();
-    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(3); // 진행 방식, 모드, 인원 수
+    expect(container.querySelectorAll('div.game-setup-field')).toHaveLength(4); // 오늘의 난이도, 진행 방식, 모드, 인원 수
   });
 });
 

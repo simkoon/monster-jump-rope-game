@@ -29,6 +29,7 @@ export interface Participant {
 export interface GameRules {
   targetJumps?: number; // One pre-game two-dice roll (5..12), fixed for all missions in this game.
   nomination?: boolean; // Teacher-selected, no round limit.
+  diffs?: Difficulty[]; // This game's chosen difficulties; absent = all. Only their missions are on the board.
   rounds: number;
   failRule: FailRule;
   startBonus: StartBonus;

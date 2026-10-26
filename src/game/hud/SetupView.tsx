@@ -15,10 +15,13 @@ import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import AnimalPicker from './AnimalPicker';
 import TargetRoll from './TargetRoll';
 import { useSetupDraft, type SetupMode, type PlayOrder } from '../useSetupDraft';
+import { DIFF_ORDER } from '../../engine/board';
+import type { Difficulty } from '../../schema';
 import { analyzeContent, buildParticipants, estimateMinutes, MAX_PARTICIPANTS } from '../../engine/setup';
 import { ANIMALS, assignAnimals, perAnimalLimit, type AnimalId } from '../../engine/animals';
 import {
   ANIMAL_EMOJI,
+  DIFF_LABEL,
   RULES_HINT,
   estimateLine,
   estimateBasis,
@@ -45,8 +48,18 @@ export default function SetupView() {
   const boardSize = useSettings((s) => s.boardSize);
   const startBonus = useSettings((s) => s.startBonus);
   const failRule = useSettings((s) => s.failRule);
-  const analysis = analyzeContent(missions, events);
-  const notices = missingNotices(analysis);
+  const diffs = useSetupDraft((s) => s.diffs);
+  const chosenMissions = missions.filter((m) => diffs.includes(m.diff));
+  const countOf = (d: Difficulty) => missions.filter((m) => m.diff === d).length;
+  // The library guard first; then the chosen difficulties must hold at least one mission.
+  const library = analyzeContent(missions, events);
+  const diffBlock = !library.ok ? null
+    : diffs.length === 0 ? '난이도를 하나 이상 골라 주세요.'
+    : chosenMissions.length === 0 ? '고른 난이도에 미션이 없어요. 다른 난이도를 골라 주세요.'
+    : null;
+  const analysis = diffBlock ? { ...library, ok: false, reason: diffBlock } : library;
+  // Missing-difficulty notices only speak about the difficulties chosen for this game.
+  const notices = missingNotices({ ...analysis, missingDiffs: analysis.missingDiffs.filter((d) => diffs.includes(d)) });
 
   const targetJumps = useSetupDraft((s) => s.targetJumps);
   const playOrder = useSetupDraft((s) => s.playOrder);
@@ -88,8 +101,12 @@ export default function SetupView() {
     patch({ picks: setAt<AnimalId | undefined>(animals, i, a) });
   }
 
+  function toggleDiff(d: Difficulty) {
+    patch((s) => ({ diffs: s.diffs.includes(d) ? s.diffs.filter((x) => x !== d) : DIFF_ORDER.filter((x) => x === d || s.diffs.includes(x)) }));
+  }
+
   function handleStart() {
-    if (targetJumps === null) return;
+    if (targetJumps === null || !analysis.ok) return;
     const memberNamesPerParticipant = isTeam
       ? rows.map((i) =>
           (members[i] ?? '')
@@ -100,7 +117,7 @@ export default function SetupView() {
       : undefined;
     const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
     const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
-    useGameStore.getState().startGame({ mode, participants, rounds: nomination ? 1 : rounds, nomination, targetJumps });
+    useGameStore.getState().startGame({ mode, participants, rounds: nomination ? 1 : rounds, nomination, targetJumps, diffs });
     // The draft is consumed once a game is running; 처음으로 then opens a fresh start screen.
     if (useGameStore.getState().game) useSetupDraft.getState().reset();
   }
@@ -113,6 +130,24 @@ export default function SetupView() {
         : '등록한 순서대로 한 명씩 도전하고 별을 모아요.'}</p>
 
       <TargetRoll value={targetJumps} onDecide={(value) => patch({ targetJumps: value })} />
+
+      <div className="game-setup-field">
+        <span>오늘의 난이도 (여러 개 고를 수 있어요)</span>
+        <div className="seg" role="group" aria-label="오늘의 난이도">
+          {DIFF_ORDER.map((d) => {
+            const on = diffs.includes(d);
+            return (
+              <button key={d} type="button" data-v={d} className={on ? 'sel' : undefined} aria-pressed={on}
+                onClick={() => toggleDiff(d)}>
+                {on ? '✔ ' : ''}{DIFF_LABEL[d]} <small>({countOf(d)})</small>
+              </button>
+            );
+          })}
+        </div>
+        <p className="setup-diff-hint">{diffs.length === DIFF_ORDER.length
+          ? '모든 난이도를 섞어서 판을 만들어요.'
+          : diffs.length > 0 ? `${diffs.map((d) => DIFF_LABEL[d]).join('·')} 미션만 판에 나와요.` : '난이도를 하나 이상 골라 주세요.'}</p>
+      </div>
 
       <div className="game-setup-field">
         <span>진행 방식</span>

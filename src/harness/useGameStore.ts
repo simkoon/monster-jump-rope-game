@@ -11,7 +11,7 @@
 import { create } from 'zustand';
 import { useStore } from '../store';
 import { useSettings, ROUNDS_MIN, ROUNDS_MAX, DEFAULT_ROUNDS } from '../settings';
-import type { Mission, Event } from '../schema';
+import type { Mission, Event, Difficulty } from '../schema';
 import type { GameState, Participant } from '../engine/state';
 import {
   createGame,
@@ -25,6 +25,7 @@ import {
   type NewParticipant,
 } from '../engine/game';
 import { analyzeContent } from '../engine/setup';
+import { DIFF_ORDER } from '../engine/board';
 import { systemRng, TARGET_JUMPS_MAX, TARGET_JUMPS_MIN } from '../engine/rng';
 
 export interface GameSetup {
@@ -33,6 +34,7 @@ export interface GameSetup {
   participants: Participant[];
   rounds: number;
   nomination?: boolean;
+  diffs?: Difficulty[]; // chosen difficulties; absent or all three = the full mix
 }
 
 interface ContentOverride {
@@ -64,9 +66,18 @@ function clampRounds(n: number): number {
 }
 
 // Copy the content once so later edits to the store arrays cannot leak into the game.
-function snapshotContent(override?: ContentOverride): ContentOverride {
+// Only missions of the chosen difficulties go into the game (the board then has only those tiles).
+function snapshotContent(override?: ContentOverride, diffs?: readonly Difficulty[]): ContentOverride {
   const src = override ?? useStore.getState();
-  return { missions: [...src.missions], events: [...src.events] };
+  const missions = diffs ? src.missions.filter((m) => diffs.includes(m.diff)) : src.missions;
+  return { missions: [...missions], events: [...src.events] };
+}
+
+// Valid, unique, in DIFF_ORDER; undefined when nothing or everything is chosen (= the full mix).
+function normalizeDiffs(diffs?: readonly Difficulty[]): Difficulty[] | undefined {
+  if (!diffs) return undefined;
+  const out = DIFF_ORDER.filter((d) => diffs.includes(d));
+  return out.length === 0 || out.length === DIFF_ORDER.length ? undefined : out;
 }
 
 export const useGameStore = create<GameStoreState>((set, get) => ({
@@ -74,17 +85,19 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   startBlockedReason: null,
 
   startGame: (setup, contentOverride) => {
-    const content = snapshotContent(contentOverride);
+    const diffs = normalizeDiffs(setup.diffs);
+    const content = snapshotContent(contentOverride, diffs);
     const analysis = analyzeContent(content.missions, content.events);
     if (!analysis.ok) {
-      set({ game: null, startBlockedReason: analysis.reason ?? '지금은 시작할 수 없어요.' });
+      const reason = diffs ? '고른 난이도에 미션이 없어요. 다른 난이도를 골라 주세요.' : analysis.reason;
+      set({ game: null, startBlockedReason: reason ?? '지금은 시작할 수 없어요.' });
       return;
     }
     const { failRule, startBonus, boardSize } = useSettings.getState();
     const targetJumps = setup.targetJumps === undefined ? {} : {
       targetJumps: Math.min(TARGET_JUMPS_MAX, Math.max(TARGET_JUMPS_MIN, Number.isFinite(setup.targetJumps) ? Math.round(setup.targetJumps) : TARGET_JUMPS_MIN)),
     };
-    const rules = { ...targetJumps, nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
+    const rules = { ...targetJumps, ...(diffs ? { diffs } : {}), nomination: setup.nomination, rounds: clampRounds(setup.rounds), failRule, startBonus, boardSize };
     const game = createGame({ mode: setup.mode, participants: setup.participants, rules }, content, systemRng());
     set({ game, startBlockedReason: null });
   },
@@ -147,6 +160,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       rounds: g.config.rules.rounds,
       nomination: g.config.rules.nomination,
       targetJumps: g.config.rules.targetJumps,
+      diffs: g.config.rules.diffs,
     });
   },
 

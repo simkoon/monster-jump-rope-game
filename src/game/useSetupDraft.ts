@@ -10,12 +10,14 @@
 import { create } from 'zustand';
 import { DEFAULT_PARTICIPANT_COUNT } from '../engine/setup';
 import type { AnimalId } from '../engine/animals';
+import type { Difficulty } from '../schema';
 
 export type SetupMode = 'solo' | 'team';
 export type PlayOrder = 'nomination' | 'sequential';
 
 export interface SetupDraft {
   targetJumps: number | null;
+  diffs: Difficulty[]; // this game's difficulties (default: all three mixed)
   playOrder: PlayOrder;
   mode: SetupMode;
   // Raw stepper/input value (may be NaN while the number field is being edited); SetupView clamps it.
@@ -34,7 +36,7 @@ interface SetupDraftState extends SetupDraft {
 }
 
 export function initialSetupDraft(): SetupDraft {
-  return { targetJumps: null, playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
+  return { targetJumps: null, diffs: ['easy', 'normal', 'hard'], playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
 }
 
 export const useSetupDraft = create<SetupDraftState>((set) => ({
