@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from './store';
 import { seedContent } from './seed';
-import type { Content, Mission, Event } from './schema';
+import { SCHEMA_VERSION, type Content, type Mission, type Event } from './schema';
 
 function resetToSeed() {
   localStorage.clear();
@@ -148,5 +148,25 @@ describe('persistence + read-guard (DATA-01, T-01-01)', () => {
     const valid: Content = { version: 1, categories: ['Z'], missions: [], events: [] };
     const merged = opts.merge!(valid, current) as Content;
     expect(merged.categories).toEqual(['Z']);
+  });
+});
+
+describe('old seed upgrade on load', () => {
+  it('replaces untouched prototype seed missions with the new curriculum, keeps edited lists', async () => {
+    const { isOldSeedMissions } = await import('./store');
+    const old = ['양발 모아뛰기', '번갈아뛰기', '엇걸어풀기 (X자)', '뒤로뛰기', '이중뛰기', '십자뛰기']
+      .map((name, i) => ({ id: 'o' + i, name, desc: '', diff: 'easy' as const, cats: [] }));
+    expect(isOldSeedMissions(old)).toBe(true);
+    expect(isOldSeedMissions(old.slice(1))).toBe(false);
+    expect(isOldSeedMissions([...old, { ...old[0], id: 'x', name: '내 미션' }])).toBe(false);
+    expect(isOldSeedMissions(seedContent().missions)).toBe(false);
+
+    localStorage.setItem('powerjumping_content_v1', JSON.stringify({
+      state: { version: SCHEMA_VERSION, categories: ['기초', '응용', '고난도'], missions: old, events: seedContent().events },
+      version: SCHEMA_VERSION,
+    }));
+    await useStore.persist.rehydrate();
+    expect(useStore.getState().missions.map((m) => m.name)).toEqual(seedContent().missions.map((m) => m.name));
+    localStorage.clear();
   });
 });

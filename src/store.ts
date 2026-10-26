@@ -5,6 +5,16 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { ContentSchema, SCHEMA_VERSION, type Content, type Mission, type Event } from './schema';
 import { seedContent } from './seed';
 
+// The 6 prototype seed missions (before the 2026-10-25 curriculum). A device whose saved missions
+// are still exactly these never edited them, so it gets the new seed missions on load.
+const OLD_SEED_MISSIONS = ['양발 모아뛰기', '번갈아뛰기', '엇걸어풀기 (X자)', '뒤로뛰기', '이중뛰기', '십자뛰기'];
+
+export function isOldSeedMissions(missions: readonly Mission[]): boolean {
+  const names = missions.map((m) => m.name).sort();
+  const old = [...OLD_SEED_MISSIONS].sort();
+  return names.length === old.length && names.every((n, i) => n === old[i]);
+}
+
 export interface Store extends Content {
   addMission: (m: Mission) => void;
   updateMission: (id: string, patch: Partial<Mission>) => void;
@@ -88,7 +98,10 @@ export const useStore = create<Store>()(
       merge: (persisted, current) => {
         const parsed = ContentSchema.safeParse(persisted);
         if (!parsed.success) return current; // corrupt / wrong-version / partial → seed stays
-        return { ...current, ...parsed.data };
+        const data = isOldSeedMissions(parsed.data.missions)
+          ? { ...parsed.data, missions: seedContent().missions } // untouched old seed → new curriculum
+          : parsed.data;
+        return { ...current, ...data };
       },
       onRehydrateStorage: () => (_state, error) => {
         if (error) {
