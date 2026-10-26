@@ -54,7 +54,7 @@ export default function AddParticipant() {
   return (
     <>
       {/* data-skip-ignore: opening the dialog must not skip a celebration (Phase 8 D-07). */}
-      <button type="button" className="game-btn--sm" data-skip-ignore onClick={openDialog}>
+      <button type="button" className="game-btn--sm" data-skip-ignore data-short="＋ 추가" onClick={openDialog}>
         ＋ {label} 추가
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title={`${label} 추가하기`}>

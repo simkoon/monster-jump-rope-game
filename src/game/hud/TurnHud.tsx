@@ -116,12 +116,15 @@ export default function TurnHud({
 
       <span className="spacer" />
 
-      {extraActions}
+      {/* One grid cell for the action buttons, so they stay side by side on a phone. */}
+      <div className="topbar-actions">
+        {extraActions}
 
-      {/* data-skip-ignore: opening the end dialog must not skip a celebration (Phase 8 D-07). */}
-      <button type="button" className="game-btn--sm" data-skip-ignore onClick={() => setConfirmOpen(true)}>
-        지금 끝내기
-      </button>
+        {/* data-skip-ignore: opening the end dialog must not skip a celebration (Phase 8 D-07). */}
+        <button type="button" className="game-btn--sm" data-skip-ignore data-short="끝내기" onClick={() => setConfirmOpen(true)}>
+          지금 끝내기
+        </button>
+      </div>
 
       <ConfirmDialog
         open={confirmOpen}

@@ -351,8 +351,9 @@
     white-space:nowrap;
     font-size:0;
   }
+  /* Each top-bar button names its own short label (끝내기 / ＋ 추가) in data-short. */
   .app--playing .game-topbar .game-btn--sm::before {
-    content:'끝내기';
+    content:attr(data-short);
     font-size:13px;
   }
   .app--playing .game-turn-pill {
@@ -865,7 +866,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.game-stage.stage .game-topbar > .game-btn--sm { flex: none; white-space: nowrap; }
+.game-stage.stage .game-topbar .topbar-actions > .game-btn--sm { flex: none; white-space: nowrap; }
 
 .stage-canvas-cell {
   position: relative;
@@ -942,7 +943,7 @@
   .app--playing .game-stage.stage .game-controls .game-btn { min-width: 0; width: 100%; flex: 1 1 100%; }
   /* Phase 4.1 shows '끝내기' through ::before but a later rule restored the label's
      font size, so both texts rendered ("끝내기지…"). */
-  .app--playing .game-stage.stage .game-topbar > .game-btn--sm { font-size: 0; }
+  .app--playing .game-stage.stage .game-topbar .topbar-actions > .game-btn--sm { font-size: 0; }
 }
 @media (max-height: 760px) {
   .app--playing .game-stage.stage .stage-bottom { grid-template-rows: minmax(56px, auto) auto; }
@@ -1006,7 +1007,7 @@
   .game-stage.stage .game-turn-pill { padding: 4px 12px; border-width: 2px; }
   .game-stage.stage .game-turn-name { font-size: 20px; }
   .game-stage.stage .game-topbar .label { display: none; }
-  .game-stage.stage .game-topbar > .game-btn--sm { min-height: 40px; padding: 0 12px; font-size: 13px; }
+  .game-stage.stage .game-topbar .topbar-actions > .game-btn--sm { min-height: 40px; padding: 0 12px; font-size: 13px; }
   .app--playing .game-stage.stage .game-controls .game-btn { padding: 0 8px; font-size: 16px; white-space: nowrap; }
   .game-stage.stage .game-controls .game-btn-emoji { font-size: 26px; }
   .game-stage.stage .stage-bottom .sb-cell { min-height: 44px; }
@@ -1639,3 +1640,6 @@
 
 /* Chosen difficulties for this game. */
 .setup-diff-hint { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+/* 끝내기 and ＋ 추가 share one top-bar cell. */
+.topbar-actions { display: flex; align-items: center; gap: 8px; flex: none; }
