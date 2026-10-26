@@ -19,12 +19,12 @@ const event = (id: string, weight: number): Event => ({
 describe('store seed defaults', () => {
   beforeEach(resetToSeed);
 
-  it('seeds 21 missions (9 easy / 8 normal / 4 hard), 4 events, and the 3 default categories', () => {
+  it('seeds 26 missions (9 easy / 8 normal / 9 hard), 4 events, and the 3 default categories', () => {
     const seed = seedContent();
-    expect(seed.missions.length).toBe(21);
+    expect(seed.missions.length).toBe(26);
     expect(seed.missions.filter((m) => m.diff === 'easy')).toHaveLength(9);
     expect(seed.missions.filter((m) => m.diff === 'normal')).toHaveLength(8);
-    expect(seed.missions.filter((m) => m.diff === 'hard').map((m) => m.name)).toEqual(['OO', 'SO', 'CO', 'CC']);
+    expect(seed.missions.filter((m) => m.diff === 'hard')).toHaveLength(9);
     expect(seed.missions.every((m) => m.desc === '')).toBe(true);
     expect(seed.events.length).toBe(4);
     expect(seed.categories).toEqual(['기초', '응용', '고난도']);
@@ -146,6 +146,7 @@ describe('persistence + read-guard (DATA-01, T-01-01)', () => {
     const opts = useStore.persist.getOptions();
     const current = useStore.getState();
     const valid: Content = { version: 1, categories: ['Z'], missions: [], events: [] };
+    localStorage.setItem('powerjumping_hard_additions', '2026-10-26-hard5'); // top-up already done
     const merged = opts.merge!(valid, current) as Content;
     expect(merged.categories).toEqual(['Z']);
   });
@@ -168,5 +169,38 @@ describe('old seed upgrade on load', () => {
     await useStore.persist.rehydrate();
     expect(useStore.getState().missions.map((m) => m.name)).toEqual(seedContent().missions.map((m) => m.name));
     localStorage.clear();
+  });
+});
+
+describe('2026-10-26 hard mission top-up', () => {
+  it('adds the 5 new hard missions once to a saved list, never again after deletion', async () => {
+    const { HARD_ADDITIONS_KEY } = await import('./store');
+    const { HARD_ADDITIONS } = await import('./seed');
+    const saved = seedContent().missions.filter((m) => !(HARD_ADDITIONS as readonly string[]).includes(m.name));
+    const write = (missions: Mission[]) => localStorage.setItem('powerjumping_content_v1', JSON.stringify({
+      state: { version: SCHEMA_VERSION, categories: ['기초', '응용'], missions, events: seedContent().events },
+      version: SCHEMA_VERSION,
+    }));
+    localStorage.clear();
+    write([...saved, { id: 'dup', name: 'ooco', desc: '', diff: 'hard', cats: [] }]);
+    await useStore.persist.rehydrate();
+    const names = useStore.getState().missions.map((m) => m.name);
+    expect(names.filter((n) => n.toUpperCase() === 'OOCO')).toHaveLength(1);
+    for (const n of HARD_ADDITIONS.slice(1)) expect(names).toContain(n);
+    expect(useStore.getState().categories).toContain('고난도');
+    expect(localStorage.getItem(HARD_ADDITIONS_KEY)).not.toBeNull();
+    await Promise.resolve(); // the top-up is written right after hydration
+    const stored = JSON.parse(localStorage.getItem('powerjumping_content_v1')!).state.missions.map((m: Mission) => m.name);
+    expect(stored).toContain('OO SO SC');
+
+    write(saved); // the instructor deleted them later
+    await useStore.persist.rehydrate();
+    expect(useStore.getState().missions.map((m) => m.name)).not.toContain('OOCC');
+    localStorage.clear();
+  });
+
+  it('the default library has 9 hard missions', () => {
+    expect(seedContent().missions.filter((m) => m.diff === 'hard').map((m) => m.name))
+      .toEqual(['OO', 'SO', 'CO', 'CC', 'OOCO', 'OOCC', 'COCC', 'OO OOO', 'OO SO SC']);
   });
 });

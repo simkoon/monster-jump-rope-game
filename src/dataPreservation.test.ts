@@ -14,6 +14,9 @@ import {
 
 async function bootWith(raw: string | null) {
   localStorage.clear();
+  // A device that already got the one-time 2026-10-26 hard mission top-up (store.ts); the
+  // top-up itself is covered in store.test.ts.
+  localStorage.setItem('powerjumping_hard_additions', '2026-10-26-hard5');
   if (raw !== null) localStorage.setItem(CONTENT_KEY, raw);
   vi.resetModules();
   const { useStore } = await import('./store');
@@ -105,6 +108,7 @@ describe('콘텐츠 저장 계약 tripwire (D-04)', () => {
 describe('설정 스토어 부팅 격리 (DATA-07)', () => {
   it('v1 콘텐츠 원문 옆에서 설정 스토어를 부팅·변경해도 콘텐츠 원문은 바이트 그대로다', async () => {
     localStorage.clear();
+    localStorage.setItem('powerjumping_hard_additions', '2026-10-26-hard5'); // top-up already done
     localStorage.setItem(CONTENT_KEY, V1_LOCALSTORAGE_RAW);
     vi.resetModules();
     const { useSettings, SETTINGS_KEY } = await import('./settings');

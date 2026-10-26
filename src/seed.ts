@@ -1,10 +1,13 @@
 // src/seed.ts — default content library: the instructor's jump-rope curriculum (2026-10-25).
-// 3 categories, 21 missions (9 easy / 8 normal / 4 hard, names only — no desc), 4 events. Each record gets a fresh id via uid().
+// 3 categories, 26 missions (9 easy / 8 normal / 9 hard, names only — no desc), 4 events. Each record gets a fresh id via uid().
 import { SCHEMA_VERSION, type Content } from './schema';
 
 export function uid(): string {
   return 'id' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
 }
+
+// Hard missions added 2026-10-26. Devices that already saved content get them once (store.ts).
+export const HARD_ADDITIONS = ['OOCO', 'OOCC', 'COCC', 'OO OOO', 'OO SO SC'] as const;
 
 export function seedContent(): Content {
   return {
@@ -32,6 +35,7 @@ export function seedContent(): Content {
       { id: uid(), name: 'SO', desc: '', diff: 'hard', cats: ['고난도'] },
       { id: uid(), name: 'CO', desc: '', diff: 'hard', cats: ['고난도'] },
       { id: uid(), name: 'CC', desc: '', diff: 'hard', cats: ['고난도'] },
+      ...HARD_ADDITIONS.map((name) => ({ id: uid(), name, desc: '', diff: 'hard' as const, cats: ['고난도'] })),
     ],
     events: [
       { id: uid(), name: '슈퍼 점프!', eff: 'forward', steps: 3, weight: 3, label: '보너스' },

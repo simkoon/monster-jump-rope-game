@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ContentSchema, SCHEMA_VERSION, type Content, type Mission, type Event } from './schema';
-import { seedContent } from './seed';
+import { seedContent, uid, HARD_ADDITIONS } from './seed';
 
 // The 6 prototype seed missions (before the 2026-10-25 curriculum). A device whose saved missions
 // are still exactly these never edited them, so it gets the new seed missions on load.
@@ -13,6 +13,38 @@ export function isOldSeedMissions(missions: readonly Mission[]): boolean {
   const names = missions.map((m) => m.name).sort();
   const old = [...OLD_SEED_MISSIONS].sort();
   return names.length === old.length && names.every((n, i) => n === old[i]);
+}
+
+// One-time top-up of the 2026-10-26 hard missions for devices that already saved content. Runs once
+// per device (flag key below), so a mission the instructor deletes later never comes back. Names
+// already in the list (case-insensitive) are skipped.
+export const HARD_ADDITIONS_KEY = 'powerjumping_hard_additions';
+export const HARD_ADDITIONS_ID = '2026-10-26-hard5';
+
+export function withHardAdditions(content: Content): Content {
+  const have = new Set(content.missions.map((m) => m.name.trim().toUpperCase()));
+  const missing = HARD_ADDITIONS.filter((n) => !have.has(n.toUpperCase()));
+  if (missing.length === 0) return content;
+  const cat = '고난도';
+  return {
+    ...content,
+    categories: content.categories.includes(cat) ? content.categories : [...content.categories, cat],
+    missions: [...content.missions, ...missing.map((name) => ({ id: uid(), name, desc: '', diff: 'hard' as const, cats: [cat] }))],
+  };
+}
+
+function hardAdditionsOnce(content: Content): Content {
+  try {
+    if (localStorage.getItem(HARD_ADDITIONS_KEY) === HARD_ADDITIONS_ID) return content;
+    localStorage.setItem(HARD_ADDITIONS_KEY, HARD_ADDITIONS_ID);
+  } catch {
+    return content; // storage blocked — nothing was saved to top up
+  }
+  const next = withHardAdditions(content);
+  // merge() only changes memory; write the topped-up list once hydration is done, or the next
+  // boot (flag already set) would load the old list again.
+  if (next !== content) queueMicrotask(() => useStore.setState({}));
+  return next;
 }
 
 export interface Store extends Content {
@@ -101,7 +133,7 @@ export const useStore = create<Store>()(
         const data = isOldSeedMissions(parsed.data.missions)
           ? { ...parsed.data, missions: seedContent().missions } // untouched old seed → new curriculum
           : parsed.data;
-        return { ...current, ...data };
+        return { ...current, ...hardAdditionsOnce(data) };
       },
       onRehydrateStorage: () => (_state, error) => {
         if (error) {
