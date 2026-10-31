@@ -25,6 +25,7 @@ export interface SetupDraft {
   names: string[];
   members: string[];
   picks: (AnimalId | undefined)[];
+  levels: (Difficulty | undefined)[]; // per-row mission level; undefined = 칸대로 (the tile's difficulty)
   // This game's round count. null = not touched yet → the start screen shows the settings default
   // (D-19). Once the instructor uses the stepper, that value is kept for this game.
   rounds: number | null;
@@ -36,7 +37,7 @@ interface SetupDraftState extends SetupDraft {
 }
 
 export function initialSetupDraft(): SetupDraft {
-  return { targetJumps: null, diffs: ['easy', 'normal', 'hard'], playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], rounds: null };
+  return { targetJumps: null, diffs: ['easy', 'normal', 'hard'], playOrder: 'nomination', mode: 'solo', count: DEFAULT_PARTICIPANT_COUNT, names: [], members: [], picks: [], levels: [], rounds: null };
 }
 
 export const useSetupDraft = create<SetupDraftState>((set) => ({

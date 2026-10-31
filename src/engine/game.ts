@@ -114,7 +114,10 @@ export function createGame(config: GameConfig, content: GameContent, rng: Rng): 
     lapsCredited: 0,
     stars: 0,
   }));
-  const board = buildBoard(rules.boardSize, content.missions, content.events, rng);
+  // Board tiles use only the chosen difficulties; the decks keep every mission, so a child's own
+  // level still has cards when that difficulty is not on the board.
+  const boardMissions = rules.diffs ? content.missions.filter((m) => rules.diffs!.includes(m.diff)) : content.missions;
+  const board = buildBoard(rules.boardSize, boardMissions.length > 0 ? boardMissions : content.missions, content.events, rng);
   const pool = {} as Decks;
   const decks = {} as Decks;
   for (const d of DIFF_ORDER) {
@@ -210,10 +213,12 @@ export function rollDice(state: GameState, rng: Rng): GameState {
   let decks = state.decks;
   let card: QuestCard | null = null;
   if (finalTile.kind === 'quest') {
-    const drawn = drawFromDeck(state.pool, state.decks, finalTile.diff, rng);
+    // A child's level picks the deck (when it has missions); the tile still decides the stars.
+    const deckDiff = p.level && state.pool[p.level].length > 0 ? p.level : finalTile.diff;
+    const drawn = drawFromDeck(state.pool, state.decks, deckDiff, rng);
     decks = drawn.decks;
     if (drawn.mission) {
-      card = { mission: drawn.mission, diff: finalTile.diff, stars: starsFor(finalTile.diff), attempt: 1 };
+      card = { mission: drawn.mission, diff: deckDiff, stars: starsFor(finalTile.diff), attempt: 1 };
       events.push({
         t: 'questDrawn',
         pid,
@@ -442,6 +447,7 @@ export function nominate(state: GameState, pid: string): GameState {
 export interface NewParticipant {
   name: string;
   animal?: AnimalId;
+  level?: Difficulty;
   memberNames?: string[]; // team mode; empty → the team name performs
 }
 
@@ -470,6 +476,7 @@ export function addParticipant(state: GameState, input: NewParticipant): GameSta
     name,
     animal,
     memberNames: members.length > 0 ? members : [name],
+    ...(input.level ? { level: input.level } : {}),
     memberTurnIndex: 0,
     position: 0,
     travel: 0,

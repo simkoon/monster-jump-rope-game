@@ -66,11 +66,9 @@ function clampRounds(n: number): number {
 }
 
 // Copy the content once so later edits to the store arrays cannot leak into the game.
-// Only missions of the chosen difficulties go into the game (the board then has only those tiles).
-function snapshotContent(override?: ContentOverride, diffs?: readonly Difficulty[]): ContentOverride {
+function snapshotContent(override?: ContentOverride): ContentOverride {
   const src = override ?? useStore.getState();
-  const missions = diffs ? src.missions.filter((m) => diffs.includes(m.diff)) : src.missions;
-  return { missions: [...missions], events: [...src.events] };
+  return { missions: [...src.missions], events: [...src.events] };
 }
 
 // Valid, unique, in DIFF_ORDER; undefined when nothing or everything is chosen (= the full mix).
@@ -86,8 +84,10 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   startGame: (setup, contentOverride) => {
     const diffs = normalizeDiffs(setup.diffs);
-    const content = snapshotContent(contentOverride, diffs);
-    const analysis = analyzeContent(content.missions, content.events);
+    const content = snapshotContent(contentOverride);
+    // The board needs missions of the chosen difficulties; the decks keep all (children's levels).
+    const boardMissions = diffs ? content.missions.filter((m) => diffs.includes(m.diff)) : content.missions;
+    const analysis = analyzeContent(boardMissions, content.events);
     if (!analysis.ok) {
       const reason = diffs ? '고른 난이도에 미션이 없어요. 다른 난이도를 골라 주세요.' : analysis.reason;
       set({ game: null, startBlockedReason: reason ?? '지금은 시작할 수 없어요.' });

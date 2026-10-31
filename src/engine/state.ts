@@ -19,6 +19,9 @@ export interface Participant {
   name: string;
   animal: AnimalId;
   memberNames: string[];
+  // This child's mission level: the quest card always comes from this difficulty, wherever they land
+  // (stars still follow the tile). Absent = the tile's difficulty.
+  level?: Difficulty;
   memberTurnIndex: number;
   position: number; // always wrap(travel, L)
   travel: number;
@@ -29,7 +32,7 @@ export interface Participant {
 export interface GameRules {
   targetJumps?: number; // One pre-game two-dice roll (5..12), fixed for all missions in this game.
   nomination?: boolean; // Teacher-selected, no round limit.
-  diffs?: Difficulty[]; // This game's chosen difficulties; absent = all. Only their missions are on the board.
+  diffs?: Difficulty[]; // This game's chosen difficulties; absent = all. Only these tile colors are on the board.
   rounds: number;
   failRule: FailRule;
   startBonus: StartBonus;

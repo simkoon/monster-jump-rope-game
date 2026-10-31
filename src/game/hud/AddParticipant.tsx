@@ -4,6 +4,8 @@
 import { useState } from 'react';
 import Modal from '../../components/Modal';
 import AnimalPicker from './AnimalPicker';
+import LevelPicker from './LevelPicker';
+import type { Difficulty } from '../../schema';
 import { ANIMALS, leastUsedAnimal, perAnimalLimit, type AnimalId } from '../../engine/animals';
 import { canAddParticipant } from '../../engine/game';
 import { MAX_PARTICIPANTS } from '../../engine/setup';
@@ -22,6 +24,7 @@ export default function AddParticipant() {
   const [name, setName] = useState('');
   const [members, setMembers] = useState('');
   const [animal, setAnimal] = useState<AnimalId | null>(null);
+  const [level, setLevel] = useState<Difficulty | undefined>(undefined);
 
   if (!game || !canAddParticipant(game)) return null;
 
@@ -38,6 +41,7 @@ export default function AddParticipant() {
     setName('');
     setMembers('');
     setAnimal(null);
+    setLevel(undefined);
     setOpen(true);
   }
 
@@ -46,6 +50,7 @@ export default function AddParticipant() {
     useGameStore.getState().addParticipant({
       name: name.trim() || placeholder,
       animal: chosen,
+      level,
       memberNames: isTeam ? members.split(',').map((m) => m.trim()).filter(Boolean) : undefined,
     });
     setOpen(false);
@@ -73,6 +78,7 @@ export default function AddParticipant() {
             />
           </div>
           <AnimalPicker groupLabel={`추가할 ${label} 동물`} value={chosen} taken={taken} onChange={setAnimal} />
+          <LevelPicker groupLabel={`추가할 ${label} 미션 난이도`} value={level} onChange={setLevel} />
           {isTeam && (
             <div className="game-setup-row">
               <input

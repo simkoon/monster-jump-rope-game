@@ -52,6 +52,11 @@ describe('adding a participant mid-game', () => {
     expect(addParticipant(s, { name: '' }).config.participants[2].memberNames).toEqual(['팀 3']);
   });
 
+  it('keeps the level of a newcomer', () => {
+    expect(addParticipant(makeGame(), { name: 'C', level: 'hard' }).config.participants[2].level).toBe('hard');
+    expect(addParticipant(makeGame(), { name: 'C' }).config.participants[2].level).toBeUndefined();
+  });
+
   it('is refused at gameOver and at MAX_PARTICIPANTS', () => {
     const over = endGame(makeGame(), 'manual');
     expect(canAddParticipant(over)).toBe(false);

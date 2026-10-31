@@ -14,6 +14,7 @@ import SegmentedControl from '../../components/SegmentedControl';
 import PowerJumpingLogo from '../../components/PowerJumpingLogo';
 import AnimalPicker from './AnimalPicker';
 import TargetRoll from './TargetRoll';
+import LevelPicker from './LevelPicker';
 import { useSetupDraft, type SetupMode, type PlayOrder } from '../useSetupDraft';
 import { DIFF_ORDER } from '../../engine/board';
 import type { Difficulty } from '../../schema';
@@ -72,6 +73,7 @@ export default function SetupView() {
   const names = useSetupDraft((s) => s.names);
   const members = useSetupDraft((s) => s.members);
   const picks = useSetupDraft((s) => s.picks);
+  const levels = useSetupDraft((s) => s.levels);
   const patch = useSetupDraft((s) => s.patch);
   const stepRounds = (delta: number) => patch((d) => ({
     rounds: Math.min(ROUNDS_MAX, Math.max(ROUNDS_MIN, (d.rounds ?? defaultRounds) + delta)),
@@ -93,7 +95,9 @@ export default function SetupView() {
 
   // Decreasing the count drops the removed rows' picks so they are not resurrected later.
   function changeCount(next: number) {
-    patch((d) => (Number.isFinite(next) ? { count: next, picks: d.picks.slice(0, clampCount(next)) } : { count: next }));
+    patch((d) => (Number.isFinite(next)
+      ? { count: next, picks: d.picks.slice(0, clampCount(next)), levels: d.levels.slice(0, clampCount(next)) }
+      : { count: next }));
   }
 
   // Freeze the currently shown animals so picking in one row never reshuffles another row.
@@ -116,7 +120,7 @@ export default function SetupView() {
         )
       : undefined;
     const finalNames = rows.map((i) => (names[i] ?? '').trim() || `${rowLabel} ${i + 1}`);
-    const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant);
+    const participants = buildParticipants(mode, clampedCount, finalNames, animals, memberNamesPerParticipant, levels);
     useGameStore.getState().startGame({ mode, participants, rounds: nomination ? 1 : rounds, nomination, targetJumps, diffs });
     // The draft is consumed once a game is running; 처음으로 then opens a fresh start screen.
     if (useGameStore.getState().game) useSetupDraft.getState().reset();
@@ -201,6 +205,7 @@ export default function SetupView() {
         </span>
       </div>
 
+      <p className="setup-diff-hint">미션 난이도를 정하면 어느 칸에 서든 그 난이도 미션이 나와요. 별은 밟은 칸대로 받아요.</p>
       <ul className="game-setup-rows">
         {rows.map((i) => (
           <li key={i} className="setup-participant">
@@ -221,6 +226,11 @@ export default function SetupView() {
               value={animals[i]}
               taken={takenFor(i)}
               onChange={(a) => pickAnimal(i, a)}
+            />
+            <LevelPicker
+              groupLabel={`${rowLabel} ${i + 1} 미션 난이도`}
+              value={levels[i]}
+              onChange={(lv) => patch((d) => ({ levels: setAt(d.levels, i, lv) }))}
             />
             {isTeam && (
               <div className="game-setup-row">

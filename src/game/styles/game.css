@@ -1643,3 +1643,9 @@
 
 /* 끝내기 and ＋ 추가 share one top-bar cell. */
 .topbar-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+
+/* Per-child mission level (칸대로 / 쉬움 / 보통 / 어려움). */
+.level-pick { display: grid; gap: 6px; }
+.level-pick-caption { font-size: 13px; font-weight: 800; color: var(--ink-soft); }
+.level-pick .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.level-pick .seg button { min-width: 0; min-height: 36px; font-size: 14px; padding: 0 4px; }

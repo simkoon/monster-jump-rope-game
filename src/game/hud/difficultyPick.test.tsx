@@ -41,7 +41,6 @@ describe('오늘의 난이도', () => {
     expect(questDiffs()).toEqual(new Set(['normal', 'hard']));
     useGameStore.getState().restart();
     expect(questDiffs()).toEqual(new Set(['normal', 'hard']));
-    expect(useGameStore.getState().game!.pool.easy).toEqual([]);
   });
 
   it('blocks the start with nothing chosen or with no missions in the chosen difficulty', () => {

@@ -1,6 +1,6 @@
 // src/game/hud/addParticipant.test.tsx — "＋ 친구 추가" during a running game, and the 20-player start screen.
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import AddParticipant from './AddParticipant';
 import SetupView from './SetupView';
 import { useStore } from '../../store';
@@ -81,5 +81,16 @@ describe('SetupView with up to 20 participants', () => {
     const list = useGameStore.getState().game!.config.participants;
     expect(list).toHaveLength(20);
     expect(new Set(list.map((p) => p.animal)).size).toBe(8);
+  });
+
+  it('passes each row mission level into the game', () => {
+    useSetupDraft.getState().patch({ targetJumps: 5 });
+    render(<SetupView />);
+    const row2 = screen.getByRole('group', { name: '플레이어 2 미션 난이도' });
+    fireEvent.click(within(row2).getByRole('button', { name: '어려움' }));
+    expect(within(row2).getByRole('button', { name: '어려움' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
+    const list = useGameStore.getState().game!.config.participants;
+    expect(list.map((p) => p.level)).toEqual([undefined, 'hard']);
   });
 });

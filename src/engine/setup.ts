@@ -24,6 +24,7 @@ export function buildParticipants(
   names: string[],
   animals: ReadonlyArray<AnimalId | undefined>,
   memberNamesPerParticipant?: string[][],
+  levels?: ReadonlyArray<Difficulty | undefined>,
 ): Participant[] {
   const n = clampCount(count);
   const assigned = assignAnimals(n, animals);
@@ -44,6 +45,7 @@ export function buildParticipants(
       name,
       animal: assigned[i],
       memberNames,
+      ...(levels?.[i] ? { level: levels[i] } : {}),
       memberTurnIndex: 0,
       position: 0,
       travel: 0,
