@@ -213,12 +213,12 @@ export function rollDice(state: GameState, rng: Rng): GameState {
   let decks = state.decks;
   let card: QuestCard | null = null;
   if (finalTile.kind === 'quest') {
-    // A child's level picks the deck (when it has missions); the tile still decides the stars.
+    // A child's level picks the deck (when it has missions); the stars follow the card's difficulty.
     const deckDiff = p.level && state.pool[p.level].length > 0 ? p.level : finalTile.diff;
     const drawn = drawFromDeck(state.pool, state.decks, deckDiff, rng);
     decks = drawn.decks;
     if (drawn.mission) {
-      card = { mission: drawn.mission, diff: deckDiff, stars: starsFor(finalTile.diff), attempt: 1 };
+      card = { mission: drawn.mission, diff: deckDiff, stars: starsFor(deckDiff), attempt: 1 };
       events.push({
         t: 'questDrawn',
         pid,

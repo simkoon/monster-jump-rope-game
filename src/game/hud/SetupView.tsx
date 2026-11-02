@@ -205,7 +205,7 @@ export default function SetupView() {
         </span>
       </div>
 
-      <p className="setup-diff-hint">미션 난이도를 정하면 어느 칸에 서든 그 난이도 미션이 나와요. 별은 밟은 칸대로 받아요.</p>
+      <p className="setup-diff-hint">미션 난이도를 정하면 어느 칸에 서든 그 난이도 미션이 나와요. 별은 미션 난이도대로 받아요.</p>
       <ul className="game-setup-rows">
         {rows.map((i) => (
           <li key={i} className="setup-participant">

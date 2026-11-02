@@ -1,4 +1,4 @@
-// Per-child mission level: the card comes from the child's level, the stars from the tile.
+// Per-child mission level: the card and its stars come from the child's level.
 import { describe, expect, it } from 'vitest';
 import { judge, rollDice } from './game';
 import { boardWith, dice, makeGame, mission, player, questTile } from './testkit';
@@ -7,13 +7,13 @@ import { buildParticipants } from './setup';
 const board = boardWith(20, { 1: questTile('easy'), 2: questTile('hard') });
 
 describe('per-child mission level', () => {
-  it('draws from the child level wherever they land; stars follow the tile', () => {
+  it('draws from the child level wherever they land; stars follow the card', () => {
     const s = makeGame({ participants: [player('p1', 'A', 'bear', { level: 'hard' }), player('p2', 'B', 'rabbit')], board });
     const a = rollDice(s, dice(1)); // easy tile
     expect(a.card!.diff).toBe('hard');
     expect(a.card!.mission.diff).toBe('hard');
-    expect(a.card!.stars).toBe(1);
-    expect(judge(a, true, dice(1)).config.participants[0].stars).toBe(1);
+    expect(a.card!.stars).toBe(3);
+    expect(judge(a, true, dice(1)).config.participants[0].stars).toBe(3);
   });
 
   it('without a level the tile decides (unchanged)', () => {

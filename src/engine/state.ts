@@ -20,7 +20,7 @@ export interface Participant {
   animal: AnimalId;
   memberNames: string[];
   // This child's mission level: the quest card always comes from this difficulty, wherever they land
-  // (stars still follow the tile). Absent = the tile's difficulty.
+  // (stars follow that difficulty too). Absent = the tile's difficulty.
   level?: Difficulty;
   memberTurnIndex: number;
   position: number; // always wrap(travel, L)

@@ -1,5 +1,5 @@
 // src/game/hud/LevelPicker.tsx — one child's mission level: 칸대로 (the tile's difficulty) or a fixed
-// 쉬움 / 보통 / 어려움 deck. Stars always follow the tile, so the level only changes which card is drawn.
+// 쉬움 / 보통 / 어려움 deck. Stars follow the card's difficulty (쉬움 1 · 보통 2 · 어려움 3).
 import { DIFF_ORDER } from '../../engine/board';
 import type { Difficulty } from '../../schema';
 import { DIFF_LABEL } from '../labels';
